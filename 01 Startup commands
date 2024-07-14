@@ -1,0 +1,37 @@
+root@ip-172-31-17-65:~# docker images
+REPOSITORY   TAG       IMAGE ID   CREATED   SIZE
+
+root@ip-172-31-17-65:~# docker run ubuntu
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+9c704ecd0c69: Pull complete 
+Digest: sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
+Status: Downloaded newer image for ubuntu:latest
+
+root@ip-172-31-17-65:~# docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+# Note: always remember the command section!
+#the reason it was exited is because, it only executed the command and existed/completed the process and came out of it. It is not the a daemon to make your container up and running. We didnt define the additional parameters to keep the container up.
+# the reason /bin/bash is being is executed is because /bin/bash command would be defined in the dockerfile of ubuntu. Ubuntu doesnt show dockerfile, for comparison you can look at centos dockerfile. 
+root@ip-172-31-17-65:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND       CREATED          STATUS                      PORTS     NAMES
+4b5a52b24996   ubuntu    "/bin/bash"   30 seconds ago   Exited (0) 29 seconds ago             practical_chebyshev
+root@ip-172-31-17-65:~# 
+
+#you can find this on docker hub, search for nginx and click on: (Supported tags and respective Dockerfile links)
+Sample dockerfile:
+https://github.com/nginxinc/docker-nginx/blob/a6f7d140744f8b15ff4314b8718b3f022efc7f43/mainline/debian/Dockerfile
+
+#to name the container
+root@ip-172-31-17-65:~# docker run --name mycon1 ubuntu:18.04
+Unable to find image 'ubuntu:18.04' locally
+18.04: Pulling from library/ubuntu
+7c457f213c76: Pull complete 
+Digest: sha256:152dc042452c496007f07ca9127571cb9c29697f42acbfad72324b2bb2e43c98
+Status: Downloaded newer image for ubuntu:18.04
+root@ip-172-31-17-65:~# 
+
+#SystemD daemon is running in each of ec2 or linux machine which is making your server up and running. You dont have such things inside of your container. To access the bash terminal in container you will have to add a parameter of interactive.
+root@ip-172-31-17-65:~# docker run --interactive --tty --name mycon2 ubuntu:latest
+root@e00dd517bdca:/# This is a terminal from indside the container
