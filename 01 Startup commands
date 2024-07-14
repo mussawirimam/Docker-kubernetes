@@ -35,3 +35,75 @@ root@ip-172-31-17-65:~#
 #SystemD daemon is running in each of ec2 or linux machine which is making your server up and running. You dont have such things inside of your container. To access the bash terminal in container you will have to add a parameter of interactive.
 root@ip-172-31-17-65:~# docker run --interactive --tty --name mycon2 ubuntu:latest
 root@e00dd517bdca:/# This is a terminal from indside the container
+
+#going back to host machine
+# exit will kill the shell of container machine, if it's not running in background
+
+root@ip-172-31-17-65:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS                      PORTS     NAMES
+e00dd517bdca   ubuntu:latest   "/bin/bash"   2 minutes ago    Exited (0) 8 seconds ago              mycon2
+6b87b076f2c9   ubuntu:18.04    "/bin/bash"   6 minutes ago    Exited (0) 6 minutes ago              mycon1
+4b5a52b24996   ubuntu          "/bin/bash"   19 minutes ago   Exited (0) 19 minutes ago             practical_chebyshev
+
+root@e00dd517bdca:/# exit
+exit
+root@ip-172-31-17-65:~# ps -a I am back to my host machine
+    PID TTY          TIME CMD
+   1162 pts/0    00:00:00 sudo
+   1164 pts/1    00:00:00 su
+   1165 pts/1    00:00:00 bash
+   3166 pts/1    00:00:00 ps
+
+#create another container and go back to host machine without killing the bash process for container
+root@ip-172-31-17-65:~# docker run --interactive --tty --name mycon3 ubuntu:latest
+root@3544141b1172:/# ps -elf
+F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+4 S root           1       0  0  80   0 -  1147 do_wai 22:00 pts/0    00:00:00 /bin/bash
+4 R root           9       1  0  80   0 -  1984 -      22:01 pts/0    00:00:00 ps -elf
+
+#I want to jump out of the container without killing the bash process
+press ctrl p + q 
+root@3544141b1172:/# root@ip-172-31-17-65:~#
+root@3544141b1172:/# root@ip-172-31-17-65:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS                      PORTS     NAMES
+3544141b1172   ubuntu:latest   "/bin/bash"   3 minutes ago    Up 3 minutes                          mycon3  <------------------ it is still running in background
+e00dd517bdca   ubuntu:latest   "/bin/bash"   9 minutes ago    Exited (0) 7 minutes ago              mycon2
+6b87b076f2c9   ubuntu:18.04    "/bin/bash"   13 minutes ago   Exited (0) 13 minutes ago             mycon1
+4b5a52b24996   ubuntu          "/bin/bash"   26 minutes ago   Exited (0) 26 minutes ago             practical_chebyshev
+root@ip-172-31-17-65:~# 
+
+# how to login into this container? there are two ways. 
+docker attach
+
+docker exec
+#this will run the command and come back out of it
+root@ip-172-31-17-65:~# docker exec -it mycon3 ls 
+bin  boot  dev	etc  home  lib	lib64  media  mnt  opt	proc  root  run  sbin  srv  sys  tmp  usr  var
+
+#this will give access to the bash terminal of the container
+root@ip-172-31-17-65:~# docker exec -it mycon3 bash
+root@3544141b1172:/# ps -elf
+F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+4 S root           1       0  0  80   0 -  1147 do_sel 22:00 pts/0    00:00:00 /bin/bash
+4 S root          17       0  0  80   0 -  1147 do_sel 22:06 pts/1    00:00:00 bash
+4 S root          25       0  0  80   0 -  1147 do_wai 22:07 pts/2    00:00:00 bash
+0 R root          33      25  0  80   0 -  1984 -      22:07 pts/2    00:00:00 ps -elf
+
+#now if you press exit because there is second bash process running in the container, the container will not terminate itself
+exec means it will be forking a new process for you, a fresh bash get's started and that is the reason it doesnt get terminated. 
+exit will kill only one bash not the original process of the bash.
+root@3544141b1172:/# exit
+exit
+root@ip-172-31-17-65:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS                      PORTS     NAMES
+3544141b1172   ubuntu:latest   "/bin/bash"   9 minutes ago    Up 9 minutes                          mycon3
+e00dd517bdca   ubuntu:latest   "/bin/bash"   16 minutes ago   Exited (0) 13 minutes ago             mycon2
+6b87b076f2c9   ubuntu:18.04    "/bin/bash"   19 minutes ago   Exited (0) 19 minutes ago             mycon1
+4b5a52b24996   ubuntu          "/bin/bash"   33 minutes ago   Exited (0) 33 minutes ago             practical_chebyshev
+root@ip-172-31-17-65:~# 
+
+
+
+
+
+
