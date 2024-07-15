@@ -1,0 +1,90 @@
+root@ip-172-31-30-108:~# docker run -it --name mycon ubuntu:latest
+
+-------------------------------
+INSIDE CONTAINER
+-------------------------------
+root@2cf7a81208a5:/# vi abc.txt
+bash: vi: command not found
+root@2cf7a81208a5:/# ping google.com
+bash: ping: command not found
+root@2cf7a81208a5:/# 
+root@2cf7a81208a5:/# apt update && apt install vim -y
+Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+
+root@2cf7a81208a5:/# vi abc.txt
+this is a test file from the container...
+:wq!
+
+root@2cf7a81208a5:/# apt install iputils-ping -y
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+
+root@2cf7a81208a5:/# ping google.com -c 2
+PING google.com (172.253.115.101) 56(84) bytes of data.
+64 bytes from bg-in-f101.1e100.net (172.253.115.101): icmp_seq=1 ttl=57 time=1.82 ms
+64 bytes from bg-in-f101.1e100.net (172.253.115.101): icmp_seq=2 ttl=57 time=1.82 ms
+
+--- google.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 1.815/1.819/1.824/0.004 ms
+root@2cf7a81208a5:/# 
+
+-------------------------------
+OUTSIDE CONTAINER
+-------------------------------
+#runs in detached mode
+root@ip-172-31-30-108:~# docker run -itd --name mycon2 ubuntu:latest
+2806591dcf85beaf6190946ec1e80a8158ec8ffe20c270c38576f90cac617edd
+
+# if you notice there is no port mapping. 
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS          PORTS     NAMES
+2806591dcf85   ubuntu:latest   "/bin/bash"   24 seconds ago   Up 24 seconds             mycon2
+
+# example: nginx uses the port but at the container level you also have to expose the container for it to be able to communicate through the port you assign or in dockerfile
+# port mapping can only be done at the starting point of your container, once your container is going in running state you cannot do anything, you cannot even modify it.
+root@ip-172-31-30-108:~# docker run -itd --name myapp3 -p <HOSTPORT>:<CONTAINERPORT> ubuntu:latest
+root@ip-172-31-30-108:~# docker run -itd --name myapp4 -p 9090:80 ubuntu:latest
+8650ecf3853936ea363639619bbfcf730d44916f5a70c5b8b2ed0b34a500b11f
+
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS          PORTS                                   NAMES
+8650ecf38539   ubuntu:latest   "/bin/bash"   14 seconds ago   Up 14 seconds   0.0.0.0:9090->80/tcp, :::9090->80/tcp   myapp4
+2806591dcf85   ubuntu:latest   "/bin/bash"   20 minutes ago   Up 20 minutes                                           mycon2
+
+#you will not be able to see 172.31.30.108:9090 on the webpage, because application is not installed on the container.
+# install webserver
+
+root@ip-172-31-30-108:~# docker exec -it myapp4 bash
+root@8650ecf38539:/# 
+
+root@8650ecf38539:/# apt update && apt install apache2 -y
+Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:2 http://security.ubuntu.com/ubuntu noble-security InRelease....
+
+#apache is not running
+root@8650ecf38539:/# ps -elf
+F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+4 S root           1       0  0  80   0 -  1147 do_sel 19:56 pts/0    00:00:00 /bin/bash
+4 S root           9       0  0  80   0 -  1147 do_wai 19:58 pts/1    00:00:00 bash
+0 R root        3412       9  0  80   0 -  1984 -      19:59 pts/1    00:00:00 ps -elf
+
+
+root@8650ecf38539:/# service apache2 start
+ * Starting Apache httpd web server apache2                                                                                                                        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.4. Set the 'ServerName' directive globally to suppress this message
+ * 
+root@8650ecf38539:/# 
+
+#apache is running now
+root@8650ecf38539:/# ps -elf
+F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+4 S root           1       0  0  80   0 -  1147 do_sel 19:56 pts/0    00:00:00 /bin/bash
+4 S root           9       0  0  80   0 -  1147 do_wai 19:58 pts/1    00:00:00 bash
+5 S root        3443       1  0  80   0 -  1701 do_sel 20:00 ?        00:00:00 /usr/sbin/apache2 -k start
+5 S www-data    3446    3443  0  80   0 - 188195 -     20:00 ?        00:00:00 /usr/sbin/apache2 -k start
+5 S www-data    3447    3443  0  80   0 - 188195 -     20:00 ?        00:00:00 /usr/sbin/apache2 -k start
+
+
+0 R root        3504       9  0  80   0 -  1984 -      20:00 pts/1    00:00:00 ps -elf
