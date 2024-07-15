@@ -1,3 +1,10 @@
+labs.play-with-docker.com
+
+docker ps -a
+docker run --interactive --tty --name mycon3 ubuntu:latest
+docker exec -it mycon3 bash
+docker attach mycon3
+
 root@ip-172-31-17-65:~# docker images
 REPOSITORY   TAG       IMAGE ID   CREATED   SIZE
 
@@ -101,6 +108,26 @@ e00dd517bdca   ubuntu:latest   "/bin/bash"   16 minutes ago   Exited (0) 13 minu
 6b87b076f2c9   ubuntu:18.04    "/bin/bash"   19 minutes ago   Exited (0) 19 minutes ago             mycon1
 4b5a52b24996   ubuntu          "/bin/bash"   33 minutes ago   Exited (0) 33 minutes ago             practical_chebyshev
 root@ip-172-31-17-65:~# 
+
+# if you want to get a shell that very first bash shell was created, docker attach will not be starting any new process like exec command. It will be attaching your terminal to the shell of the the container. 
+root@ip-172-31-17-65:~# docker attach mycon3
+root@3544141b1172:/# 
+
+#if you notice there is only one bash process is running now, it didnt create another bash process.
+root@ip-172-31-17-65:~# docker attach mycon3
+root@3544141b1172:/# top
+
+top - 01:48:08 up  4:27,  0 user,  load average: 0.00, 0.03, 0.01
+Tasks:   2 total,   1 running,   1 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st 
+MiB Mem :    957.4 total,    170.3 free,    381.1 used,    565.5 buff/cache     
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.    576.3 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                                                    
+      1 root      20   0    4588   3840   3328 S   0.0   0.4   0:00.03 bash                                                                                       
+      9 root      20   0    8856   5120   3072 R   0.0   0.5   0:00.00 top 
+
+if you want to kill this process, then press exit but if you dont want to kill the process then and want to run in background press ctrl p + q    <---------------
 
 
 
