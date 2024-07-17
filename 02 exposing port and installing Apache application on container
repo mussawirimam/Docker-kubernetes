@@ -54,7 +54,7 @@ CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS          PO
 8650ecf38539   ubuntu:latest   "/bin/bash"   14 seconds ago   Up 14 seconds   0.0.0.0:9090->80/tcp, :::9090->80/tcp   myapp4
 2806591dcf85   ubuntu:latest   "/bin/bash"   20 minutes ago   Up 20 minutes                                           mycon2
 
-#you will not be able to see 172.31.30.108:9090 on the webpage, because application is not installed on the container.
+#you will not be able to see <PUBLICIPOFTHECONTAINERINAWS>:9090 on the webpage, because application is not installed on the container.
 # install webserver
 
 root@ip-172-31-30-108:~# docker exec -it myapp4 bash
@@ -73,8 +73,9 @@ F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME C
 
 
 root@8650ecf38539:/# service apache2 start
- * Starting Apache httpd web server apache2                                                                                                                        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.4. Set the 'ServerName' directive globally to suppress this message
- * 
+ * Starting Apache httpd web server apache2                                                                                                                        
+* AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.4. Set the 'ServerName' directive globally to suppress this message
+
 root@8650ecf38539:/# 
 
 #apache is running now
@@ -88,3 +89,77 @@ F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME C
 
 
 0 R root        3504       9  0  80   0 -  1984 -      20:00 pts/1    00:00:00 ps -elf
+
+# if a port number is already in use, it will fail.
+root@ip-172-31-30-108:~# docker run -itd --name myapp5 -p 9090:80 ubuntu:latest
+25cbce5d329d334d749c8cb5add60a997429ad13fc1b8b8d3364fa07beedf0e8
+docker: Error response from daemon: driver failed programming external connectivity on endpoint myapp5 (c33aa098c2d9fbf55981d83b3eccc7e76112908e5d744a7c3faae34f0aac923d): Bind for 0.0.0.0:9090 failed: port is already allocated.
+
+CONTAINER ID   IMAGE           COMMAND       CREATED             STATUS                         PORTS                                   NAMES
+25cbce5d329d   ubuntu:latest   "/bin/bash"   49 seconds ago      Created                                                                myapp5
+
+# if the container has same name as other container, there will be a conflict
+root@ip-172-31-30-108:~# docker run -itd --name myapp5 -p 9070:80 ubuntu:latest
+docker: Error response from daemon: Conflict. The container name "/myapp5" is already in use by container "25cbce5d329d334d749c8cb5add60a997429ad13fc1b8b8d3364fa07beedf0e8". You have to remove (or rename) that container to be able to reuse that name.
+See 'docker run --help'.
+root@ip-172-31-30-108:~# 
+
+#how to remove the container : 
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED             STATUS                         PORTS                                   NAMES
+25cbce5d329d   ubuntu:latest   "/bin/bash"   3 minutes ago       Created                                                                myapp5
+8650ecf38539   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour               0.0.0.0:9090->80/tcp, :::9090->80/tcp   myapp4
+2969f8223604   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour               0.0.0.0:80->8080/tcp, :::80->8080/tcp   myapp3
+2806591dcf85   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour                                                       mycon2
+2cf7a81208a5   ubuntu:latest   "/bin/bash"   2 hours ago         Exited (1) About an hour ago                                           mycon
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# docker container rm 25cbce5d329d <or name of container>
+25cbce5d329d
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED             STATUS                         PORTS                                   NAMES
+8650ecf38539   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour               0.0.0.0:9090->80/tcp, :::9090->80/tcp   myapp4
+2969f8223604   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour               0.0.0.0:80->8080/tcp, :::80->8080/tcp   myapp3
+2806591dcf85   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour                                                       mycon2
+2cf7a81208a5   ubuntu:latest   "/bin/bash"   2 hours ago         Exited (1) About an hour ago                                           mycon
+root@ip-172-31-30-108:~# 
+
+# how to remove stopped containers only with bash?:
+docker rm $(docker ps -aq)
+
+root@ip-172-31-30-108:~# docker ps -aq
+8650ecf38539
+2969f8223604
+2806591dcf85
+2cf7a81208a5
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# docker rm -f $(docker ps -aq) <--------------------------------- BECAREFUL IT MEANS FORCEFUL ------------------------------
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+root@ip-172-31-30-108:~# 
+
+
+# to remove docker in existed status
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND       CREATED          STATUS                      PORTS     NAMES
+01373ed727e5   ubuntu    "/bin/bash"   3 seconds ago    Exited (0) 2 seconds ago              beautiful_tu
+56ed90bf9e84   ubuntu    "/bin/bash"   4 seconds ago    Exited (0) 3 seconds ago              trusting_euclid
+e35acdc50f38   ubuntu    "/bin/bash"   15 seconds ago   Exited (0) 14 seconds ago             sad_khorana
+bd2f26b524f6   ubuntu    "/bin/bash"   17 seconds ago   Exited (0) 15 seconds ago             keen_hofstadter
+1ae0b72ce952   ubuntu    "/bin/bash"   18 seconds ago   Exited (0) 17 seconds ago             mystifying_neumann
+root@ip-172-31-30-108:~# docker container prune <--------------------------------- BECAREFUL IT MEANS FORCEFUL ------------------------------
+WARNING! This will remove all stopped containers.
+Are you sure you want to continue? [y/N] y
+Deleted Containers:
+01373ed727e5aaa9e5610391cb211c0e0cdbb68d5841297c44645aabc69c9e95
+56ed90bf9e84f01f222d0517a79ae75c85bf588b01a4721a32bd761c82d8ab4d
+e35acdc50f383ef79d1df8182134b53b6ec1448d7181e30e40fba6d0c80b12b3
+bd2f26b524f646b1b2fe61092d4cd20019998018917974b86ab72f7f6c56dcd1
+1ae0b72ce9529c2134a0f7b93c963e8b7ef70ef8c71d9f3ccb95ff0758f4b533
+
+Total reclaimed space: 0B
+root@ip-172-31-30-108:~# 
+
+
+
