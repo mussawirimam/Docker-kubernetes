@@ -5,7 +5,7 @@ docker run --interactive --tty --name mycon3 ubuntu:latest
 docker exec -it mycon3 bash    (creates a bash process within the container process) 
 docker attach mycon3        (attaches the host terminal to the container terminal)
 docker run -itd mycon4 ubuntu:latest (creates a container in detached form with interactive terminal) 
-docker prune (deletes all container be careful)
+docker container prune (deletes all container be careful)
 
 root@ip-172-31-17-65:~# docker images
 REPOSITORY   TAG       IMAGE ID   CREATED   SIZE
@@ -129,9 +129,26 @@ MiB Swap:      0.0 total,      0.0 free,      0.0 used.    576.3 avail Mem
       1 root      20   0    4588   3840   3328 S   0.0   0.4   0:00.03 bash                                                                                       
       9 root      20   0    8856   5120   3072 R   0.0   0.5   0:00.00 top 
 
-if you want to kill this process, then press exit but if you dont want to kill the process then and want to run in background press ctrl p + q    <---------------
+if you want to kill this process, then press exit but if you dont want to kill the process then and want to run in background press ctrl p + q    <---------------***
 
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED              STATUS                     PORTS     NAMES
+7d16394af155   ubuntu:latest   "/bin/bash"   About a minute ago   Exited (0) 2 seconds ago             pedantic_thompson
+da5cebdb3c37   ubuntu:latest   "/bin/bash"   2 minutes ago        Exited (0) 2 minutes ago             mycon3
+6e916ab7899a   ubuntu          "/bin/bash"   8 minutes ago        Exited (0) 3 minutes ago             hero
 
+root@ip-172-31-30-108:~# man docker
+root@ip-172-31-30-108:~# docker container prune
+WARNING! This will remove all stopped containers.
+Are you sure you want to continue? [y/N] y
+Deleted Containers:
+7d16394af155a3f3b2dad39bf91183521bcd632e3d16dabf59b1ea1e5b122e88
+da5cebdb3c3700ad163e7a1084fc0a6927c222e796c6729e9dd2948ecd871792
+6e916ab7899ad715a388aead316edf730cd653076b863dc28bf75efd7aea7f0b
+
+Total reclaimed space: 71B
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 
 
