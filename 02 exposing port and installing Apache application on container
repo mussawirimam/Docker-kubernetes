@@ -1,3 +1,6 @@
+NOTE: when you ssh, during the login it gives you shell, it creates few of the session files on the home directory. While you dont have the space on the home directory, it will not be able to create a session
+file and you will not be able to ssh in the server.
+
 root@ip-172-31-30-108:~# docker run -it --name mycon ubuntu:latest
 
 -------------------------------
