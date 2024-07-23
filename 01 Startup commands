@@ -2,8 +2,10 @@ labs.play-with-docker.com
 
 docker ps -a
 docker run --interactive --tty --name mycon3 ubuntu:latest
-docker exec -it mycon3 bash
-docker attach mycon3
+docker exec -it mycon3 bash    (creates a bash process within the container process) 
+docker attach mycon3        (attaches the host terminal to the container terminal)
+docker run -itd mycon4 ubuntu:latest (creates a container in detached form with interactive terminal) 
+docker prune (deletes all container be careful)
 
 root@ip-172-31-17-65:~# docker images
 REPOSITORY   TAG       IMAGE ID   CREATED   SIZE
