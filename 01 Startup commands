@@ -6,6 +6,7 @@ docker exec -it mycon3 bash    (creates a bash process within the container proc
 docker attach mycon3        (attaches the host terminal to the container terminal)
 docker run -itd mycon4 ubuntu:latest (creates a container in detached form with interactive terminal) 
 docker container prune (deletes all container be careful)
+docker image prune ( to delete the garbage images) 
 
 root@ip-172-31-17-65:~# docker images
 REPOSITORY   TAG       IMAGE ID   CREATED   SIZE
