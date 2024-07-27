@@ -88,6 +88,9 @@ docker rmi -f $(docker image ls -aq)
 ```
 docker container rm 25cbce5d329d <or name of container>
 ```
+
+```
+docker top <container ID or name>
 ```
 ```
 ```
@@ -96,5 +99,4 @@ docker container rm 25cbce5d329d <or name of container>
 ```
 ```
 ```
-```
-v
+
