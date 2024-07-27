@@ -1,3 +1,16 @@
+commands cover 
+docker run -it --name mycon ubuntu:latest
+docker exec -it myapp4 bash
+root@8650ecf38539:/# ps -elf
+docker run -itd --name myapp5 -p 9090:80 ubuntu:latest
+docker container rm 25cbce5d329d <or name of container>
+docker run -itd --name myapp5 -p 9090:80 ubuntu:latest
+# how to remove stopped containers only with bash?:
+docker rmi -f $(docker images -aq)
+docker image ls -aq
+docker rm $(docker ps -aq)
+docker rmi -f $(docker images -aq)
+
 NOTE: when you ssh, during the login it gives you shell, it creates few of the session files on the home directory. While you dont have the space on the home directory, it will not be able to create a session
 file and you will not be able to ssh in the server.
 
