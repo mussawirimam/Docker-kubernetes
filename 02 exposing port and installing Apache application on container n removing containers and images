@@ -164,5 +164,71 @@ bd2f26b524f646b1b2fe61092d4cd20019998018917974b86ab72f7f6c56dcd1
 Total reclaimed space: 0B
 root@ip-172-31-30-108:~# 
 
+# to remove images
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+ubuntu       latest    35a88802559d   7 weeks ago   78.1MB
+
+root@ip-172-31-30-108:~# docker run -itd ubuntu:latest 
+e35aea0ead94122da4dea8d4df0f3abb62499b5dfdb4fcbfe8ce04dc7a82645d
+
+root@ip-172-31-30-108:~# docker rmi 35a88802559d
+Error response from daemon: conflict: unable to delete 35a88802559d (cannot be forced) - image is being used by running container e35aea0ead94
+
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS          PORTS     NAMES
+e35aea0ead94   ubuntu:latest   "/bin/bash"   37 seconds ago   Up 37 seconds             elastic_blackwell
+root@ip-172-31-30-108:~# docker stop elastic_blackwell 
+elastic_blackwell
+
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+root@ip-172-31-30-108:~# docker rmi 35a88802559d
+Untagged: ubuntu:latest
+Untagged: ubuntu@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
+Deleted: sha256:35a88802559dd2077e584394471ddaa1a2c5bfd16893b829ea57619301eb3908
+Deleted: sha256:a30a5965a4f7d9d5ff76a46eb8939f58e95be844de1ac4a4b452d5d31158fdea
+
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+nginx        latest    a72860cb95fd   5 weeks ago   188MB
+ubuntu       latest    35a88802559d   7 weeks ago   78.1MB
+centos       7         eeb6ee3f44bd   2 years ago   204MB
+centos       latest    5d0da3dc9764   2 years ago   231MB
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# docker image ls -aq
+a72860cb95fd
+35a88802559d
+eeb6ee3f44bd
+5d0da3dc9764
+root@ip-172-31-30-108:~# docker rmi -f $(docker images -aq)
+Untagged: nginx:latest
+Untagged: nginx@sha256:6af79ae5de407283dcea8b00d5c37ace95441fd58a8b1d2aa1ed93f5511bb18c
+Deleted: sha256:a72860cb95fd59e9c696c66441c64f18e66915fa26b249911e83c3854477ed9a
+Deleted: sha256:1188c692bee9694c47db34046023dbd938d88f303f216ef689863741b2d1a900
+Deleted: sha256:3eefccfd7e5fd8bbb2bd982509dc79206b056f22dd2b14553951a743833b0d09
+Deleted: sha256:5234252bfd2bba1548a4998869e9a01aedfe3b319ce61acbe98f8aec223640e7
+Deleted: sha256:b292d631e6ca5af8269dc2cf3ec47be1f9faa0865b2aaa794daa2b8c25ea8cb4
+Deleted: sha256:beda8840654459fe0efc1cd0bcae6a00b65b469cc999ebc41608b53c51fb93b4
+Deleted: sha256:7a69d5090b2e7d873a365c81c590b2e6b87a702178b22b3c32c50d35eb7616fc
+Deleted: sha256:e0781bc8667fb5ebf954df4ae52997f6f5568ec9f07e21e5db7c9d324ed41e1f
+Untagged: ubuntu:latest
+Untagged: ubuntu@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
+Deleted: sha256:35a88802559dd2077e584394471ddaa1a2c5bfd16893b829ea57619301eb3908
+Deleted: sha256:a30a5965a4f7d9d5ff76a46eb8939f58e95be844de1ac4a4b452d5d31158fdea
+Untagged: centos:7
+Untagged: centos@sha256:be65f488b7764ad3638f236b7b515b3678369a5124c47b8d32916d6487418ea4
+Deleted: sha256:eeb6ee3f44bd0b5103bb561b4c16bcb82328cfe5809ab675bb17ab3a16c517c9
+Deleted: sha256:174f5685490326fc0a1c0f5570b8663732189b327007e47ff13d2ca59673db02
+Untagged: centos:latest
+Untagged: centos@sha256:a27fd8080b517143cbbbab9dfb7c8571c40d67d534bbdee55bd6c473f432b177
+Deleted: sha256:5d0da3dc976460b72c77d94c8a1ad043720b0416bfc16c52c45d4847e53fadb6
+Deleted: sha256:74ddd0ec08fa43d09f32636ba91a0a3053b02cb4627c35051aff89f853606b59
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID   CREATED   SIZE
+root@ip-172-31-30-108:~# 
+
+
 
 
