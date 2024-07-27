@@ -25,7 +25,7 @@ docker run -itd --name myapp5 -p 9090:80 ubuntu:latest
 ```
 exit
 ```
-
+**If you want to exit without killing the process of bash within the container and run it in the background**
 ```
 Ctrl p + q
 ```
