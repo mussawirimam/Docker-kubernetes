@@ -1,11 +1,11 @@
 # Docker-kubernetes
 https://www.geeksforgeeks.org/kubernetes-images/?ref=lbp
 
-
+**Start the Container**
 ```
 Docker start <Container ID or Name>
 ```
-
+**Stop the Container**
 ```
 Docker stop <Container ID or Name>```
 ```
@@ -18,6 +18,7 @@ Docker pull <image name>
 docker run -it --name mycon ubuntu:latest
 ```
 
+**Mapping the port and running it in interactive terminal as detached mode **
 ```
 docker run -itd --name myapp5 -p 9090:80 ubuntu:latest
 ```
@@ -29,7 +30,7 @@ exit
 ```
 Ctrl p + q
 ```
-
+**to execute a process within the running container**
 ```
 docker exec -it myapp4 bash
 ```
