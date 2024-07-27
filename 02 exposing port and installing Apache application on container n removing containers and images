@@ -11,6 +11,10 @@ docker image ls -aq
 docker rm $(docker ps -aq)
 docker rmi -f $(docker images -aq)
 docker create --name app01 -p 8090:80 ubuntu 
+apt get net-tools -y ( networking tools)
+netstat -tunalp (to check the used ports)
+ps -ef ( running processors on the machine)
+kill -9 <pid>	To kill the process
 
 NOTE: when you ssh, during the login it gives you shell, it creates few of the session files on the home directory. While you dont have the space on the home directory, it will not be able to create a session
 file and you will not be able to ssh in the server.
@@ -277,4 +281,12 @@ root@ip-172-31-30-108:~# docker run nginx:latest
 2024/07/27 03:02:11 [notice] 1#1: start worker processes
 2024/07/27 03:02:11 [notice] 1#1: start worker process 29
 
+# docker system prune removes everything 
+root@ip-172-31-30-108:~# docker system prune 
+WARNING! This will remove:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all dangling images
+  - unused build cache
 
+Are you sure you want to continue? [y/N] 
