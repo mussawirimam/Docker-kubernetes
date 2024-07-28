@@ -108,7 +108,9 @@ docker system df
 ```
 docker system info
 ```
+**docker-commit - Create a new image from a container's changes**
 ```
+docker commit <name of the container> <desiredname:version>
 ```
 ```
 
