@@ -112,5 +112,51 @@ docker system info
 ```
 docker commit <name of the container> <desiredname:version>
 ```
+**to turn the image into tar file in order to email or send it to your collegue**
 ```
-
+docker save <image ID or name with tag> -o <tarfilename>.tar 
+```
+to load back the docker image from tar file to docker image
+```
+docker load < <name of the tar image file>.tar
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
