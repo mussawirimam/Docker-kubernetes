@@ -1,9 +1,30 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15" version="24.7.5">
   <diagram name="Page-1" id="ofmvdiJBeYy7TZPo0Xtj">
-    <mxGraphModel>
+    <mxGraphModel dx="2284" dy="744" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="C4g6iONC9xjZB1VP2NS5-1" target="C4g6iONC9xjZB1VP2NS5-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-1" value="" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-2" value="" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.ec2_compute_container;fillColor=#F58534;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="400" y="192.75" width="60" height="34.5" as="geometry" />
+        </mxCell>
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-5" value="Docker Images&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-6" value="Docker Containers" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="400" y="250" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-7" value="&lt;p style=&quot;margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica&quot;&gt;Read Only Template Used To Create Containers&lt;/p&gt;&#xa;&lt;p style=&quot;margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica&quot;&gt;Built By Docker Users&lt;/p&gt;&#xa;&lt;p style=&quot;margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica&quot;&gt;Stored In Docker Hub Or Your Local Registry&lt;/p&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-61" y="310" width="290" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="C4g6iONC9xjZB1VP2NS5-8" value="&lt;p style=&quot;margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica&quot;&gt;Isolated Application Platform&lt;/p&gt;&#xa;&lt;p style=&quot;margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica&quot;&gt;Contains Everything Needed To Run The Application&lt;/p&gt;&#xa;&lt;p style=&quot;margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica&quot;&gt;Built From One Or More Images&lt;/p&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="320" width="310" height="90" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
