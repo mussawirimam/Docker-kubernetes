@@ -100,9 +100,13 @@ docker container rm <or name of container>
 ```
 docker top <container ID or name>
 ```
+**To display the docker system usage**
 ```
+docker system df 
 ```
+**Gives you docker system info**
 ```
+docker system info
 ```
 ```
 ```
