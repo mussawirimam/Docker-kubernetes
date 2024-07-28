@@ -1,4 +1,6 @@
 # Docker-kubernetes
+ghcr.io
+hub.docker.com
 https://www.geeksforgeeks.org/kubernetes-images/?ref=lbp
 
 **Start the Container**
@@ -120,13 +122,21 @@ to load back the docker image from tar file to docker image
 ```
 docker load < <name of the tar image file>.tar
 ```
+**To Login to dockerhub account to access your own repository**
 ```
+docker login
 ```
+**Unencrypted password location on host machine for hub.docker.com**
 ```
+cat /root/.docker/config.json
 ```
+**In order to push the image from host machine to hub.docker.com repository you will need to tag the username before the image in order to successfully push the image to remote repository**
 ```
+docker tag myapp:v1 <username>/myapp01:v1
 ```
+**docker-push - Upload an image to a registry**
 ```
+docker push <username>/myapp01:v1
 ```
 ```
 ```
