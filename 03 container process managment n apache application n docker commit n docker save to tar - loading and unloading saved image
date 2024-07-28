@@ -1,0 +1,288 @@
+How to find out which processes are running within the container?
+remember in app container most of the utility will be missing, you might have to download them at the start of creating a container from the image.
+You can use a dockerfile for that
+
+```
+docker exec -it <container id or name> /bin/bash
+ps -elf 
+top
+```
+OR
+```
+docker top <container id or name> 
+```
+root@ip-172-31-30-108:~# docker ps 
+CONTAINER ID   IMAGE           COMMAND                  CREATED              STATUS              PORTS                                   NAMES
+d32323c2a446   httpd:latest    "httpd-foreground"       About a minute ago   Up About a minute   0.0.0.0:8081->80/tcp, :::8081->80/tcp   httpd
+78ad84caa2d8   nginx:latest    "/docker-entrypoint.…"   14 minutes ago       Up 14 minutes       0.0.0.0:9090->80/tcp, :::9090->80/tcp   nginx
+34905a0a06b2   ubuntu:latest   "/bin/bash"              41 minutes ago       Up 26 minutes                                               app01
+root@ip-172-31-30-108:~# 
+
+root@ip-172-31-30-108:~# docker top httpd
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                4867                4838                0                   23:14               pts/0               00:00:00            httpd -DFOREGROUND
+www-data            4890                4867                0                   23:14               pts/0               00:00:00            httpd -DFOREGROUND
+www-data            4891                4867                0                   23:14               pts/0               00:00:00            httpd -DFOREGROUND
+www-data            4893                4867                0                   23:14               pts/0               00:00:00            httpd -DFOREGROUND
+root@ip-172-31-30-108:~# 
+
+root@ip-172-31-30-108:~# docker system
+
+Usage:  docker system COMMAND
+
+Manage Docker
+
+Commands:
+  df          Show docker disk usage
+  events      Get real time events from the server
+  info        Display system-wide information
+  prune       Remove unused data
+
+Run 'docker system COMMAND --help' for more information on a command.
+root@ip-172-31-30-108:~# 
+```
+root@ip-172-31-30-108:~# ```docker system df```
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          3         3         339MB     74.78MB (22%)
+Containers      3         3         1.188kB   0B (0%)
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+root@ip-172-31-30-108:~# 
+
+Gives you system information for docker
+root@ip-172-31-30-108:~# docker system events 
+^Ccontext canceled
+root@ip-172-31-30-108:~# docker system info
+Client: Docker Engine - Community
+ Version:    27.0.3
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.15.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v2.28.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 3
+  Running: 0
+  Paused: 0
+  Stopped: 3
+ Images: 3
+ Server Version: 27.0.3
+ Storage Driver: overlay2
+  Backing Filesystem: extfs........
+
+root@62f25a4c5d7b:/# apt update && apt install apache2 -y
+root@62f25a4c5d7b:/# service apache2 start
+root@62f25a4c5d7b:/# ps -elf
+F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+4 S root           1       0  0  80   0 -  1147 do_sel 19:30 pts/0    00:00:00 /bin/bash
+4 S root           9       0  0  80   0 -  1147 do_wai 19:30 pts/1    00:00:00 bash
+5 S root        3592       1  0  80   0 -  1701 do_sel 20:26 ?        00:00:00 /usr/sbin/apache2 -k start
+5 S www-data    3595    3592  0  80   0 - 188195 -     20:26 ?        00:00:00 /usr/sbin/apache2 -k start
+5 S www-data    3596    3592  0  80   0 - 188195 -     20:26 ?        00:00:00 /usr/sbin/apache2 -k start
+0 R root        3654       9  0  80   0 -  1984 -      20:27 pts/1    00:00:00 ps -elf
+
+# to check, we have mapped apache 
+root@62f25a4c5d7b:/# exit          
+exit
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS          PORTS                                   NAMES
+62f25a4c5d7b   ubuntu:latest   "/bin/bash"   58 minutes ago   Up 58 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   myapp01
+
+# Installing wget and unzip to create a small application using html template (download the template from https://www.free-css.com/free-css-templates/page296/spering)
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE           COMMAND       CREATED          STATUS          PORTS                                   NAMES
+62f25a4c5d7b   ubuntu:latest   "/bin/bash"   58 minutes ago   Up 58 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   myapp01
+root@ip-172-31-30-108:~# docker exec -it myapp01 bash
+root@62f25a4c5d7b:/# apt install wget unzip -y 
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+
+root@62f25a4c5d7b:/# cd /var/www/html 
+root@62f25a4c5d7b:/var/www/html# pwd
+/var/www/html
+root@62f25a4c5d7b:/var/www/html# wget https://www.free-css.com/assets/files/free-css-templates/download/page296/spering.zip
+--2024-07-28 20:36:39--  https://www.free-css.com/assets/files/free-css-templates/download/page296/spering.zip
+Resolving www.free-css.com (www.free-css.com)... 217.160.0.242, 2001:8d8:100f:f000::28f
+Connecting to www.free-css.com (www.free-css.com)|217.160.0.242|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 557415 (544K) [application/zip]
+Saving to: 'spering.zip'
+
+spering.zip                              100%[=================================================================================>] 544.35K  1.03MB/s    in 0.5s    
+
+2024-07-28 20:36:40 (1.03 MB/s) - 'spering.zip' saved [557415/557415]
+
+root@62f25a4c5d7b:/var/www/html# ls
+index.html  spering.zip
+root@62f25a4c5d7b:/var/www/html# 
+
+root@62f25a4c5d7b:/var/www/html# unzip spering.zip 
+Archive:  spering.zip
+   creating: spering-html/
+  inflating: spering-html/about.html  
+  inflating: spering-html/category.html  
+   creating: spering-html/css/
+  inflating: spering-html/css/bootstrap.css  
+  inflating: spering-html/css/responsive.css  
+  inflating: spering-html/css/style.css        .........
+
+root@62f25a4c5d7b:/var/www/html# ls
+index.html  spering-html  spering.zip
+root@62f25a4c5d7b:/var/www/html# 
+
+# ON BROWSER
+54.xxx.xxx.xxx:8080/spering-html
+
+root@62f25a4c5d7b:/var/www/html# cd spering-html/
+root@62f25a4c5d7b:/var/www/html/spering-html# mv * ..
+root@62f25a4c5d7b:/var/www/html/spering-html# cd ..
+root@62f25a4c5d7b:/var/www/html# ls
+about.html  category.html  css  images  index.html  js  spering-html  spering.zip  work.html
+root@62f25a4c5d7b:/var/www/html# 
+about.html  category.html  css  images  index.html  js  spering-html  spering.zip  work.html
+root@62f25a4c5d7b:/var/www/html# rm -rf spering-html/
+root@62f25a4c5d7b:/var/www/html#  
+
+
+# ON BROWSER
+54.xxx.xxx.xxx:8080
+
+# SCENERIO: lets say if you configured the container with applicaiton and next day you come to the office and how would you check your changes? 
+# BEST PRACTICE: is to write dockerfile
+# how can we save the container for the changes?? you can convert the running container to the image
+
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE           COMMAND       CREATED             STATUS             PORTS                                   NAMES
+62f25a4c5d7b   ubuntu:latest   "/bin/bash"   About an hour ago   Up About an hour   0.0.0.0:8080->80/tcp, :::8080->80/tcp   myapp01
+root@ip-172-31-30-108:~# docker commit myapp01 myapp:v1           <--------------------------------------------------------------------------------------------<<<
+sha256:81411260b5b8b4d954190fe73f8a86a9152e86ea5764e4b13507aeb7209a6f5e
+
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+myapp        v1        81411260b5b8   7 seconds ago   294MB
+httpd        latest    19c71fbb7140   10 days ago     148MB
+nginx        latest    a72860cb95fd   5 weeks ago     188MB
+ubuntu       latest    35a88802559d   7 weeks ago     78.1MB
+root@ip-172-31-30-108:~# 
+
+# let say someone deleted your container, you can recreate your docker container from the commited docker image that you have created
+root@ip-172-31-30-108:~# docker rm -f myapp01
+myapp01
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+myapp        v1        81411260b5b8   3 minutes ago   294MB
+httpd        latest    19c71fbb7140   10 days ago     148MB
+nginx        latest    a72860cb95fd   5 weeks ago     188MB
+ubuntu       latest    35a88802559d   7 weeks ago     78.1MB
+root@ip-172-31-30-108:~# docker run -itd --name myapp01 -p 8080:80 myapp:v1
+a8af239d8a1748c0319e6ebbda2db0f40f6ec9cb61c947457a4bb5d07f0b0af7
+root@ip-172-31-30-108:~# 
+
+# new docker container from the commited image
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE      COMMAND       CREATED          STATUS          PORTS                                   NAMES
+a8af239d8a17   myapp:v1   "/bin/bash"   23 seconds ago   Up 22 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   myapp01
+root@ip-172-31-30-108:~# 
+
+#NOTE: PORT 8080 will not be accessible when you create the container back from the commited image, because the running service is not enable within the container
+# because the default command of ubuntu in official dockerfile is bash when the image starts. To change that CMD configuration you will have to do it within the dockerfile. VERY IMPORTANT WHEN YOU WANT TO START THE LIST OF APPLICATION AT START
+
+
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE      COMMAND       CREATED          STATUS          PORTS                                   NAMES
+a8af239d8a17   myapp:v1   "/bin/bash"   23 seconds ago   Up 22 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   myapp01
+root@ip-172-31-30-108:~# docker exec -it myapp01 bash
+root@a8af239d8a17:/# service apache2 start 
+ * Starting Apache httpd web server apache2                                                                                                                        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+ * 
+root@a8af239d8a17:/# ps -elf
+F S UID          PID    PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+4 S root           1       0  0  80   0 -  1147 do_sel 17:07 pts/0    00:00:00 /bin/bash
+4 S root           9       0  0  80   0 -  1147 do_wai 17:11 pts/1    00:00:00 bash
+5 S root          36       1  0  80   0 -  1701 do_sel 17:11 ?        00:00:00 /usr/sbin/apache2 -k start
+5 S www-data      40      36  0  80   0 - 188195 -     17:11 ?        00:00:00 /usr/sbin/apache2 -k start
+5 S www-data      42      36  0  80   0 - 188195 -     17:11 ?        00:00:00 /usr/sbin/apache2 -k start
+0 R root          99       9  0  80   0 -  1984 -      17:11 pts/1    00:00:00 ps -elf
+root@a8af239d8a17:/# 
+
+# how would you share this image? 
+# you can convert this file into tar file to email or upload it to dockerhub
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+myapp        v1        81411260b5b8   10 minutes ago   294MB
+httpd        latest    19c71fbb7140   10 days ago      148MB
+nginx        latest    a72860cb95fd   5 weeks ago      188MB
+ubuntu       latest    35a88802559d   7 weeks ago      78.1MB
+
+root@ip-172-31-30-108:~# docker save myapp:v1 -o myapp-v1.tar 
+root@ip-172-31-30-108:~# ls
+get-docker.sh  myapp-v1.tar  snap
+root@ip-172-31-30-108:~# 
+
+# load back the tar file as docker image in your host machine
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE      COMMAND       CREATED          STATUS          PORTS                                   NAMES
+a8af239d8a17   myapp:v1   "/bin/bash"   25 minutes ago   Up 25 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   myapp01
+root@ip-172-31-30-108:~# docker rm -f myapp01
+myapp01
+root@ip-172-31-30-108:~# docker rmi 81411260b5b8
+Untagged: myapp:v1
+Deleted: sha256:81411260b5b8b4d954190fe73f8a86a9152e86ea5764e4b13507aeb7209a6f5e
+Deleted: sha256:f401e293b91e51accce62ea76c4e58eb536336906b2af67cda581df8ff6e4b22
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+httpd        latest    19c71fbb7140   10 days ago   148MB
+nginx        latest    a72860cb95fd   5 weeks ago   188MB
+ubuntu       latest    35a88802559d   7 weeks ago   78.1MB
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+root@ip-172-31-30-108:~# docker load < myapp-v1.tar 
+88e2fae39538: Loading layer [==================================================>]  221.3MB/221.3MB
+Loaded image: myapp:v1
+
+root@ip-172-31-30-108:~# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+myapp        v1        81411260b5b8   32 minutes ago   294MB
+httpd        latest    19c71fbb7140   10 days ago      148MB
+nginx        latest    a72860cb95fd   5 weeks ago      188MB
+ubuntu       latest    35a88802559d   7 weeks ago      78.1MB
+root@ip-172-31-30-108:~# 
+
+root@ip-172-31-30-108:~# docker run -itd --name app01 -p 8080:80 myapp:v1
+510b7b140b3bd49c81a1c4fda6c5796501602f89a0c624be217791b07165a05e
+root@ip-172-31-30-108:~# 
+
+
+root@ip-172-31-30-108:~# docker run -itd --name app01 -p 8080:80 myapp:v1
+510b7b140b3bd49c81a1c4fda6c5796501602f89a0c624be217791b07165a05e
+
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE      COMMAND       CREATED              STATUS              PORTS                                   NAMES
+510b7b140b3b   myapp:v1   "/bin/bash"   About a minute ago   Up About a minute   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~# 
+
+root@ip-172-31-30-108:~# docker exec -it app01 bash
+root@510b7b140b3b:/# service apache2 start
+ * Starting Apache httpd web server apache2                                                                                                                        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+ * 
+root@510b7b140b3b:/# 
+root@510b7b140b3b:/# ps -ef
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0  0 17:39 pts/0    00:00:00 /bin/bash
+root           9       0  0 17:40 pts/1    00:00:00 bash
+root          36       1  0 17:40 ?        00:00:00 /usr/sbin/apache2 -k start
+www-data      40      36  0 17:40 ?        00:00:00 /usr/sbin/apache2 -k start
+www-data      41      36  0 17:40 ?        00:00:00 /usr/sbin/apache2 -k start
+root          99       9  0 17:40 pts/1    00:00:00 ps -ef
+root@510b7b140b3b:/# 
