@@ -40,7 +40,7 @@ Commands:
 
 Run 'docker system COMMAND --help' for more information on a command.
 root@ip-172-31-30-108:~# 
-
+```
 root@ip-172-31-30-108:~# ```docker system df```
 TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
 Images          3         3         339MB     74.78MB (22%)
