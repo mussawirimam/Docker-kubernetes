@@ -1,0 +1,26 @@
+# let say if your vm is restarted, how to start up and running upon vm getting stopped or crash
+root@ip-172-31-30-108:~# docker run -d --name app01 -p 8080:80 nginx:latest
+1e2cf96f7c742b68af0fc9919c49aa9effee6ecd749eed7a4050914d40bc1c23
+root@ip-172-31-30-108:~# 
+
+===vm restarts===
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS                      PORTS     NAMES
+1e2cf96f7c74   nginx:latest   "/docker-entrypoint.…"   4 minutes ago   Exited (0) 16 seconds ago             app01
+
+===== container restart always, even if the vm stops or restarts or crashes =====
+root@ip-172-31-30-108:~# docker run -itd --name app01 -p 8080:80 --restart always nginx:latest
+
+---after restarting the vm---
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED              STATUS          PORTS                                   NAMES
+2dead1ae9733   nginx:latest   "/docker-entrypoint.…"   About a minute ago   Up 12 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~# 
+
+=== Networking ===
+# how can two container communicate with each other
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS              PORTS                                   NAMES
+b754c546386d   ubuntu:latest   "/bin/bash"              17 seconds ago   Up 17 seconds                                               app02
+2dead1ae9733   nginx:latest    "/docker-entrypoint.…"   3 minutes ago    Up About a minute   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~# 
