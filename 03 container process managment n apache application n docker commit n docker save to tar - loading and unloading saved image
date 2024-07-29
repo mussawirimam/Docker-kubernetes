@@ -286,3 +286,132 @@ www-data      40      36  0 17:40 ?        00:00:00 /usr/sbin/apache2 -k start
 www-data      41      36  0 17:40 ?        00:00:00 /usr/sbin/apache2 -k start
 root          99       9  0 17:40 pts/1    00:00:00 ps -ef
 root@510b7b140b3b:/# 
+====================================================================================================================================================================================================
+                                                TO PUSH IMAGE TO HUB.DOCKER.COM AND TO SETUP REPOSITORY ON GIT 
+====================================================================================================================================================================================================
+
+# in a corporation/comapny you will have to share the images through repositories like https://hub.docker.com or wherever your central repository is setup. 
+root@ip-172-31-30-108:~# docker login
+Log in with your Docker ID or email address to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com/ to create one.
+You can log in with your password or a Personal Access Token (PAT). Using a limited-scope PAT grants better security and is required for organizations using SSO. Learn more at https://docs.docker.com/go/access-tokens/
+
+Username: <give your username>
+Password: <give your password>
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.    <------------------------<< password is unencrypted here
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credential-stores
+
+root@ip-172-31-30-108:~# cat /root/.docker/config.json 
+{
+	"auths": {
+		"https://index.docker.io/v1/": {
+			"auth": "xxxxxxxxxxxxxxxxxxxxxxxxxxx="
+		}
+
+# it will fail to push, because you have to add the username infront of the image. We have to tag the image (alternative name or the alias) to match the format 
+root@ip-172-31-30-108:~# docker images 
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+myapp        v1        81411260b5b8   2 hours ago   294MB
+httpd        latest    19c71fbb7140   10 days ago   148MB
+nginx        latest    a72860cb95fd   5 weeks ago   188MB
+ubuntu       latest    35a88802559d   7 weeks ago   78.1MB
+root@ip-172-31-30-108:~# docker push myapp:v1
+The push refers to repository [docker.io/library/myapp]
+88e2fae39538: Preparing 
+a30a5965a4f7: Preparing 
+denied: requested access to the resource is denied
+
+# tagging the username infront of the image so we can push the image to our dockerhub repository 
+root@ip-172-31-30-108:~# docker tag myapp:v1 mussawirimam/myapp01:v1
+root@ip-172-31-30-108:~# docker images
+REPOSITORY             TAG       IMAGE ID       CREATED       SIZE
+myapp                  v1        81411260b5b8   2 hours ago   294MB
+<username>myapp01   v1        81411260b5b8   2 hours ago   294MB
+httpd                  latest    19c71fbb7140   10 days ago   148MB
+nginx                  latest    a72860cb95fd   5 weeks ago   188MB
+ubuntu                 latest    35a88802559d   7 weeks ago   78.1MB
+root@ip-172-31-30-108:~# 
+
+# PUSH SUCCESSFUL because there was tag/username added before the image
+root@ip-172-31-30-108:~# docker push <username>/myapp01:v1
+The push refers to repository [docker.io/<username>/myapp01]
+88e2fae39538: Pushed 
+a30a5965a4f7: Pushed 
+v1: digest: sha256:0f2eb5658f9073e0e7f923a0af2ceaedf24d03d38b1280cd8f8897d5291e8f73 size: 741
+root@ip-172-31-30-108:~# 
+
+# now if you go to hub.docker.com (to your repository with your login id and password) you will see the image in your personal repository.
+<username>/myapp01
+Contains: Image • Last pushed: 6 minutes ago ⭐️ 0 ⬇️ 1 🌎 Public Scout inactive
+----------------------------------------------
+# we can also host our image to GITHUB VERY IMPORTANT
+ghcr.io
+# whenever using a different repository, you have to define the url of that before tagging and pushing the image. Because, by default docker picks up the docker hub credentials that's been logged in to push the images to.
+# SAMPLE from ghcr.io:
+(PERSONAL ACCESS TOKEN = PAT)
+$ echo $PAT | docker login ghcr.io --username <username> --password-stdin
+Logged in successfully
+
+$ docker tag app ghcr.io/<username>/app:1.0.0
+
+$ docker push ghcr.io/<username/app:1.0.0
+
+1.0.0: digest: sha256:631cb8... fc822c size: 1373
+-------------------------------------------------    
+(to generate PAT)
+  1) go to github > settings > developer settings > Personal access tokens > classic token > Generate new token (classic)
+  2) Name > Note | select expiration days | Select scope > click on repo | click on write:packages | click on delete:packages | click on admin:org | admin:repo_hook | click on user | delete_repo
+
+# create a environmental variable for PAT in host machine 
+root@ip-172-31-30-108:~# PAT=xxxxxxxxxxxxxx
+root@ip-172-31-30-108:~# echo $PAT
+xxxxxxxxxxxxxx
+root@ip-172-31-30-108:~# 
+
+root@ip-172-31-30-108:~# PAT=xxxxxxxxxxxxxx
+root@ip-172-31-30-108:~# echo $PAT
+xxxxxxxxxxxxxx
+root@ip-172-31-30-108:~# echo $PAT | docker login ghcr.io --username <username> --password-stdin
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credential-stores
+
+Login Succeeded
+root@ip-172-31-30-108:~# 
+
+root@ip-172-31-30-108:~# docker images
+REPOSITORY             TAG       IMAGE ID       CREATED       SIZE
+myapp                  v1        81411260b5b8   3 hours ago   294MB
+mussawirimam/myapp01   v1        81411260b5b8   3 hours ago   294MB
+httpd                  latest    19c71fbb7140   11 days ago   148MB
+nginx                  latest    a72860cb95fd   5 weeks ago   188MB
+ubuntu                 latest    35a88802559d   7 weeks ago   78.1MB
+root@ip-172-31-30-108:~# docker push 81411260b5b8 ghcr.io/<username>/myapp:v1
+"docker push" requires exactly 1 argument.
+See 'docker push --help'.
+
+Usage:  docker push [OPTIONS] NAME[:TAG]
+
+Upload an image to a registry
+root@ip-172-31-30-108:~# docker tag 81411260b5b8 ghcr.io/username/myapp:v1
+root@ip-172-31-30-108:~# docker push 81411260b5b8 ghcr.io/username/myapp:v1
+"docker push" requires exactly 1 argument.
+See 'docker push --help'.
+
+Usage:  docker push [OPTIONS] NAME[:TAG]
+
+Upload an image to a registry
+root@ip-172-31-30-108:~# docker push ghcr.io/username/myapp:v1
+The push refers to repository [ghcr.io/username/myapp]
+88e2fae39538: Pushing [==================================================>]  221.3MB
+88e2fae39538: Pushed 
+
+v1: digest: sha256:0f2eb5658f9073e0e7f923a0af2ceaedf24d03d38b1280cd8f8897d5291e8f73 size: 741
+root@ip-172-31-30-108:~# 
+root@ip-172-31-30-108:~# 
+
+# to check your container image that has been pushed to github
+click on your profile image > your repositories > click on packages
+your container image --> myapp Private Published 2 minutes ago by username
+************************************************************************
+to delete this package click on Package settings > Delete this package 
