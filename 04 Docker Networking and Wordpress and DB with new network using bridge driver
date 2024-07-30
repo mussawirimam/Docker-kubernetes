@@ -765,3 +765,50 @@ root@ip-172-31-30-108:~# docker network inspect mynet
                 "MacAddress": "02:42:ac:12:00:03",
                 "IPv4Address": "172.18.0.3/16",
                 "IPv6Address": ""
+
+
+=== front-end and back-end === 
+root@ip-172-31-30-108:~# docker run -d --name wordpress -p 9090:80 --network mynet wordpress:latest
+Unable to find image 'wordpress:latest' locally
+
+
+--- backend mysql db ---
+=== Setting ENVIRONMENT VARIABLES for MYSQLDB === 
+MYSQL_ROOT_PASSWORD
+This variable is mandatory and specifies the password that will be set for the MySQL root superuser account. In the above example, it was set to my-secret-pw.
+
+MYSQL_DATABASE
+This variable is optional and allows you to specify the name of a database to be created on image startup. If a user/password was supplied (see below) then that user will be granted superuser access (corresponding to GRANT ALL⁠) to this database.
+
+
+# mysql will not run because it needs the environment variable added 
+root@ip-172-31-30-108:~# docker run -d --name mydb --network mynet mysql:3.7
+
+# you can check the environment variable examples on the mysql docker image from dockerhub
+https://hub.docker.com/_/mysql
+root@ip-172-31-30-108:~# docker run -d --name mydb --network mynet -e MYSQL_ROOT_PASSWORD=test123 -e MYSQL_DATABASE=mywp  mysql:3.7
+
+Unable to find image 'mysql:3.7' locally
+docker: Error response from daemon: manifest for mysql:3.7 not found: manifest unknown: manifest unknown.
+See 'docker run --help'.
+root@ip-172-31-30-108:~# docker run -d --name mydb --network mynet -e MYSQL_ROOT_PASSWORD=test123 -e MYSQL_DATABASE=mywp  mysql:latest
+Unable to find image 'mysql:latest' locally
+latest: Pulling from library/mysql
+d9a40b27c30f: Pull complete
+fe4b01031aab: Pull complete
+aa72c34c4347: Pull complete
+
+--- in browser --- 
+# put the ip address with port in browser to access the wordpress
+IPaddress in browser xxx.xxx.xxx.xxx:9090
+set up your wordbress on browser
+
+# this will throw you an error on browser for Error establishing a database connection
+root@ip-172-31-30-108:~# docker stop mydb
+
+# to resolve the issue start the db again
+root@ip-172-31-30-108:~# docker start mydb
+mydb
+
+
+
