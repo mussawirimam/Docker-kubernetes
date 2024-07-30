@@ -558,9 +558,210 @@ root@ip-172-31-30-108:~# docker network connect bridge app03
 Error response from daemon: container cannot be connected to multiple networks with one of the networks in private (none) mode
 root@ip-172-31-30-108:~# 
 
+=== host network ===
 # the reason we are not giving the port mapping is, because the application is using the host networking. 
 root@ip-172-31-30-108:~# docker run -d --name app04 --network host nginx:latest
 d3f622e2053883c1b057e0cc6244479038b18224793e84b31f98507268b29486
 root@ip-172-31-30-108:~# 
 
+root@ip-172-31-30-108:~# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute
+       valid_lft forever preferred_lft forever
+2: enX0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 0a:ff:e5:2d:09:f3 brd ff:ff:ff:ff:ff:ff
+    inet 172.31.30.108/20 metric 100 brd 172.31.31.255 scope global dynamic enX0
+       valid_lft 2177sec preferred_lft 2177sec
+    inet6 fe80::8ff:e5ff:fe2d:9f3/64 scope link
+       valid_lft forever preferred_lft forever
+3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+    link/ether 02:42:5d:fe:e1:9d brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:5dff:fefe:e19d/64 scope link
+       valid_lft forever preferred_lft forever
+5: veth007ad47@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
+    link/ether be:f9:a1:d2:7b:d3 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::bcf9:a1ff:fed2:7bd3/64 scope link
+       valid_lft forever preferred_lft forever
+7: veth54aeb9c@if6: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
+    link/ether 52:12:93:f7:c9:42 brd ff:ff:ff:ff:ff:ff link-netnsid 1
+    inet6 fe80::5012:93ff:fef7:c942/64 scope link
+       valid_lft forever preferred_lft forever
+root@ip-172-31-30-108:~#
 
+"Networks": {
+                "host": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "MacAddress": "",
+                    "DriverOpts": null,
+                    "NetworkID": "e31e46537abfd57c14c2c082b86666d8f6cefa917cae6c4ae4fa1eb23f1a3bf4",
+                    "EndpointID": "480e5048c9a5b7ac754d3861d4e1221d24daa12a86829ebffee38ff398c68709",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        }
+    }
+]
+
+# there is no mac address or ip assigned but you still will be able to access application while using host machine network adapter using the host ipaddress.
+# use your local ip address without mentioning the port, since the container is using the host network adapter. 
+
+Welcome to nginx!
+
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+=== ENABLING NAME BASED DNS ON CONTAINERS ===
+#whenever using the default bridge network, you will not have the named based DNS enabled. 
+# to enable named based DNS you will have to create another network while using the bridge drivers
+
+# note that the ip address of the container is from the same subnet that the docker adapter provides
+root@ip-172-31-30-108:~# docker container inspect app01
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "IPPrefixLen": 16,
+
+root@ip-172-31-30-108:~# ip a
+3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+    link/ether 02:42:5d:fe:e1:9d brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:5dff:fefe:e19d/64 scope link
+       valid_lft forever preferred_lft forever
+
+=== Creating New Network using bridge driver ===
+root@ip-172-31-30-108:~# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+891ff3c082fa   bridge    bridge    local
+e31e46537abf   host      host      local
+a0453ab09788   none      null      local
+
+# note if you done define the flag -d then, the new network will be picket up as the bridge
+root@ip-172-31-30-108:~# docker network create mynet -d bridge
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker network create mynet
+ee8b121b955a5a8495b32a1cf46c2371a733813fe1b1a4a10412edcff3fc4d89
+root@ip-172-31-30-108:~# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+891ff3c082fa   bridge    bridge    local
+e31e46537abf   host      host      local
+ee8b121b955a   mynet     bridge    local
+a0453ab09788   none      null      local
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker run -d --name app01 --network mynet -p 8080:80 nginx:latest
+62d5e490b1d6f4cb431243b7a0d30f01205f749957c7e1914f7cc1cc1a3ccaa1
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+62d5e490b1d6   nginx:latest   "/docker-entrypoint.…"   11 seconds ago   Up 11 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~# docker run -d --name app02 --network mynet -p 8081:80 nginx:latest
+ca4dc018af0a152de6448d5433318a64db744b1ab003c4e2f90108dcb421a677
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+ca4dc018af0a   nginx:latest   "/docker-entrypoint.…"   2 seconds ago    Up 1 second     0.0.0.0:8081->80/tcp, :::8081->80/tcp   app02
+62d5e490b1d6   nginx:latest   "/docker-entrypoint.…"   37 seconds ago   Up 36 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker exec -it app01 bash
+root@62d5e490b1d6:/# apt update && apt install iputils-ping -y
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates I
+
+root@ip-172-31-30-108:~# docker exec -it app02 bash
+root@ca4dc018af0a:/# apt update && apt install iputils-ping -y
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security
+
+=== NAMED BASED DNS IS ENABLED NOW THROUGH MYNET USING BRIDGE DRIVER ===
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+ca4dc018af0a   nginx:latest   "/docker-entrypoint.…"   8 minutes ago   Up 8 minutes   0.0.0.0:8081->80/tcp, :::8081->80/tcp   app02
+62d5e490b1d6   nginx:latest   "/docker-entrypoint.…"   8 minutes ago   Up 8 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~# docker exec -it app01 bash
+root@62d5e490b1d6:/# ping app02
+PING app02 (172.18.0.3) 56(84) bytes of data.
+64 bytes from app02.mynet (172.18.0.3): icmp_seq=1 ttl=64 time=0.104 ms
+64 bytes from app02.mynet (172.18.0.3): icmp_seq=2 ttl=64 time=0.057 ms
+64 bytes from app02.mynet (172.18.0.3): icmp_seq=3 ttl=64 time=0.077 ms
+^C
+--- app02 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2012ms
+rtt min/avg/max/mdev = 0.057/0.079/0.104/0.019 ms
+root@62d5e490b1d6:/#
+
+root@ip-172-31-30-108:~# docker exec -it app02 bash
+root@ca4dc018af0a:/# ping app01
+PING app01 (172.18.0.2) 56(84) bytes of data.
+64 bytes from app01.mynet (172.18.0.2): icmp_seq=1 ttl=64 time=0.064 ms
+64 bytes from app01.mynet (172.18.0.2): icmp_seq=2 ttl=64 time=0.058 ms
+64 bytes from app01.mynet (172.18.0.2): icmp_seq=3 ttl=64 time=0.075 ms
+64 bytes from app01.mynet (172.18.0.2): icmp_seq=4 ttl=64 time=0.091 ms
+
+root@ip-172-31-30-108:~# ip a
+3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 02:42:5d:fe:e1:9d brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:5dff:fefe:e19d/64 scope link
+       valid_lft forever preferred_lft forever
+10: br-ee8b121b955a: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+    link/ether 02:42:60:8a:78:24 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.0.1/16 brd 172.18.255.255 scope global br-ee8b121b955a
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:60ff:fe8a:7824/64 scope link
+       valid_lft forever preferred_lft forever
+
+
+root@ip-172-31-30-108:~# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+891ff3c082fa   bridge    bridge    local
+e31e46537abf   host      host      local
+ee8b121b955a   mynet     bridge    local
+a0453ab09788   none      null      local
+root@ip-172-31-30-108:~# docker network inspect mynet
+[
+    {
+        "Name": "mynet",
+        "Id": "ee8b121b955a5a8495b32a1cf46c2371a733813fe1b1a4a10412edcff3fc4d89",
+        "Created": "2024-07-30T15:56:51.160826325Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+
+--- # you can check your new network if any container is using mynet network ---
+
+     "ConfigOnly": false,
+        "Containers": {
+            "62d5e490b1d6f4cb431243b7a0d30f01205f749957c7e1914f7cc1cc1a3ccaa1": {
+                "Name": "app01",
+                "EndpointID": "92916268768f721d501f29eec7dfea8274265a1b47cec9b26d6ff3e2b04933ba",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            },
+            "ca4dc018af0a152de6448d5433318a64db744b1ab003c4e2f90108dcb421a677": {
+                "Name": "app02",
+                "EndpointID": "e3012189fa8dfd9c2ce47160023002119662df8f0f19b3e7dd543aff40416e26",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
+                "IPv6Address": ""
