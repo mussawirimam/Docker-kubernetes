@@ -3,6 +3,14 @@ ghcr.io
 hub.docker.com
 https://www.geeksforgeeks.org/kubernetes-images/?ref=lbp
 
+what is the use of Docker?
+the use of docker is to containerize the applicaition, we cannot run our workloads only using docker alone. Docker is nothing wihthout kubernetes. 
+Once the application is containerized, it needs to be orchestrated using kubernetes. And whenever we are using kubernetes, we are having one of the service or the service mesh is available for ISTIO. 
+If you see the feature functionality of ISTIO while 100's of microservices, you want to make secure all of them. All of them should be accessible through MTLS. You will be able to securely accessible.
+To make the application accessible outside of the cluster, we will have to create the virtual service to make the application accessible outside. 
+
+Docker is only used to containerize application, rest of the mechanism is taken care of by the kubernetes. 
+
 **Start the Container**
 ```
 Docker start <Container ID or Name>
