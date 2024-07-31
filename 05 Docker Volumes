@@ -1,0 +1,70 @@
+Docker Volumes
+1. Bind Mount :- Dir created on host machine --> similar to mount command Mount Source/Dest e.g Mount /dev/sdb1 /mnt
+2. Docker Volume :- This type of volume is created under docker 
+3. tempfs :- temporary file system / will be created on your memory will be wiped out once the system is restarted. 
+
+=== BIND MOUNT ===
+=== volume from host to container === 
+## to add data from host machine to container
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+root@ip-172-31-30-108:/# docker run -d --name app01 -p 8080:80 -v /mydata/:/data nginx:latest
+2d9ddcc11d1b2b51d7de3f49d332c6a2db019c9911e0f61566d20e3899c8586d
+root@ip-172-31-30-108:/# docker ps -a
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   4 seconds ago   Up 4 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:/#
+
+root@ip-172-31-30-108:/mydata# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   45 minutes ago   Up 45 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:/mydata#
+
+root@ip-172-31-30-108:/mydata# docker exec -it app01 bash
+root@2d9ddcc11d1b:/# ls
+bin  boot  data  dev  docker-entrypoint.d  docker-entrypoint.sh  etc  home  lib  lib64	media  mnt  opt  proc  root  run  sbin	srv  sys  tmp  usr  var
+root@2d9ddcc11d1b:/# cd /data/
+root@2d9ddcc11d1b:/data# ls
+mango.txt
+root@2d9ddcc11d1b:/data# cat mango.txt
+this is mango.txt a file
+root@2d9ddcc11d1b:/data#
+
+--- how to save the logs of container to host machine --- 
+## multiple Volumes can be mounted 
+root@ip-172-31-30-108:~# docker run -d --name app02 -p 8081:80 -v /mydata/:/data -v /mylogs/:/var/log/nginx nginx:latest
+d0261add81bdc5b4f7740598bf3cddeb4edf25f6f7d1873b445df6f02e75f5b4
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+d0261add81bd   nginx:latest   "/docker-entrypoint.…"   54 seconds ago   Up 53 seconds   0.0.0.0:8081->80/tcp, :::8081->80/tcp   app02
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   50 minutes ago   Up 50 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# cd /mylogs/
+root@ip-172-31-30-108:/mylogs# ls
+access.log  error.log
+root@ip-172-31-30-108:/mylogs#
+
+## logs from container were mounted to the host machine directory
+root@ip-172-31-30-108:/mylogs# docker exec -it app02 bash
+root@d0261add81bd:/# cd /var/log/nginx/
+root@d0261add81bd:/var/log/nginx# ls
+access.log  error.log
+root@d0261add81bd:/var/log/nginx#
+
+## if you have data allocated/availabe on the destination mount, that data will be over-written by the source mount
+
+root@d0261add81bd:/usr# cd share/nginx/html
+root@d0261add81bd:/usr/share/nginx/html# pwd
+/usr/share/nginx/html
+root@d0261add81bd:/usr/share/nginx/html# ls
+50x.html  index.html
+root@d0261add81bd:/usr/share/nginx/html# cat index.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
