@@ -68,3 +68,45 @@ root@d0261add81bd:/usr/share/nginx/html# cat index.html
 <style>
 html { color-scheme: light dark; }
 body { width: 35em; margin: 0 auto;
+
+
+=== BINDING /MYDATA /USR/SHARE/NGINX/HTML === 
+## if there is already data that exists in the mydata will be mounted on /us/share/nginx/html (you will lose the data on container)
+
+root@ip-172-31-30-108:~# cat /mydata/mango.txt
+this is mango.txt a file
+
+root@ip-172-31-30-108:~# docker run -d --name app03 -p 8082:80 -v /mydata/:/usr/share/nginx/html nginx:latest
+ef1d1919dbe560d6def910121866afa8371e7a282757cd2062b994ce9a5fda6b
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS          PORTS                                   NAMES
+ef1d1919dbe5   nginx:latest   "/docker-entrypoint.…"   5 seconds ago   Up 4 seconds    0.0.0.0:8082->80/tcp, :::8082->80/tcp   app03
+d0261add81bd   nginx:latest   "/docker-entrypoint.…"   27 hours ago    Up 5 minutes    0.0.0.0:8081->80/tcp, :::8081->80/tcp   app02
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   27 hours ago    Up 37 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~#
+
+--- ON BROWSER --- (because mydata file have over-written the files on container mount)
+403 Forbidden
+
+nginx/1.27.0
+root@ip-172-31-30-108:~# docker exec -it app03 bash
+root@ef1d1919dbe5:/# ls /usr/share/nginx/html
+mango.txt
+
+root@ef1d1919dbe5:/# cat /usr/share/nginx/html/mango.txt
+this is mango.txt a file
+root@ef1d1919dbe5:/#
+
+root@ef1d1919dbe5:/# cd /usr/share/nginx/html/
+root@ef1d1919dbe5:/usr/share/nginx/html# mv mango.txt index.html
+root@ef1d1919dbe5:/usr/share/nginx/html# ls
+index.html
+root@ef1d1919dbe5:/usr/share/nginx/html#
+
+--- ON BROWSER --- (it will show you the content of the text file but you will lose the data if you mount host file to container file if the container file already have any data within the directory)
+this is mango.txt a file
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
