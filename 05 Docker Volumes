@@ -107,6 +107,34 @@ root@ef1d1919dbe5:/usr/share/nginx/html#
 this is mango.txt a file
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+=== DOCKER VOLUME ===
+## 
+
+
+root@ip-172-31-30-108:~# docker container inspect app03
+....
+       "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/mydata",
+                "Destination": "/usr/share/nginx/html",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+....
+            "Image": "nginx:latest",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": [
+                "/docker-entrypoint.sh"
+            ],
+
+....
+
+
+
+
+
 
 
 
