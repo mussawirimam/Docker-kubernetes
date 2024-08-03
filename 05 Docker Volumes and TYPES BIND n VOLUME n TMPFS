@@ -1,0 +1,342 @@
+
+Docker Volumes
+1. Bind Mount :- Dir created on host machine --> similar to mount command Mount Source/Dest e.g Mount /dev/sdb1 /mnt  
+                     https://docs.docker.com/storage/bind-mounts/
+
+2. Docker Volume :- This type of volume is created under docker 
+                     https://docs.docker.com/storage/volumes/
+
+3. tempfs :- temporary file system / will be created on your memory will be wiped out once the system is restarted. 
+                     https://docs.docker.com/storage/tmpfs/
+
+1st type of docker Volume
+=== BIND MOUNT ===
+=== volume from host to container === 
+## to add data from host machine to container
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+root@ip-172-31-30-108:/# docker run -d --name app01 -p 8080:80 -v /mydata/:/data nginx:latest
+2d9ddcc11d1b2b51d7de3f49d332c6a2db019c9911e0f61566d20e3899c8586d
+root@ip-172-31-30-108:/# docker ps -a
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   4 seconds ago   Up 4 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:/#
+
+root@ip-172-31-30-108:/mydata# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   45 minutes ago   Up 45 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:/mydata#
+
+root@ip-172-31-30-108:/mydata# docker exec -it app01 bash
+root@2d9ddcc11d1b:/# ls
+bin  boot  data  dev  docker-entrypoint.d  docker-entrypoint.sh  etc  home  lib  lib64	media  mnt  opt  proc  root  run  sbin	srv  sys  tmp  usr  var
+root@2d9ddcc11d1b:/# cd /data/
+root@2d9ddcc11d1b:/data# ls
+mango.txt
+root@2d9ddcc11d1b:/data# cat mango.txt
+this is mango.txt a file
+root@2d9ddcc11d1b:/data#
+
+--- how to save the logs of container to host machine --- 
+## multiple Volumes can be mounted 
+root@ip-172-31-30-108:~# docker run -d --name app02 -p 8081:80 -v /mydata/:/data -v /mylogs/:/var/log/nginx nginx:latest
+d0261add81bdc5b4f7740598bf3cddeb4edf25f6f7d1873b445df6f02e75f5b4
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+d0261add81bd   nginx:latest   "/docker-entrypoint.…"   54 seconds ago   Up 53 seconds   0.0.0.0:8081->80/tcp, :::8081->80/tcp   app02
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   50 minutes ago   Up 50 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# cd /mylogs/
+root@ip-172-31-30-108:/mylogs# ls
+access.log  error.log
+root@ip-172-31-30-108:/mylogs#
+
+## logs from container were mounted to the host machine directory
+root@ip-172-31-30-108:/mylogs# docker exec -it app02 bash
+root@d0261add81bd:/# cd /var/log/nginx/
+root@d0261add81bd:/var/log/nginx# ls
+access.log  error.log
+root@d0261add81bd:/var/log/nginx#
+
+## if you have data allocated/availabe on the destination mount, that data will be over-written by the source mount
+
+root@d0261add81bd:/usr# cd share/nginx/html
+root@d0261add81bd:/usr/share/nginx/html# pwd
+/usr/share/nginx/html
+root@d0261add81bd:/usr/share/nginx/html# ls
+50x.html  index.html
+root@d0261add81bd:/usr/share/nginx/html# cat index.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+
+
+=== OVER WRITTING  DATA IN /USR/SHARE/NGINX/HTML FROM /MYDATA AND BINDING /MYDATA /USR/SHARE/NGINX/HTML === 
+## if there is already data that exists in the mydata will be mounted on /us/share/nginx/html (you will lose the data on container)
+
+root@ip-172-31-30-108:~# cat /mydata/mango.txt
+this is mango.txt a file
+
+root@ip-172-31-30-108:~# docker run -d --name app03 -p 8082:80 -v /mydata/:/usr/share/nginx/html nginx:latest
+ef1d1919dbe560d6def910121866afa8371e7a282757cd2062b994ce9a5fda6b
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS          PORTS                                   NAMES
+ef1d1919dbe5   nginx:latest   "/docker-entrypoint.…"   5 seconds ago   Up 4 seconds    0.0.0.0:8082->80/tcp, :::8082->80/tcp   app03
+d0261add81bd   nginx:latest   "/docker-entrypoint.…"   27 hours ago    Up 5 minutes    0.0.0.0:8081->80/tcp, :::8081->80/tcp   app02
+2d9ddcc11d1b   nginx:latest   "/docker-entrypoint.…"   27 hours ago    Up 37 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   app01
+root@ip-172-31-30-108:~#
+
+--- ON BROWSER --- (because mydata file have over-written the files on container mount)
+403 Forbidden
+
+nginx/1.27.0
+root@ip-172-31-30-108:~# docker exec -it app03 bash
+root@ef1d1919dbe5:/# ls /usr/share/nginx/html
+mango.txt
+
+root@ef1d1919dbe5:/# cat /usr/share/nginx/html/mango.txt
+this is mango.txt a file
+root@ef1d1919dbe5:/#
+
+root@ef1d1919dbe5:/# cd /usr/share/nginx/html/
+root@ef1d1919dbe5:/usr/share/nginx/html# mv mango.txt index.html
+root@ef1d1919dbe5:/usr/share/nginx/html# ls
+index.html
+root@ef1d1919dbe5:/usr/share/nginx/html#
+
+--- ON BROWSER --- (it will show you the content of the text file but you will lose the data if you mount host file to container file if the container file already have any data within the directory)
+this is mango.txt a file
+
+root@ip-172-31-30-108:~# docker container inspect app03
+....
+       "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/mydata",
+                "Destination": "/usr/share/nginx/html",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+....
+            "Image": "nginx:latest",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": [
+                "/docker-entrypoint.sh"
+            ],
+
+....
+
+
+
+=== ONE VOLUME CAN BE MOUNTED TO MULTIPLE CONTAINER === 
+root@ip-172-31-30-108:~# docker run -d --name app04 -p 8084:80 --mount type=bind,source="/mydata",target="/usr/share/nginx/html" nginx:latest
+d202bd493a780d45cffbd8f49775386c3e898e1038a5b2bf9eb1edcadb01f062
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker run -d --name app05 -p 8085:80 --mount type=bind,source=/mydata,target=/usr/share/nginx/html nginx:latest
+bcbe05685d737efca5ff1c70d6564bdc29bb45e88c6504eb4627bf2b08e28b4b
+root@ip-172-31-30-108:~#
+
+        "Mounts": [
+            {
+                "Type": "bind",       <-------------------------------------------<<
+                "Source": "/mydata",       <-------------------------------------------<<
+                "Destination": "/usr/share/nginx/html",       <-------------------------------------------<<
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            }
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2nd type of docker Volume
+=== DOCKER VOLUME ===
+# in DOCKER BIND MOUNT VOLUMES if you bind the source directory into destination directory if there any pre-existing data is in the directory will be replaced with the source directory.
+## in DOCKER VOLUME whatever data your source directory is having is copied or that will be stored inside docker volume 
+## 
+root@ip-172-31-30-108:~# docker volume ls
+DRIVER    VOLUME NAME
+local     4e0d66960fb904efd24a49b2148d1c8e612236735dc971bbc472a0fa124a02d0
+local     afc30ae72b205023744533821ca4bfeb99a989326bd21ea54f4c12cbe461f7f0
+
+## this docker volume exist because when we build the mysql container from image, mysql dockerfile on hub.docker.com defines it 
+https://github.com/docker-library/mysql/blob/a482468640c602ccd8a7c86a4c7422f18a307326/innovation/Dockerfile.oracle#L114-L117
+....
+ENV MYSQL_SHELL_VERSION 9.0.1-1.el9
+RUN set -eux; \
+	microdnf install -y "mysql-shell-$MYSQL_SHELL_VERSION"; \
+	microdnf clean all; \
+	\
+	mysqlsh --version
+
+VOLUME /var/lib/mysql              <------------------------------------------------------------<< this path will be mounted
+....
+
+--- CREATING DOCKER VOLUME ---
+root@ip-172-31-30-108:~# docker volume ls
+DRIVER    VOLUME NAME
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# docker volume create impdata
+impdata
+root@ip-172-31-30-108:~#
+
+## driver local means the scope of this volume is on local host machine
+## you can mount this volume to any one of the container or multiple container can be mounted to this volume 
+root@ip-172-31-30-108:~# docker volume ls
+DRIVER    VOLUME NAME
+local     impdata
+root@ip-172-31-30-108:~#
+
+## previously in bind method whatever source directory had the information that would replace the destination directoyr
+root@ip-172-31-30-108:~# docker run -d --name app08 -p 8088:80 -v impdata:/usr/share/nginx/html nginx:latest
+b9ef1411398ce5d834462b20aff4b526e23f01bf0c2078fe4ec50c9e7ed524c5
+root@ip-172-31-30-108:~#
+
+--- on browser ip:8088 ---
+Welcome to nginx!
+
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+## desitination directory have the information available
+root@ip-172-31-30-108:~# docker exec -it app08 bash
+root@b9ef1411398c:/# cd /usr/share/nginx/html/
+root@b9ef1411398c:/usr/share/nginx/html# ls
+50x.html  index.html
+root@b9ef1411398c:/usr/share/nginx/html#
+
+=== to verify the data on docker volume from container === 
+## how to verify whether with docker volume if the data is saved into the volume or not.
+
+root@ip-172-31-30-108:~# docker volume ls
+DRIVER    VOLUME NAME
+local     impdata
+root@ip-172-31-30-108:~# docker volume inspect impdata
+[
+    {
+        "CreatedAt": "2024-08-03T18:57:08Z",
+        "Driver": "local",       <-------------------------------------------<<
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/impdata/_data",       <----------------------------------------<<
+        "Name": "impdata",       <-------------------------------------------<<
+        "Options": null,
+        "Scope": "local"
+    }
+]
+root@ip-172-31-30-108:~#
+
+--- from HOST MACHINE GO TO THE PATH DEFINED ON IMPDATA DOCKER VOLUME ---
+
+root@ip-172-31-30-108:~# cd /var/lib/docker/volumes/impdata/_data
+root@ip-172-31-30-108:/var/lib/docker/volumes/impdata/_data# ls
+50x.html  index.html
+root@ip-172-31-30-108:/var/lib/docker/volumes/impdata/_data#
+
+--- IMPORTANT TIP --- 
+## even when your container gets deleted, in both cases of docker bind and docker volume method, you need to re-creat the docker container by using the same modules to get your data back
+
+=== Using full form mount flag for docker volume ===
+root@ip-172-31-30-108:~# docker run -d --name test -p 8090:80 --mount type=volume,src=impdata,dst=/usr/share/nginx/html nginx:latest
+4c16412bb0452738bdb75e7a5e677368fc5dc3fd6a278cb0297260beecdc0438
+root@ip-172-31-30-108:~# docker container inspect test
+       "Mounts": [
+            {
+                "Type": "volume",       <-------------------------------------------<<
+                "Name": "impdata",       <-------------------------------------------<<
+                "Source": "/var/lib/docker/volumes/impdata/_data",       <-------------------------------------------<<
+                "Destination": "/usr/share/nginx/html",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+
+3rd type of docker Volume
+=== TMPFS Volume  ===
+
+root@ip-172-31-30-108:~# docker run -d --name app02 -p 8091:80 --mount type=tmpfs,destination=/usr/share/nginx/html nginx:latest
+a54ae2c125d5388e987b9919180c59ef8f1b6674cc6ebdd14769257f0fbdc6e1
+
+root@ip-172-31-30-108:~# docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+a54ae2c125d5   nginx:latest   "/docker-entrypoint.…"   37 seconds ago   Up 37 seconds   0.0.0.0:8091->80/tcp, :::8091->80/tcp   app02
+
+root@ip-172-31-30-108:~# docker container inspect app02
+root@ip-172-31-30-108:~#
+
+       "Mounts": [
+            {
+                "Type": "tmpfs",       <-------------------------------------------<<
+                "Source": "",       <-------------------------------------------<<
+                "Destination": "/usr/share/nginx/html",       <-------------------------------------------<<
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            }
+
+
+=== DOCKERFILE FOR MYSQL DEFINES THE VOLUME POINT ===
+https://hub.docker.com/_/mysql
+https://github.com/docker-library/mysql/blob/a482468640c602ccd8a7c86a4c7422f18a307326/innovation/Dockerfile.oracle#L114-L117
+ENV MYSQL_SHELL_VERSION 9.0.1-1.el9
+RUN set -eux; \
+	microdnf install -y "mysql-shell-$MYSQL_SHELL_VERSION"; \
+	microdnf clean all; \
+	\
+	mysqlsh --version
+
+VOLUME /var/lib/mysql       <-------------------------------------------<<
+
+root@ip-172-31-30-108:~# docker run -d --name mydata -e MYSQL_ROOT_PASSWORD=test123 -e MYSQL_DATABASE=mywp  mysql:latest
+cb1f0965c13070301a72fa2197427118cf7e0a38a723fc9e78efaba65197d2bd
+root@ip-172-31-30-108:~#
+
+       "Mounts": [
+            {
+                "Type": "volume",       <-------------------------------------------<<
+                "Name": "4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12",       <-------------------------------------------<<
+                "Source": "/var/lib/docker/volumes/4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12/_data",       <-------------------------------------------<<
+                "Destination": "/var/lib/mysql",       <-------------------------------------------<<
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+
+root@ip-172-31-30-108:~# docker volume ls
+DRIVER    VOLUME NAME
+local     4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12       <-------------------------------------------<<
+local     impdata
+
+root@ip-172-31-30-108:~# docker volume inspect 4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12
+[
+    {
+        "CreatedAt": "2024-08-03T20:43:49Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.volume.anonymous": ""
+        },
+        "Mountpoint": "/var/lib/docker/volumes/4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12/_data",       <-------------------------------------------<<
+        "Name": "4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+root@ip-172-31-30-108:~#
+
+root@ip-172-31-30-108:~# cd /var/lib/docker/volumes/4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12/_data
+root@ip-172-31-30-108:/var/lib/docker/volumes/4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12/_data# ls
+'#ib_16384_0.dblwr'  '#innodb_temp'   binlog.000002   ca.pem            ib_buffer_pool   mysql        mysql_upgrade_history   private_key.pem   server-key.pem   undo_002
+'#ib_16384_1.dblwr'   auto.cnf        binlog.index    client-cert.pem   ibdata1          mysql.ibd    mywp                    public_key.pem    sys
+'#innodb_redo'        binlog.000001   ca-key.pem      client-key.pem    ibtmp1           mysql.sock   performance_schema      server-cert.pem   undo_001
+root@ip-172-31-30-108:/var/lib/docker/volumes/4654786d2fd97ad4ce105798197052ebf44f5df8d57f0a755f0ca0c6e8056e12/_data#
+
+
+
+
+
+
