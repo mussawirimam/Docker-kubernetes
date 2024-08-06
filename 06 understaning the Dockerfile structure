@@ -3,14 +3,14 @@
 
   ## EXAMPLE dockerfile keywords
 FROM <image>:<tag> Tells Docker what will be the base for the image being create  ## can you run msoffice without a operating system? No you will need OS to run an application
-ADD  Copies the files from the source on the host into the Docker image's own filesystem at the desired destination. Command is not only about copying files from the local filesystem-you can use it to get the file from the network.
+ADD  Copies the files from the source on the host into the Docker image's own filesystem at the desired destination. Command is not only about copying files from the local filesystem-you can use it to get the file from the network. ( also extracts tar files )
 COPY  It will copy new files or directories from < source path> and adds them to the filesystem of the container at the path <destination path>
 CMD/ENTRYPOINT  CMD ["executable", "parameter1", "parameter2"] his is the so-called exec form 
                 CMD command parameter1 parameter2 This a shell form of the instruction
-RUN  Instruction will execute any commands in a new layer on top of the current image and then commit the results
-EXPOSE  Instruction informs Docker that the container listens on the specified network ports at runtime.
+RUN  Instruction will execute any commands in a new layer on top of the current image and then commit the results ( try to combine commands)
+EXPOSE  Instruction informs Docker that the container listens on the specified network ports at runtime. ck
 WORKDIR  Default login location
-ENV  Environment variable
+ENV  Environment variable (to Setup environment variables)
 
 
 === WORKDIR EXAMPLE === 
@@ -96,7 +96,7 @@ root@ip-172-31-30-108:~/myapp/app#
 
 
 
-=== EXAMPLE DOCKERFILE AND HOW TO BUILD A IMAGE OUT OF IT === 
+=== CREATING DOCKERFILE AND HOW TO BUILD A IMAGE OUT OF IT === 
 root@ip-172-31-30-108:~/myapp/app# vi Dockerfile
 
 "Dockerfile" 14L, 806B                                                                                                                                                                          10,2          All
@@ -141,7 +141,7 @@ root@ip-172-31-30-108:~/myapp/app#
 
 root@ip-172-31-30-108:~/myapp/app# docker images
 REPOSITORY                   TAG       IMAGE ID       CREATED              SIZE
-testapp                      v1        4064c6cb261e   About a minute ago   240MB
+testapp                      v1        4064c6cb261e   About a minute ago   240MB	<-----------------------<<
 myapp                        v1        81411260b5b8   7 days ago           294MB
 mussawirimam/myapp01         v1        81411260b5b8   7 days ago           294MB
 ghcr.io/mussawirimam/myapp   v1        81411260b5b8   7 days ago           294MB
@@ -151,4 +151,146 @@ httpd                        latest    19c71fbb7140   2 weeks ago          148MB
 nginx                        latest    a72860cb95fd   6 weeks ago          188MB
 ubuntu                       latest    35a88802559d   8 weeks ago          78.1MB
 root@ip-172-31-30-108:~/myapp/app#
+
+=== CREATING CONTAINER OUT OF DOCKERFILE IMAGE ===
+
+root@ip-172-31-30-108:~/myapp/app# docker run -d --name app02 -p 9090:80 testapp:v1
+3e3a89d3bc43b2bbed85e45fea5c189a07bb1659a9182ba86b30c4597b59dc47
+root@ip-172-31-30-108:~/myapp/app# docker ps
+CONTAINER ID   IMAGE        COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+3e3a89d3bc43   testapp:v1   "/usr/sbin/apache2ct…"   3 seconds ago   Up 2 seconds   0.0.0.0:9090->80/tcp, :::9090->80/tcp   app02
+root@ip-172-31-30-108:~/myapp/app#
+
+## goes to the defined directory in the docker file. 
+root@ip-172-31-30-108:~/myapp/app# docker exec -it app02 bash
+root@3e3a89d3bc43:/var/www/html# pwd
+/var/www/html
+root@3e3a89d3bc43:/var/www/html# ls
+index.html
+root@3e3a89d3bc43:/var/www/html#
+
+
+https://www.free-css.com/free-css-templates
+root@ip-172-31-30-108:~/myapp/app# wget https://www.free-css.com/assets/files/free-css-templates/download/page296/finexo.zip
+--2024-08-06 16:05:34--  https://www.free-css.com/assets/files/free-css-templates/download/page296/finexo.zip
+
+root@ip-172-31-30-108:~/myapp/app# unzip finexo.zip
+Archive:  finexo.zip
+   creating: finexo-html/
+
+root@ip-172-31-30-108:~/myapp/app# cd finexo-html/
+root@ip-172-31-30-108:~/myapp/app/finexo-html# ls
+
+about.html  css  fonts  images  index.html  js  service.html  team.html  why.html
+root@ip-172-31-30-108:~/myapp/app/finexo-html#
+
+root@ip-172-31-30-108:~/myapp/app/finexo-html# tar -czvf app.tar .
+./
+./fonts/
+./fonts/fontawesome-webfont.woff2
+
+root@ip-172-31-30-108:~/myapp/app/finexo-html# tar -tvf app.tar
+drwxr-xr-x root/root         0 2024-08-06 16:07 ./
+drwxr-xr-x root/root         0 2020-09-16 13:26 ./fonts/
+-rw-r--r-- root/root     77160 2019-08-22 23:05 ./fonts/fontaw
+
+root@ip-172-31-30-108:~/myapp/app/finexo-html# mv app.tar app.tar ..
+mv: cannot stat 'app.tar': No such file or directory
+root@ip-172-31-30-108:~/myapp/app/finexo-html# cd ..
+root@ip-172-31-30-108:~/myapp/app# ls
+Dockerfile  app.tar  finexo-html  finexo.zip
+root@ip-172-31-30-108:~/myapp/app# rm -rf finexo-html/ finexo.zip
+root@ip-172-31-30-108:~/myapp/app# ls
+Dockerfile  app.tar
+root@ip-172-31-30-108:~/myapp/app#
+
+=== DOCKERFILE ===
+root@ip-172-31-30-108:~/myapp/app# vi Dockerfile
+root@ip-172-31-30-108:~/myapp/app# cat Dockerfile
+## it is not a good practice to use <image>:latest (latest tag) as your image, because
+## if the image version were to change in future, you will have improper application or platform.
+FROM ubuntu:22.04
+RUN apt update && apt install apache2 -y
+WORKDIR /var/www/html
+EXPOSE 80
+ADD app.tar /var/www/html
+## to start main process of the container to make it alive or that will be making up and running my container.
+## this is not a good proactice (CMD [service apache2 start])
+## whenever writing service apache2 start is actaully is executing /usr/sbin/apache2ctl binary location to execute the command.
+##/usr/sbin/apache2ctl is only a binary to run it, we need to define -D and how you want to start it in foreground or background
+## dont have the white spaces or else you will get errors
+CMD ["/usr/sbin/apache2ctl","-D","FOREGROUND"]
+
+=== BUILDING IMAGE FROM DOCKERFILE INSTRUCTIONS ===
+root@ip-172-31-30-108:~/myapp/app#
+(failed reverse-i-search)`': docker run --name app02 u^Cntu:lateset
+root@ip-172-31-30-108:~/myapp/app# docker build -t testapp:v2 .
+[+] Building 1.0s (10/10) FINISHED                                                                                                                                                                 docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                         0.1s
+ => => transferring dockerfile: 884B                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/ubuntu:22.04                                                                                                                                              0.5s
+ => [auth] library/ubuntu:pull token for registry-1.docker.io                                                                                                                                                0.0s
+ => [internal] load .dockerignore                                                                                                                                                                            0.0s
+ => => transferring context: 2B                                                                                                                                                                              0.0s
+ => [1/4] FROM docker.io/library/ubuntu:22.04@sha256:340d9b015b194dc6e2a13938944e0d016e57b9679963fdeb9ce021daac430221                                                                                        0.0s
+ => [internal] load build context                                                                                                                                                                            0.1s
+ => => transferring context: 2.09MB                                                                                                                                                                          0.0s
+ => CACHED [2/4] RUN apt update && apt install apache2 -y                                                                                                                                                    0.0s
+ => CACHED [3/4] WORKDIR /var/www/html                                                                                                                                                                       0.0s
+ => [4/4] ADD app.tar /var/www/html                                                                                                                                                                          0.1s
+ => exporting to image                                                                                                                                                                                       0.1s
+ => => exporting layers                                                                                                                                                                                      0.1s
+ => => writing image sha256:45734c7608206883d58a85f550383e27512b84647dbc8c9c08a89111f356fad8                                                                                                                 0.0s
+ => => naming to docker.io/library/testapp:v2                                                                                                                                                                0.0s
+root@ip-172-31-30-108:~/myapp/app#
+
+root@ip-172-31-30-108:~/myapp/app# docker images
+REPOSITORY                   TAG       IMAGE ID       CREATED          SIZE
+testapp                      v2        45734c760820   24 seconds ago   243MB
+testapp                      v1        4064c6cb261e   40 hours ago     240MB
+mussawirimam/myapp01         v1        81411260b5b8   8 days ago       294MB
+ghcr.io/mussawirimam/myapp   v1        81411260b5b8   8 days ago       294MB
+myapp                        v1        81411260b5b8   8 days ago       294MB
+wordpress                    latest    90d160fe6b42   13 days ago      686MB
+mysql                        latest    7ce93a845a8a   2 weeks ago      586MB
+httpd                        latest    19c71fbb7140   2 weeks ago      148MB
+nginx                        latest    a72860cb95fd   6 weeks ago      188MB
+ubuntu                       latest    35a88802559d   2 months ago     78.1MB
+root@ip-172-31-30-108:~/myapp/app#
+
+root@ip-172-31-30-108:~/myapp/app# docker run -d --name app03 -p 9091:80 testapp:v2
+329d2b920913090cac5008377631fc0b12fa8500e11124d9f2f9341c9455cf28
+root@ip-172-31-30-108:~/myapp/app# docker ps
+CONTAINER ID   IMAGE        COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+329d2b920913   testapp:v2   "/usr/sbin/apache2ct…"   4 seconds ago    Up 3 seconds    0.0.0.0:9091->80/tcp, :::9091->80/tcp   app03
+3e3a89d3bc43   testapp:v1   "/usr/sbin/apache2ct…"   39 minutes ago   Up 39 minutes   0.0.0.0:9090->80/tcp, :::9090->80/tcp   app02
+root@ip-172-31-30-108:~/myapp/app#
+
+--- ON BROSWER ---
+http://<IP>:9091
+Finexo
+
+--- where you will end up should be defined in the docker file of the images ---
+root@ip-172-31-30-108:~/myapp/app# docker run -d --name test01 -p 8080:80 nginx:latest
+13649db55dfcc4e7653c4fec2d2b2bac0ff9bdf072b8c3b0976326a07e1df56b
+root@ip-172-31-30-108:~/myapp/app# docker exec -it test bash
+Error response from daemon: No such container: test
+root@ip-172-31-30-108:~/myapp/app# docker exec -it test bash01
+Error response from daemon: No such container: test
+root@ip-172-31-30-108:~/myapp/app# docker exec -it test01 bash
+root@13649db55dfc:/# whoami
+root
+root@13649db55dfc:/# pwd
+/
+root@13649db55dfc:/# exit
+exit
+root@ip-172-31-30-108:~/myapp/app# docker run -d --name test02 -p 8081:80 httpd:latest
+c31f0ae102486851828b2a02de0e089c4805bb2bf2813211083b65c908ee7d52
+root@ip-172-31-30-108:~/myapp/app# docker exec -it test02 bash
+root@c31f0ae10248:/usr/local/apache2# whoami
+root
+root@c31f0ae10248:/usr/local/apache2# pwd
+/usr/local/apache2
+root@c31f0ae10248:/usr/local/apache2#
+
 
