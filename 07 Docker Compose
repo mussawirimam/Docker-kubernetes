@@ -1,0 +1,135 @@
+=== Docker compose INSTALLATION on linux === 
+https://docs.docker.com/compose/install/linux/
+
+root@ip-172-31-30-108:~# apt-get install docker-compose-plugin
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+
+## docker compose is used to test the application, application required to start multiple containers. 
+## same like Dockerfile you have to create a directory
+
+vi docker-compose.yaml
+
+## docker compose creates a network between two containers 
+root@ip-172-31-30-108:~/newapp# cat docker-compose.yaml
+version: '3'
+services:
+  wordpress:
+     images: wordpress:latest
+     ports:
+       - 9091:80
+  mydb:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: test123
+      MYSQL_DATABASE: wordpress
+
+## docker compose up needs to be executed within the directory of your docker-compose.yaml file is placed
+## it will not work if you try to run the docker compose up from anywhere else. 
+
+root@ip-172-31-30-108:~/newapp# docker compose up
+WARN[0000] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Running 3/3
+ ✔ Network newapp_default        Created                                                                                                                                        0.1s
+ ✔ Container newapp-wordpress-1  Created                                                                                                                                        0.2s
+ ✔ Container newapp-mydb-1       Created                                                                                                                                        0.1s
+Attaching to mydb-1, wordpress-1
+wordpress-1  | WordPress not found in /var/www/html - copying now...
+mydb-1       | 2024-08-10 00:35:32+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 9.0.1-1.el9 started.
+mydb-1       | 2024-08-10 00:35:33+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
+mydb-1       | 2024-08-10 00:35:33+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 9.0.1-1.el9 started.
+mydb-1       | 2024-08-10 00:35:33+00:00 [Note] [Entrypoint]: Initializing database files
+mydb-1       | 2024-08-10T00:35:33.812068Z 0 [System] [MY-015017] [Server] MySQL Server Initialization - start.
+mydb-1       | 2024-08-10T00:35:33.815678Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 9.0.1) initializing of server in progress as process 79
+mydb-1       | 2024-08-10T00:35:33.854261Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+mydb-1       | 2024-08-10T00:35:34.847395Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+mydb-1       | 2024-08-10T00:35:37.677320Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+wordpress-1  | Complete! WordPress has been successfully copied to /var/www/html
+wordpress-1  | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.2. Set the 'ServerName' directive globally to suppress this message
+wordpress-1  | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.2. Set the 'ServerName' directive globally to suppress this message
+wordpress-1  | [Sat Aug 10 00:35:39.839631 2024] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.61 (Debian) PHP/8.2.21 configured -- resuming normal operations
+wordpress-1  | [Sat Aug 10 00:35:39.840414 2024] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+mydb-1       | 2024-08-10T00:35:40.938315Z 0 [System] [MY-015018] [Server] MySQL Server Initialization - end.
+mydb-1       | 2024-08-10 00:35:40+00:00 [Note] [Entrypoint]: Database files initialized
+mydb-1       | 2024-08-10 00:35:40+00:00 [Note] [Entrypoint]: Starting temporary server
+mydb-1       | 2024-08-10T00:35:41.073535Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+mydb-1       | 2024-08-10T00:35:41.409600Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 9.0.1) starting as process 116
+mydb-1       | 2024-08-10T00:35:41.443050Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+mydb-1       | 2024-08-10T00:35:42.383995Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+mydb-1       | 2024-08-10T00:35:42.965806Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+mydb-1       | 2024-08-10T00:35:42.966311Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+mydb-1       | 2024-08-10T00:35:42.975102Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+mydb-1       | 2024-08-10T00:35:43.039930Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '9.0.1'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  MySQL Community Server - GPL.
+mydb-1       | 2024-08-10T00:35:43.040532Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: /var/run/mysqld/mysqlx.sock
+mydb-1       | 2024-08-10 00:35:43+00:00 [Note] [Entrypoint]: Temporary server started.
+mydb-1       | '/var/lib/mysql/mysql.sock' -> '/var/run/mysqld/mysqld.sock'
+mydb-1       | Warning: Unable to load '/usr/share/zoneinfo/iso3166.tab' as time zone. Skipping it.
+mydb-1       | Warning: Unable to load '/usr/share/zoneinfo/leap-seconds.list' as time zone. Skipping it.
+mydb-1       | Warning: Unable to load '/usr/share/zoneinfo/leapseconds' as time zone. Skipping it.
+mydb-1       | Warning: Unable to load '/usr/share/zoneinfo/tzdata.zi' as time zone. Skipping it.
+mydb-1       | Warning: Unable to load '/usr/share/zoneinfo/zone.tab' as time zone. Skipping it.
+mydb-1       | Warning: Unable to load '/usr/share/zoneinfo/zone1970.tab' as time zone. Skipping it.
+mydb-1       | 2024-08-10 00:35:46+00:00 [Note] [Entrypoint]: Creating database wordpress
+mydb-1       |
+mydb-1       | 2024-08-10 00:35:46+00:00 [Note] [Entrypoint]: Stopping temporary server
+mydb-1       | 2024-08-10T00:35:46.260460Z 11 [System] [MY-013172] [Server] Received SHUTDOWN from user root. Shutting down mysqld (Version: 9.0.1).
+mydb-1       | 2024-08-10T00:35:47.226719Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 9.0.1)  MySQL Community Server - GPL.
+mydb-1       | 2024-08-10T00:35:47.228098Z 0 [System] [MY-015016] [Server] MySQL Server - end.
+mydb-1       | 2024-08-10 00:35:47+00:00 [Note] [Entrypoint]: Temporary server stopped
+mydb-1       |
+mydb-1       | 2024-08-10 00:35:47+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+mydb-1       |
+mydb-1       | 2024-08-10T00:35:47.293857Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+mydb-1       | 2024-08-10T00:35:47.610799Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 9.0.1) starting as process 1
+mydb-1       | 2024-08-10T00:35:47.623318Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+mydb-1       | 2024-08-10T00:35:48.559108Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+mydb-1       | 2024-08-10T00:35:48.961679Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+mydb-1       | 2024-08-10T00:35:48.961724Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+mydb-1       | 2024-08-10T00:35:48.969314Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+mydb-1       | 2024-08-10T00:35:49.043335Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '9.0.1'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
+mydb-1       | 2024-08-10T00:35:49.043891Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+^CGracefully stopping... (press Ctrl+C again to force)
+[+] Stopping 2/2
+ ✔ Container newapp-mydb-1       Stopped                                                                                                                                        2.4s
+ ✔ Container newapp-wordpress-1  Stopped                                                                                                                                        2.5s
+
+
+## even after stopping the docker compose process with CTRL + C above you will still have the network remaining. 
+## this is because you canceled the foreground execution by forecefully by pressing CTRL + C
+root@ip-172-31-30-108:~/newapp# docker network ls
+NETWORK ID     NAME             DRIVER    SCOPE
+4fd504c53e57   bridge           bridge    local
+e31e46537abf   host             host      local
+ebdf2da09b9d   newapp_default   bridge    local  <-------------------------<<
+a0453ab09788   none             null      local
+
+=== the way to start compose is with -d it will not create a network because it looks for the previously network that it made already ===
+root@ip-172-31-30-108:~/newapp# docker compose up -d
+WARN[0000] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Running 2/2
+ ✔ Container newapp-mydb-1       Started                                                                                                                                        1.6s
+ ✔ Container newapp-wordpress-1  Started                                                                                                                                        1.6s
+
+
+=== to stop ===
+root@ip-172-31-30-108:~/newapp# docker compose stop
+WARN[0001] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Stopping 2/2
+ ✔ Container newapp-wordpress-1  Stopped                                                                                                                                        2.3s
+ ✔ Container newapp-mydb-1       Stopped                                                                                                                                        2.9s
+
+root@ip-172-31-30-108:~/newapp# docker compose stop
+WARN[0001] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Stopping 2/2
+ ✔ Container newapp-wordpress-1  Stopped                                                                                                                                        2.3s
+ ✔ Container newapp-mydb-1       Stopped                                                                                                                                        2.9s                                                                                                                               2.9s                                                                                                                    2.9s
+
+
+
+
+
+
+
+
+canceled
