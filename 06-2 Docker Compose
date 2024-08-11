@@ -111,6 +111,28 @@ WARN[0000] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete
  ✔ Container newapp-mydb-1       Started                                                                                                                                        1.6s
  ✔ Container newapp-wordpress-1  Started                                                                                                                                        1.6s
 
+root@ip-172-31-30-108:~# docker ps -a
+CONTAINER ID   IMAGE              COMMAND                  CREATED        STATUS        PORTS                                   NAMES
+7f85214c663d   mysql:latest       "docker-entrypoint.s…"   41 hours ago   Up 41 hours   3306/tcp, 33060/tcp                     newapp-mydb-1
+b3c5acafda55   wordpress:latest   "docker-entrypoint.s…"   41 hours ago   Up 41 hours   0.0.0.0:9091->80/tcp, :::9091->80/tcp   newapp-wordpress-1
+
+## use this file to setup the wordpress/database
+root@ip-172-31-30-108:~/newapp# cat docker-compose.yaml
+version: '3'
+services:
+  wordpress:
+     image: wordpress:latest
+     ports:
+       - 9091:80
+  mydb:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: test123
+      MYSQL_DATABASE: wordpress
+
+--- ON BROWSER --- 
+<ip>:9091
+##configure the wordpress
 
 === to stop ===
 root@ip-172-31-30-108:~/newapp# docker compose stop
@@ -119,15 +141,39 @@ WARN[0001] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete
  ✔ Container newapp-wordpress-1  Stopped                                                                                                                                        2.3s
  ✔ Container newapp-mydb-1       Stopped                                                                                                                                        2.9s
 
-root@ip-172-31-30-108:~/newapp# docker compose stop
-WARN[0001] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
-[+] Stopping 2/2
- ✔ Container newapp-wordpress-1  Stopped                                                                                                                                        2.3s
- ✔ Container newapp-mydb-1       Stopped                                                                                                                                        2.9s                                                                                                                               2.9s                                                                                                                    2.9s
+root@ip-172-31-30-108:~/newapp# docker ps -a
+CONTAINER ID   IMAGE              COMMAND                  CREATED        STATUS                     PORTS     NAMES
+7f85214c663d   mysql:latest       "docker-entrypoint.s…"   41 hours ago   Exited (0) 8 seconds ago             newapp-mydb-1
+b3c5acafda55   wordpress:latest   "docker-entrypoint.s…"   41 hours ago   Exited (0) 8 seconds ago             newapp-wordpress-1
 
+root@ip-172-31-30-108:~/newapp# docker compose start
+WARN[0000] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Running 2/2
+ ✔ Container newapp-mydb-1       Started                                                                                                                                        1.5s
+ ✔ Container newapp-wordpress-1  Started                                                                                                                                        1.5s                                                                                                                          2.9s                                                                                                                    2.9s
 
+docker ps -a
+CONTAINER ID   IMAGE              COMMAND                  CREATED        STATUS          PORTS                                   NAMES
+7f85214c663d   mysql:latest       "docker-entrypoint.s…"   41 hours ago   Up 24 seconds   3306/tcp, 33060/tcp                     newapp-mydb-1
+b3c5acafda55   wordpress:latest   "docker-entrypoint.s…"   41 hours ago   Up 24 seconds   0.0.0.0:9091->80/tcp, :::9091->80/tcp   newapp-wordpress-1
 
+docker compose down
+WARN[0000] /root/newapp/docker-compose.yaml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Running 3/3
+ ✔ Container newapp-wordpress-1  Removed                                                                                                                                        2.1s
+ ✔ Container newapp-mydb-1       Removed                                                                                                                                        2.0s
+ ✔ Network newapp_default        Removed                                                                                                                                        0.2s
 
+docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+=== docker compose down removes the network as well === 
+## even the network gets removed 
+docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+4fd504c53e57   bridge    bridge    local
+e31e46537abf   host      host      local
+a0453ab09788   none      null      local
 
 
 
