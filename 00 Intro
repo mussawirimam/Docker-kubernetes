@@ -1,3 +1,5 @@
+## you can use the docker installation script
+https://docs.docker.com/engine/install/ubuntu/ 
 dockerhub.com
 Docker architecture is read-only from dockerhub, you will have to pull it to your local machine in order to make any changes to the image and build a container out of it using the dockerfile. 
 root# docker
