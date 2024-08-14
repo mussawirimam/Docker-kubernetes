@@ -1,0 +1,32 @@
+## if one container is crashed and replica container needs to be spun up by itself, docker itself cant do it alone. You will need a mechanism such as Docker Swarm or Kubernetes. To make your container highly available. 
+## you have to define if the load is increasing on your server (container) how many maximum or minumum containers should spin up based on your CPU utilization (Horizontal Pod Autoscaling (HPA)) in your cluster. 
+
+Manager/Lead Node 
+We can have multiple manager nodes 
+If we have multiple manager nodes, we will have a leader of them who will be taking the decisions.
+max 7 manager but no limit but one has to be leader node
+
+Worker Nodes
+We can have multiple worker nodes
+Job of a worker node is to get deployed your containers in it, your worker nodes. 
+In docker swarm allows the containers to be deployed on the managers or leaders as well. 
+
+
+Assume that your manager is getting down. Always create even number of nodes that can be in groups of 4,6,8
+
+If you have 3 containers with 2 managers and 1 leader, and both managers are down, the leader will not be able to make a decision if you request the creation of a deployment with 3 replicas (of containers), because the managers are responsible 
+for managing the worker nodes and it will not know in which one to place the worker nodes. If you have 4 worker nodes for example. If you want it to be working, you will need to reset the manager 
+
+#########################################
+# docker swarm init --force-new-cluster #
+#########################################
+
+In this case where multiple manager node are down one eader will not be able to take decision in this situation we need
+To create new cluster
+#docker swarm init --force-new-cluster
+Here your node will be having already information of worker node, your swarm services will continue to run.
+Promote existing worker to manager node #docker node promote {node-name}
+All worker node will be having your deployment in it. U can disable deployment in manager node #docker node update - -availability drain {node-name}
+
+If multiple node is down
+Suggestion: always create even number of nodes that can be divided in groups 4,6,8
