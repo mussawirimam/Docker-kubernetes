@@ -11,11 +11,15 @@ We can have multiple worker nodes
 Job of a worker node is to get deployed your containers in it, your worker nodes. 
 In docker swarm allows the containers to be deployed on the managers or leaders as well. 
 
-
+If multiple node is down
+Suggestion: always create even number of nodes that can be divided in groups 4,6,8
 Assume that your manager is getting down. Always create even number of nodes that can be in groups of 4,6,8
 
 If you have 3 containers with 2 managers and 1 leader, and both managers are down, the leader will not be able to make a decision if you request the creation of a deployment with 3 replicas (of containers), because the managers are responsible 
 for managing the worker nodes and it will not know in which one to place the worker nodes. If you have 4 worker nodes for example. If you want it to be working, you will need to reset the manager 
+
+## if your managers are down, you can create your leader a manager as well
+## your worker nodes can be promoted as the managers 
 
 #########################################
 # docker swarm init --force-new-cluster #
@@ -28,5 +32,83 @@ Here your node will be having already information of worker node, your swarm ser
 Promote existing worker to manager node #docker node promote {node-name}
 All worker node will be having your deployment in it. U can disable deployment in manager node #docker node update - -availability drain {node-name}
 
-If multiple node is down
-Suggestion: always create even number of nodes that can be divided in groups 4,6,8
+Mastering the Raft Consensus Algorithm: A Comprehensive Tutorial in Distributed Systems
+https://www.youtube.com/watch?app=desktop&v=ZyqAbQkpeUo
+https://www.youtube.com/watch?v=IujMVjKvWP4
+## RAFT ALGORITHM are used to distribute the workload
+
+Distributed consensus using raft algorithm
+what is Raft consensus?
+Consensus is a fundamental problem in fault-tolerant distributed systems. Consensus involves multiple servers agreeing on values. Once they reach a decision on a value, that decision is final.
+Typical consensus algorithms make progress when any majority of their servers is available; for example, a cluster of 5 servers can continue to operate even if 2 servers fail. If more servers fail, they stop making progress
+Every decision has to agreed upon by majority of manager
+
+
+docker service create - -replicas=3 httpd:latest
+⬇️
+Orchestrator   💻 manager/leader Node
+⬇️                Task will be updating manager node, so that manager can track status of containers, if container fails task also fail and it will inform manager.
+Scheduler
+⬇️
+----------------------------
+💻``````💻``````💻``````💻
+⬇️      ⬇️      ⬇️      ⬇️
+task    task     task    task
+
+the reason for that is to spreading the replicas on multiple nodes, so there is no single point of failure (in this case single node) 
+e.g if the worker node is failed, then scheduler will create another container on different node that is available. 
+if all nodes are failed, in this case manager node have space, it will create a container on that node. 
+
+DOCKER SWARM NETWORK OVERLAY
+============================
+#docker network create - -driver overlayimynet
+#docker service create - -name mydep - -network mvol - -replicas=3 -p 8080:80 httpd:latest
+
+----------------------------
+    OVERLAY NETWORK
+----------------------------
+⬇️      ⬇️      ⬇️      ⬇️
+💻``````💻``````💻``````💻
+
+overlay will not displayed generally listing all the network docker network ls, untill unless the swarm mode is enabled only then the driver will work. You have to do swarm initialiazation.
+What overlay does:
+it will be creating the layer of the network, where all the the nodes are connected to single adapter, which is overlay network where all nodes will be able to connect with the containers in those nodes.
+do not confuse kubernetes with this
+
+the default name for network is Ingress which will be using overlay driver on docker swarm.
+
+----------------------------
+          INGRESS (OVERLAY)
+----------------------------
+            ⬇️
+      |HOSTPORT 8080|
+      |             |            two container in same node with same port is not possible 
+      ↓             ↓
+PORT 80              PORT 80
+
+
+
+#docker network create --driver overlay myol
+#docker service create --name mydep --network mvol --replicas=3 -p 8080:80 httpd:latest
+----------------------------
+          INGRESS (OVERLAY)
+----------------------------
+              ↓
+╭ ── ── ── ── ── ── ── ── ── ── ╮
+┊       Host-port:8080          ┊  Swarm Ingress controller will have inbuilt load balancer it will be forwarding traffic to mapped containers ports
+┊   Swarm ingress/overlay       ┊
+┊     |              |          ┊
+┊ PORT 80          PORT80       ┊
+╰ ── ── ── ── ── ── ── ── ── ── ╯
+
+#docker service create - -name mydep - -replicas=3 -p 8080:80 httpd:latest
+
+port 8080 on host can be mapped to multiple port 80 on containers but the condition is that all the containers should belong to particular deployment.
+for example my deployment name is mydep. 
+
+Once you create a deployment with port 8080, you will not be able to use port 8080 for another deployment. 
+
+ 
+
+
+
