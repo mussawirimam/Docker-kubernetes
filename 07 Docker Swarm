@@ -120,7 +120,53 @@ Once you create a deployment with port 8080, you will not be able to use port 80
 ┊  --------------------------------------------------------------------------------------------------  ┊
                                     Swarm ingress/overlay                                              ┊ 
 ┊  ------------/----------------/\----------------/-----------------/--------------------------------- ┊
-┊   PORT 80   /                /  \      PORT80  /                 /        PORT 80                    ┊ 
+┊   PORT 80   /                /  \      PORT80  /                 /                                   ┊ 
 ╰ ── ── ── ── ── ── ── ── ── ── ╯  ╰ ── ── ── ── ── ── ── ── ── ── ╯   ╰ ── ── ── ── ── ── ── ── ── ── ╯
 
 
+==============ARCHITECTURE OF PRACTICAL LAB:==============
+3 nodes Cluseter on ec2:
+             === Manager ===
+            |               |
+        worker 1      worker 2 
+
+LAB ON AWS:
+step1: delete the garbage security groups (if you have any)
+step2: click on the create security groups
+step3: name your security group (name it docker-swarm)
+step4: name description (docker-swarm)
+step5: dont change the vpc, leave it as default vpc
+    On your fresly Security group there will be no inbound configuration and outbound would be allowed for all trafic. 
+step6: click on Create security group
+step7: Edit Inboud Rule
+Step8: add Rule
+step9: enable all traffic. 
+step10: select the docker swarm from security group drop down menu 
+
+## the reason we did the above steps is to keep the 3 node cluster in one security group (docker-swarm security group)
+## the reason for this is so that the servers within the security group (docker-swarm security group) are able to communicate with each other. 
+## you wont have to enable any additional rule with this architecture above 👆
+
+Step11: click on ec2 service
+step12: click on launch instance
+        a. name it node 
+        b. select Ubuntu 
+        c. select t2 mediume <---------------<< important <<<<<<<<
+        d. choose the keypair
+        e. click on select existing security existing security group
+        f. click on drop down and select docker-swarm 
+step13: ENTER 3 NUMBER OF INSTANCES 
+        g. click on Advance details
+        h. find user data - optional box write a shell script below 👇
+╭ ── ── ── ── ── ── ── ── ── ──  ── ── ── ── ── ── ── ── ── ──  ── ── ── ── ── ── ── ── ── ── ╮         
+#!/bin/bash
+sudo curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh 
+╰ ── ── ── ── ── ── ── ── ── ──  ── ── ── ── ── ── ── ── ── ──  ── ── ── ── ── ── ── ── ── ── ╯
+## sudo needs to be copied without sudo above ⬆ you will not be able to install docker on 3 instances
+## ubuntu user cannot install anything by itself, that is why you need sudo.
+step14: Launch the instance
+
+## you should have three instances
+## PRO-TIP: these are paid ec2 instances you will have to pay for it. You can write a CronJob or Lambda for safe side but 
+## SHUTDOWN EVERYTIME YOU USE IT
