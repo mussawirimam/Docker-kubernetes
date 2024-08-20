@@ -1,3 +1,6 @@
+LEGEND 
+🖥️ Server
+💻 containers/replicas
 ## if one container is crashed and replica container needs to be spun up by itself, docker itself cant do it alone. You will need a mechanism such as Docker Swarm or Kubernetes. To make your container highly available. 
 ## you have to define if the load is increasing on your server (container) how many maximum or minumum containers should spin up based on your CPU utilization (Horizontal Pod Autoscaling (HPA)) in your cluster. 
 
@@ -231,36 +234,320 @@ node2
 root@ip-172-31-17-168:~# reboot"
 
 
+=============INITIALIZING DOCKER SWARM=============
+ root@manager:~# docker info
+Client: Docker Engine - Community
+ Version:    27.1.2
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.16.2
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v2.29.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+...
+ Swarm: inactive    <---------------<<
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ ...
+
+###ACTIVATING DOCKER SWARM###
+root@manager:~# docker swarm init
+Swarm initialized: current node (j0jcwtg4xqq9wotyz37q7nc3m) is now a manager.       <---------------<< this node is a manager now
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-0sorxhqqi5487iqlw7v89yldz37uh50hdmoni845otx49yczk5-cgtwqs66wdomb50wxj5p0y8jj 172.31.30.94:2377       <---------------<< to join worker node (to be part of cluster)
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.      <---------------<< to join as manager
+
+docker swarm join --token SWMTKN-1-0sorxhqqi5487iqlw7v89yldz37uh50hdmoni845otx49yczk5-cgtwqs66wdomb50wxj5p0y8jj 172.31.30.94:2377
+
+
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2               
+
+===JOINING THE DOCKER WORKER NODE===
+root@node1:~# docker swarm join --token SWMTKN-1-0sorxhqqi5487iqlw7v89yldz37uh50hdmoni845otx49yczk5-cgtwqs66wdomb50wxj5p0y8jj 172.31.30.94:2377
+This node joined a swarm as a worker.
+
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
 
 
 
+ubuntu@node2:~$ sudo su -
+root@node2:~# docker swarm join --token SWMTKN-1-0sorxhqqi5487iqlw7v89yldz37uh50hdmoni845otx49yczk5-cgtwqs66wdomb50wxj5p0y8jj 172.31.30.94:2377
+This node joined a swarm as a worker.
+
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2           <--------------<< * means leader here under ID
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
+yibgo99hdxkhkjk4bm6txef1f     node2      Ready     Active                          27.1.2
 
 
+=== TO DEMOTE, PROMOTE, REMOVE, AND JOIN THE WORKER NODES IN DOCKER SWARM CLUSTER ===
+## worker node can be promoted as the manager role
+
+root@manager:~# docker node promote node2
+Node node2 promoted to a manager in the swarm.
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
+yibgo99hdxkhkjk4bm6txef1f     node2      Ready     Active         Reachable        27.1.2       <-----------------<< node is reachable as manager status
+
+## worker node can be demoted from the manager role
+
+root@manager:~# docker node demote node2
+Manager node2 demoted in the swarm.
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
+yibgo99hdxkhkjk4bm6txef1f     node2      Ready     Active                          27.1.2       <---------------<< no longer manager
+
+## to remove docker node from the cluster
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
+yibgo99hdxkhkjk4bm6txef1f     node2      Ready     Active                          27.1.2
+root@manager:~# docker node rm ndocker node rm node2
+Error response from daemon: rpc error: code = FailedPrecondition desc = node yibgo99hdxkhkjk4bm6txef1f is not down and #can't be removed
+
+root@node2:~# docker swarm leave
+Node left the swarm.
 
 
+root@manager:~# docker node rm node2
+node2
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
+
+## GENERATING TOKEN TO JOIN THE WORKER 
+root@manager:~# docker swarm join-token worker
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-0sorxhqqi5487iqlw7v89yldz37uh50hdmoni845otx49yczk5-cgtwqs66wdomb50wxj5p0y8jj 172.31.30.94:2377
+
+## PASTE IT IN NODE2
+root@node2:~# docker swarm join --token SWMTKN-1-0sorxhqqi5487iqlw7v89yldz37uh50hdmoni845otx49yczk5-cgtwqs66wdomb50wxj5p0y8jj 172.31.30.94:2377
+This node joined a swarm as a worker.
 
 
+## DOCKER JOINS BACK ON THE DOCKER SWARM CLUSTER
+root@manager:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+j0jcwtg4xqq9wotyz37q7nc3m *   manager    Ready     Active         Leader           27.1.2
+bcq22d016xslovrt72oi3pqv8     node1      Ready     Active                          27.1.2
+8o5zajfmm9qe14z54uewsmu0o     node2      Ready     Active                          27.1.2
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## I WANT TO CREATE A DEPLOYMENT WITH 3 REPLICAS AND THOSE REPLICAS NEEDS TO BE CREATED IN SWARM CLUSTER
+
+## ERROR how to remove garbage service that gets created
+root@manager:~# docker service create mydep --replicas 3 -p 8080:80 nginx:latest
+image mydep:latest could not be accessed on a registry to record
+its digest. Each node will access mydep:latest independently,
+possibly leading to different nodes running different
+versions of the image.
+
+norrpgdi3zlkg0oz22o04uy51
+overall progress: 0 out of 1 tasks
+1/1: No such image: mydep:latest
+^COperation continuing in background.
+Use `docker service ps norrpgdi3zlkg0oz22o04uy51` to check progress.
+root@manager:~# docker service ps
+"docker service ps" requires at least 1 argument.
+See 'docker service ps --help'.
+
+Usage:  docker service ps [OPTIONS] SERVICE [SERVICE...]
+
+List the tasks of one or more services
+root@manager:~# docker service ls
+ID             NAME                MODE         REPLICAS   IMAGE          PORTS
+norrpgdi3zlk   interesting_kilby   replicated   0/1        mydep:latest
+root@manager:~# docker service rm norrpgdi3zlk
+norrpgdi3zlk
+root@manager:~# docker service ls
+ID        NAME      MODE      REPLICAS   IMAGE     PORTS
+
+=======CREATING 3 REPLICAS SERVICE=======
+root@manager:~# docker service create --name mydep --replicas 3 -p 8080:80 nginx:latest
+ykkef645oxxbdbzf8l09qt50e
+overall progress: 3 out of 3 tasks
+1/3: running   [==================================================>]
+2/3: running   [==================================================>]
+3/3: running   [==================================================>]
+verify: Service ykkef645oxxbdbzf8l09qt50e converged
+
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+
+GO TO AWS AND OPEN PORT 8080 IN SECURITY GROUP:
+step1: go to security group
+step2: click on edit inbound rules
+    1. add a rule custom TCP 
+    2. from drop down add port range 8080
+    3 from drop down select (Anywhere-IPv4)
+    4. save rules
+step3: go to ec2 Insctances
+    1. copy any instance public ip address
+    2. go to new tab paste it <IP>:8080
+step4: ---ON BROWSER---
+Welcome to nginx!
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
 
 
+## 3 replicas are running but I dont know on which nodes these 3 replicas are running
+## I want to check that
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
 
+root@manager:~# docker service ps mydep                                             <------------------------------<< to check which nodes are running which replicas
+ID             NAME      IMAGE          NODE      DESIRED STATE   CURRENT STATE           ERROR     PORTS
+fxsm19t15ama   mydep.1   nginx:latest   manager   Running         Running 8 minutes ago
+ktxge1cd0khk   mydep.2   nginx:latest   node1     Running         Running 8 minutes ago
+mj58o9b31gmv   mydep.3   nginx:latest   node2     Running         Running 8 minutes ago
 
+## if you dont define the replicas, it will create single deployment
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   1/1        nginx:latest   *:9090->80/tcp
+## to find which node is running this container 
+root@manager:~# docker service ps newapp
+ID             NAME       IMAGE          NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+9tuc2q36n80y   newapp.1   nginx:latest   manager   Running         Running 49 seconds ago
 
+======== TO SCALE UP THE CONTAINER FOR FAULT-TOLERANCE ========
+root@manager:~# docker service scale newapp=3
+newapp scaled to 3
+overall progress: 3 out of 3 tasks
+1/3: running   [==================================================>]
+2/3: running   [==================================================>]
+3/3: running   [==================================================>]
+verify: Service newapp converged
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   3/3        nginx:latest   *:9090->80/tcp
 
+root@manager:~# docker service pdocker service ps newapp
+ID             NAME       IMAGE          NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+9tuc2q36n80y   newapp.1   nginx:latest   manager   Running         Running 3 minutes ago
+39wh6tkpqeuf   newapp.2   nginx:latest   node1     Running         Running 59 seconds ago
+ms49vece2xi8   newapp.3   nginx:latest   node2     Running         Running 58 seconds ago
 
+root@manager:~# docker service scale newapp=5
+newapp scaled to 5
+overall progress: 5 out of 5 tasks
+1/5: running   [==================================================>]
+2/5: running   [==================================================>]
+3/5: running   [==================================================>]
+4/5: running   [==================================================>]
+5/5: running   [==================================================>]
+verify: Service newapp converged
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   5/5        nginx:latest   *:9090->80/tcp
 
+root@manager:~# docker service ps newapp
+ID             NAME       IMAGE          NODE      DESIRED STATE   CURRENT STATE                ERROR     PORTS
+9tuc2q36n80y   newapp.1   nginx:latest   manager   Running         Running 4 minutes ago
+39wh6tkpqeuf   newapp.2   nginx:latest   node1     Running         Running about a minute ago
+ms49vece2xi8   newapp.3   nginx:latest   node2     Running         Running about a minute ago
+0fef6yf25dbq   newapp.7   nginx:latest   node2     Running         Running 17 seconds ago
+ocr3upz88ek7   newapp.8   nginx:latest   manager   Running         Running 18 seconds ago
 
+=== TO SCALE DOWN ===
+root@manager:~# docker service scale newapp=2
+newapp scaled to 2
+overall progress: 2 out of 2 tasks
+1/2: running   [==================================================>]
+2/2: running   [==================================================>]
+verify: Service newapp converged
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   2/2        nginx:latest   *:9090->80/tcp
+root@manager:~# docker service ps newapp
+ID             NAME       IMAGE          NODE      DESIRED STATE   CURRENT STATE           ERROR     PORTS
+9tuc2q36n80y   newapp.1   nginx:latest   manager   Running         Running 5 minutes ago
+39wh6tkpqeuf   newapp.2   nginx:latest   node1     Running         Running 3 minutes ago
 
+=== 2ND METHOD TO SCALE UP USING UPDATE COMMAND === 
+root@manager:~# docker service update --replicas 4 newapp
+newapp
+overall progress: 4 out of 4 tasks
+1/4: running   [==================================================>]
+2/4: running   [==================================================>]
+3/4: running   [==================================================>]
+4/4: running   [==================================================>]
+verify: Service newapp converged
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        nginx:latest   *:9090->80/tcp
 
+root@manager:~# docker service ps newapp
+ID             NAME       IMAGE          NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+9tuc2q36n80y   newapp.1   nginx:latest   manager   Running         Running 6 minutes ago
+39wh6tkpqeuf   newapp.2   nginx:latest   node1     Running         Running 4 minutes ago
+q6h39yt0ifx6   newapp.3   nginx:latest   node2     Running         Running 34 seconds ago
+uh5i7k6hhr7b   newapp.4   nginx:latest   node2     Running         Running 34 seconds ago
 
+===== IN A SITUATION WHERE I WANT TO PLACE ONE OF THE POD IN EACH NODE AND EVEN IN FUTURE NEW NODES ARE ADDED TO SWARM CLUSTER, AUTOMATICALLY THAT CONTAINER NEEDS TO BE DEPLOYED NODE NUMBER 3. AND IF SOMEONE IS REMOVEING NODES FROM MY CLUSTER, SO THOSE CONTAINERS WHICH WERE DELETED FROM THE DELETED NODES SHOULDNT BE CREATED ANYWHERE ELSE ======
+THIS FEATURE IS CALLED GLOBAL IN DOCKER SWARM AND IN KUBERNETES IS DEAMON SET 
+#(In Kubernetes, the equivalent feature to Docker Swarm's "global" service is called a DaemonSet.
+#A DaemonSet ensures that a copy of a particular pod runs on all (or some) nodes in the cluster. This is similar to Docker Swarm's "global" mode, where a service is deployed to every node in the swarm.)
+=== GLOBAL FEAUTURE OF DOCKER SWARM ===
+Scenerio 1:
+🖥️
+💻
+🖥️ + 🖥️ ++ 🖥️
+💻 + 💻 ++ 💻
 
+Scenerio 2:
+🖥️
+💻
+🖥️ || - 🖥️ - 🖥️
+💻       -    -  
 
+## NOTE: even though I am not mentioning the replicas, 3 replicas will be created and each one container replicas will be placed in each node (all available nodes)
 
+root@manager:~# docker service create --name monapp --mode global nginx:latest
+vqrknolroob4k8tspy7t4puv1
+overall progress: 3 out of 3 tasks
+bcq22d016xsl: running   [==================================================>]
+j0jcwtg4xqq9: running   [==================================================>]
+8o5zajfmm9qe: running   [==================================================>]
+verify: Service vqrknolroob4k8tspy7t4puv1 converged
 
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+vqrknolroob4   monapp    global       3/3        nginx:latest                   <-------------- MODE=global
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest   *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        nginx:latest   *:9090->80/tcp
 
-
-
-
-
-
-
+## if you see all three replicas are distributed in global mode meaning dispersed in each node
+root@manager:~# docker service ps monapp
+ID             NAME                               IMAGE          NODE      DESIRED STATE   CURRENT STATE           ERROR     PORTS
+w417qcocp76c   monapp.8o5zajfmm9qe14z54uewsmu0o   nginx:latest   node2     Running         Running 2 minutes ago
+l1aehk14t7lq   monapp.bcq22d016xslovrt72oi3pqv8   nginx:latest   node1     Running         Running 2 minutes ago
+pdyezzxpjyqa   monapp.j0jcwtg4xqq9wotyz37q7nc3m   nginx:latest   manager   Running         Running 2 minutes ago
 
