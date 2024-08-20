@@ -1,0 +1,180 @@
+#!/bin/bash
+## docker network 
+root@manager:~# docker network ls
+NETWORK ID     NAME              DRIVER    SCOPE
+794053260f40   bridge            bridge    local
+92d5b0342f2a   docker_gwbridge   bridge    local
+555e41470a56   host              host      local
+em9mcjs0s4qs   ingress           overlay   swarm    <-------------------<< ingress/overlay is the network service for the DOCKER SWARM
+608d483897a6   none              null      local
+
+## we can create our own network using overlay driver 
+## 
+root@manager:~# docker network create mynet -d overlay  <--- this driver can be used on the docker swarm cluster
+klm2fc567hoalix8n3f7i2dnh
+root@manager:~# docker network ls
+NETWORK ID     NAME              DRIVER    SCOPE
+794053260f40   bridge            bridge    local
+92d5b0342f2a   docker_gwbridge   bridge    local
+555e41470a56   host              host      local
+em9mcjs0s4qs   ingress           overlay   swarm
+klm2fc567hoa   mynet             overlay   swarm        <----------------<< scope is swarm, meaning can be accessible within your swarm cluster
+608d483897a6   none              null      local
+
+
+============== WORDPRESS AND MYSQL PROJECT ==============
+
+## the same thing as previously we learned in docker networking, by default NAMED BASED DNS will not be available. You will have to enable it for container communication. 
+
+## WORDPRESS WITH NETWORKING
+root@manager:~# docker service create --name wp --network mynet -p 9091:80 wordpress:latest
+uwbjebtiqb83nfnpe5e17lb1t
+overall progress: 1 out of 1 tasks
+1/1: running   [==================================================>]
+verify: Service uwbjebtiqb83nfnpe5e17lb1t converged
+
+
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+vqrknolroob4   monapp    global       3/3        nginx:latest
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest       *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        nginx:latest       *:9090->80/tcp
+uwbjebtiqb83   wp        replicated   1/1        wordpress:latest   *:9091->80/tcp
+
+## MYDB WITH ENVIRONMENT VARIABLE AND NETWORKING 
+root@manager:~# docker service create --name mydb --network mynet -e MYSQL_ROOT_PASSWORD=test123 -e MYSQL_DATABASE=wordpress mysql:latest
+1vm5p6tvpagsgfei5zquip2hw
+overall progress: 1 out of 1 tasks
+1/1: running   [==================================================>]
+verify: Service 1vm5p6tvpagsgfei5zquip2hw converged
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+vqrknolroob4   monapp    global       3/3        nginx:latest
+1vm5p6tvpags   mydb      replicated   1/1        mysql:latest
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest       *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        nginx:latest       *:9090->80/tcp
+uwbjebtiqb83   wp        replicated   1/1        wordpress:latest   *:9091->80/tcp
+
+## you can use the DOCKER COMPOSE HERE as well but instead of docker-compose up, you need to use the docker stack command
+
+## enable port# 9091 in AWS for inbound rule in SecurityGroup
+
+GO TO AWS AND OPEN PORT 9091 IN SECURITY GROUP:
+step1: go to security group (docker-swarm)
+step2: click on edit inbound rules
+    1. add a rule custom TCP 
+    2. from drop down add port range 9091
+    3 from drop down select (Anywhere-IPv4)
+    4. save rules
+step3: go to ec2 Insctances
+    1. copy any instance public ip address
+    2. go to new tab paste it <IP>:9091
+step4: ---ON BROWSER---
+Welcome to WordPress. Before getting started, you will need to know the following items.
+
+Database name
+Database username
+Database password
+Database host
+Table prefix (if you want to run more than one WordPress in a single database)
+This information is being used to create a wp-config.php file. If for any reason this automatic file creation does not work, do not worry. All this does is fill in the database information to a configuration file. You may also simply open wp-config-sample.php in a text editor, fill in your information, and save it as wp-config.php. Need more help? Read the support article on wp-config.php.
+
+In all likelihood, these items were supplied to you by your web host. If you do not have this information, then you will need to contact them before you can continue. If you are ready…
+
+Let’s go!
+
+## mysql environment variable that you have already used above ⬆ add those in 
+-e MYSQL_ROOT_PASSWORD=test123 
+-e MYSQL_DATABASE=wordpress mysql:latest
+
+Below you should enter your database connection details. If you are not sure about these, contact your host.
+
+Database Name	
+The name of the database you want to use with WordPress.
+Username    wordpress	
+        Your database username.
+Password <ENVIRONMENT VARIABLE YOU HAVE PUT IN AT THE TIME OF CREATING DB=test123>	
+        Your database password.
+Database Host	
+You should be able to get this info from your web host, if localhost does not work.
+Table Prefix wp_   	
+If you want to run multiple WordPress installations in a single database, change this.
+SUBMIT
+## WORDPRESS IS NOW ABLE TO COMMUNICATE WITH OUR DATABASE CONTAINER
+Welcome
+
+Welcome to the famous five-minute WordPress installation process! Just fill in the information below and you’ll be on your way to using the most extendable and powerful personal publishing platform in the world.
+
+## ⬆ ABOVE STEPS ARE HOW WE CONFIGURE OUR NETWORK USING OVERLAY NETWORK SO THAT CONTAINERS CAN COMMUNICATE WITH EACH OTHER
+
+## PERFORMING ROLLING UPDATES
+## it will be deleting one pod and creating another
+
+
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+vqrknolroob4   monapp    global       3/3        nginx:latest
+1vm5p6tvpags   mydb      replicated   1/1        mysql:latest
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest       *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        nginx:latest       *:9090->80/tcp
+uwbjebtiqb83   wp        replicated   1/1        wordpress:latest   *:9091->80/tcp
+
+## PREVIOUSLY NEWAPP WAS RUNNING NGINX, NOW IT IS RUNNING HTTPD
+root@manager:~# docker service update newapp --image httpd:latest
+newapp
+overall progress: 4 out of 4 tasks
+1/4: running   [==================================================>]
+2/4: running   [==================================================>]
+3/4: running   [==================================================>]
+4/4: running   [==================================================>]
+verify: Service newapp converged
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+vqrknolroob4   monapp    global       3/3        nginx:latest
+1vm5p6tvpags   mydb      replicated   1/1        mysql:latest
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest       *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        httpd:latest       *:9090->80/tcp
+uwbjebtiqb83   wp        replicated   1/1        wordpress:latest   *:9091->80/tcp
+
+---ON BROWSER---
+## you need to enable port 9090 on aws in order for it to work
+<ip>:9090
+It works!
+
+
+
+=== ROLLBACK ===
+## it will only take back one previous rollback (previous image) 
+## the advantage of kubernetes is that you can do more rollback on previous iterations
+root@manager:~# docker service rollback newapp
+newapp
+rollback: manually requested rollback
+overall progress: rolling back update: 4 out of 4 tasks
+1/4: running   [==================================================>]
+2/4: running   [==================================================>]
+3/4: running   [==================================================>]
+4/4: running   [==================================================>]
+verify: Service newapp converged
+
+root@manager:~# docker service ls
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+vqrknolroob4   monapp    global       3/3        nginx:latest
+1vm5p6tvpags   mydb      replicated   1/1        mysql:latest
+ykkef645oxxb   mydep     replicated   3/3        nginx:latest       *:8080->80/tcp
+rdod9ohawv6r   newapp    replicated   4/4        nginx:latest       *:9090->80/tcp
+uwbjebtiqb83   wp        replicated   1/1        wordpress:latest   *:9091->80/tcp
+
+root@manager:~# docker service ps newapp
+ID             NAME           IMAGE          NODE      DESIRED STATE   CURRENT STATE             ERROR     PORTS
+wyfnz3jvszpj   newapp.1       nginx:latest   manager   Running         Running 14 minutes ago
+ozb8lrmf2aps    \_ newapp.1   httpd:latest   manager   Shutdown        Shutdown 14 minutes ago
+9tuc2q36n80y    \_ newapp.1   nginx:latest   manager   Shutdown        Shutdown 21 minutes ago
+rdjxc0bv6g63   newapp.2       nginx:latest   node1     Running         Running 14 minutes ago
+x3qcnjyd2woj    \_ newapp.2   httpd:latest   node1     Shutdown        Shutdown 14 minutes ago
+39wh6tkpqeuf    \_ newapp.2   nginx:latest   node1     Shutdown        Shutdown 21 minutes ago
+yxcnku33ovr6   newapp.3       nginx:latest   node2     Running         Running 14 minutes ago
+wv5iseg5gfbl    \_ newapp.3   httpd:latest   node2     Shutdown        Shutdown 14 minutes ago
+q6h39yt0ifx6    \_ newapp.3   nginx:latest   node2     Shutdown        Shutdown 21 minutes ago
+unjuiy6ihv9m   newapp.4       nginx:latest   node2     Running         Running 14 minutes ago
+kw4cpolezx6v    \_ newapp.4   httpd:latest   node2     Shutdown        Shutdown 14 minutes ago
+uh5i7k6hhr7b    \_ newapp.4   nginx:latest   node2     Shutdown        Shutdown 21 minutes ago
