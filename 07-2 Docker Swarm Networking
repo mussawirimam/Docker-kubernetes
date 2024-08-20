@@ -178,3 +178,14 @@ q6h39yt0ifx6    \_ newapp.3   nginx:latest   node2     Shutdown        Shutdown 
 unjuiy6ihv9m   newapp.4       nginx:latest   node2     Running         Running 14 minutes ago
 kw4cpolezx6v    \_ newapp.4   httpd:latest   node2     Shutdown        Shutdown 14 minutes ago
 uh5i7k6hhr7b    \_ newapp.4   nginx:latest   node2     Shutdown        Shutdown 21 minutes ago
+
+---ON BROWSER---
+<IP>:9090
+Welcome to nginx!
+
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+For online documentation and support please refer to nginx.org.
+Commercial support is available at nginx.com.
+
+Thank you for using nginx.
