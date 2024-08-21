@@ -16,3 +16,49 @@ For this reason, you would use the Kubernetes feature called Auto-Scaling.
 # if you deploy any application it gets deployed to manager/leader as well but in kubernetes you can turn on or turn off this feature.
 # there are lot's of features missing from Docker Swarm compared to Kubernetes
 
+## multi-flavors of kubernetes:
+On-prem
+managed k8s
+AWS --> EKS Elastic Kubernetes Service
+GCP --> GKE Google Kubernetes Engine
+Azure --> AKS Azure Kubernetes Service
+# the difference would be with clustrter creations, because their cloud provider are having different user interfaces. Their looks and dashboard would be different
+and cluster creation method would be different. 
+
+to achieve high availabilty on-prem you will have to deploy the multiple Master node and these nodes would be managed by you only for high availability and similarly,
+you would have to create multiple worker nodes. These master nodes will not be getting your deployment. Master node will not have your application deployed,
+you will have the application deployed in worker and you would need a special admin to make sure it is always up and running which is a down side of On-Prem kubernetes, 
+that is why you need managed kubernetes cloud provides. 
+
+
+------------------------------------------------------------------------------------
+some topics object to learn in our session:
+Deployment
+Satefulset
+ConfigMap
+Secrets
+------------------------------------------------------------------------------------
+
+
+You can define 
+min-3 
+or 
+max-10 
+
+You are responsible for upgrading/updating the kubernetes on-prem. If you are not updating/upgrading the On-Prem Kubernetes, you will be seeing deprecated work in kubernetes.
+
+If you are not updating kuberenetes on Cloud version will have getting expired and if you are not updating the, your master node will automatically gets updated.
+Auto-Upgradation feature is for Cloud-providers.
+
+On-Premise depends on platform like linux, you will have to be executing commands like adding a user and then you will have to add RBAC
+------------------------------------------------------------------------------------
+RBAC: role based access control
+on-prem
+linux - adduser role/cluster-role role-bindling/cluster-rolebinding
+
+cloud
+aws-create user from IAM
+GCP- IAM
+AZURE-activedirectory with IAM
+------------------------------------------------------------------------------------
+
