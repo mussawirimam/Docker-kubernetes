@@ -1,0 +1,18 @@
+## we were able to achieve the high availabilty through Docker Swarm using 3 nodes
+## Master node (manager/leader) and 2 worker nodes
+
+## manager node was managing 
+## in docker swarm, we were missing few of the feature. If you are creating few of the application in pods with 3 replicas in each 3 nodes.
+if  container1 is failed, container2 will serve the traffic. But if somehow there is more load and if the 3 replicas are not able to serve the traffic,
+then you might have monitoring tool let's say you get a mail if the cpu usage/traffic got increased. You will be logging in the node and you 
+will scale up the relicas. 
+
+Assume let's say you have created 10 containers and after sometime the traffic went down, additional containers will keep on running on the container
+you will have to again log in into the docker manager and scale it down. The ability for it to scale up and scale down is missing from Docker Swarm. 
+For this reason, you would use the Kubernetes feature called Auto-Scaling. 
+
+## Kubernetes has more features compared to Docker Swarm
+# configMap is used to keep the configuration at the centralized place
+# if you deploy any application it gets deployed to manager/leader as well but in kubernetes you can turn on or turn off this feature.
+# there are lot's of features missing from Docker Swarm compared to Kubernetes
+
