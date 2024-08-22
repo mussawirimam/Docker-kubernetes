@@ -125,6 +125,9 @@ Atomic unit or smallest
 • Pods are one or MORE containers that share volumes, a network
 namespace, and are a part of a single context.
 
+In Docker and Docker swarm, we were creating containers directly. In kubernetes, first you have to create the pods and in the pods, you can create the containers. 
+and your pods will be deployed in the Host (vms/ec2)
+
 ⠀⠀⣤⠶⠶⠶⠶⠶⠶⠶⠶⠖⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠖⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⠶⣄⠀⠀
 ⢀⣾⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀HOST A     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣧⢀
 ⢸⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⢸
