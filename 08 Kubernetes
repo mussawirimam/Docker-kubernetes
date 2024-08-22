@@ -69,3 +69,14 @@ If you guys want to spin up the load balancer, then again you will have to insta
 
 ------------------------------------------------------------------------------------
 
+PRE-REQUISTES:
+docker
+yaml
+cloud
+virtualbox to setup lab environment on local box
+linux
+
+What Does kubernetes mean? 
+Greek for "pilot" or "Helmsman of a ship"
+
+What is kubernetes? 
