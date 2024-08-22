@@ -80,3 +80,41 @@ What Does kubernetes mean?
 Greek for "pilot" or "Helmsman of a ship"
 
 What is kubernetes? 
+. Kubernetes is an open-source Container Orchestration/Management tool which automates container deployment, container (de)scaling & container load balancing.
+. Written on Golang, it has a huge community because it was first developed by Google & later donated to CNCF 
+. Can group 'n' no of containers into one logical unit for managing & deploying them
+. Built from the lessons learned in the experiences of developing and running Google's Borg and Omega.
+
+Redhat has a paid version called Openshift, you pay for the license 
+minimum node required t2 x.large on ec2
+
+
+Decouples Infrastructure and Scaling:
+. All services within Kubernetes are natively Load Balanced.
+. Can scale up and down dynamically.
+. Used both to enable self-healing and seamless upgrading or rollback of applications.
+
+Self-healing:
+Self Healing
+Kubernetes will ALWAYS try and steer the cluster to Its desired state.
+• Me: "I want 3 healthy instances of redis to always be running."
+• Kubernetes: "Okay, I'll ensure there are always 3 instances up and running."
+• Kubernetes: "Oh look, one has died. I'm going to attempt to spin up a new one."
+
+Most importantly:
+Use the SAME API across bare metal and
+EVERY cloud provider!!!
+
+Who "Manages" Kubernetes?
+
+CLOUD NATIVE
+COMPUTING FOUNDATION
+Seif Hesting
+The CNCF is a child entity of the Linux Foundation and operates as a vendor neutral governance group.
+cncf.io
+
+CERTIFICATION:
+https://www.cncf.io/training/certification/
+
+DISCOUNTED TRAINING:
+https://training.linuxfoundation.org/?campaignid=21372675077&adgroupid=171974510868&creative=704304945812&matchtype=e&network=g&device=c&keyword=linux%20foundation&hsa_acc=8666746580&hsa_cam=21372675077&hsa_grp=171974510868&hsa_ad=704304945812&hsa_src=g&hsa_tgt=kwd-319242482088&hsa_kw=linux%20foundation&hsa_mt=e&hsa_net=adwords&hsa_ver=3&gad_source=1&gbraid=0AAAAAD2R-lqYs1f5JccR8X0Z0XEpEYFYL&gclid=Cj0KCQjww5u2BhDeARIsALBuLnPKA0ns6K4LlCnlwpvNZPF3A7MDmDpbJte2TWF-fuc326P4tu0IdVIaAr_sEALw_wcB&utm_source=google&utm_medium=paid-search&utm_campaign=24q2-evergreen-lf_training&utm_term=tnc-na-search-lf-brand&utm_content=eg_rsa&utm_term=linux%20foundation&utm_campaign=T%26C+-+NA+-+Search+-+LF
