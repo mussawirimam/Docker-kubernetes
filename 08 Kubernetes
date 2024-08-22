@@ -57,8 +57,15 @@ on-prem
 linux - adduser role/cluster-role role-bindling/cluster-rolebinding
 
 cloud
-aws-create user from IAM
-GCP- IAM
-AZURE-activedirectory with IAM
+## you will have the IAM and then you have to implement the role/cluster-role role-bindling/cluster-rolebinding
+aws-create user from IAM - role/cluster-role role-bindling/cluster-rolebinding
+GCP- IAM - role/cluster-role role-bindling/cluster-rolebinding
+AZURE-activedirectory with IAM - role/cluster-role role-bindling/cluster-rolebinding
+
+if you are talking about gcp and azure cloud, what I found is that these two types of kubernetes it is supereasy, you dont have to bother for plugin installation and configuration. Multiple types of configuraiton is required during cluster creation 
+, you can enable auto-scaling once cluster is created, you can spin up volumes in these two cloud withtout any additional configuration, you can create load-balancers as well. These are the most used objects that is automatically enabled or configured.
+In case of aws (eks), it is more secure and eadch and every step you will have to install and configure the plugin. If you are thinking to provision dynamic volume, so you will have to install and configure storage class in your EBS sci driver needs to be installed in cluster then only you will be able to spinup the volume.
+If you guys want to spin up the load balancer, then again you will have to install and configure the aws cloud load balancer. 
+
 ------------------------------------------------------------------------------------
 
