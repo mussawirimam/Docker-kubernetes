@@ -1,6 +1,8 @@
 ## you can use the docker installation script
 https://docs.docker.com/engine/install/ubuntu/ 
 dockerhub.com
+https://docs.docker.com/reference/cli/docker/swarm/init/
+
 Docker architecture is read-only from dockerhub, you will have to pull it to your local machine in order to make any changes to the image and build a container out of it using the dockerfile. 
 root# docker
 Usage:  docker [OPTIONS] COMMAND
