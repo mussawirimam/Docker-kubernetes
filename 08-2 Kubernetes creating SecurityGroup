@@ -1,0 +1,16 @@
+Go to Security Group
+1. click on create a security group
+  a. give security group name (mykube)
+  b. description (kubernetes internal communcation)
+  c. keep the vpc to default
+  d. click on create 
+2. add inboud rule
+  a. under type drop down menu, select (all traffic)
+  b. under Cidr/block drop down next to source, select (mykube) security group
+3. add rule for SSH
+  a. add rule for ssh under type drown down menu select (SSH)
+  b. under source drop down menu, select (Anywhere-IPv4)
+  c. cidr/block next to source is (0.0.0.0/0)
+save the rules
+
+
