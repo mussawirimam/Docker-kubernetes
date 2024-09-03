@@ -268,3 +268,72 @@ clusterrolebinding.rbac.authorization.k8s.io/calico-cni-plugin created
 daemonset.apps/calico-node created
 deployment.apps/calico-kube-controllers created
 root@manager:~#
+
+==== KUBERNETES ARCHITECTURES RUN IN THE FORM OF POD, RUNNING IN THE NAME SPACE KUBE-SYSTEM ====
+root@manager:~# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS   AGE
+calico-kube-controllers-787f445f84-6z8ts   1/1     Running   0          2m50s
+calico-node-lrsjm                          1/1     Running   0          2m50s
+coredns-5dd5756b68-bz9dt                   1/1     Running   0          63m
+coredns-5dd5756b68-hggmg                   1/1     Running   0          63m
+etcd-manager                               1/1     Running   0          63m
+kube-apiserver-manager                     1/1     Running   0          63m
+kube-controller-manager-manager            1/1     Running   0          63m
+kube-proxy-xrslf                           1/1     Running   0          63m
+kube-scheduler-manager                     1/1     Running   0          63m
+root@manager:~#
+
+
+==== ATTACHING WORKER NODES TO THE MASTER NODE TO FORM CLUSTER ====
+## we need to add these nodes to another worker nodes to this cluster
+root@manager:~# kubectl get nodes
+NAME      STATUS   ROLES           AGE   VERSION
+manager   Ready    control-plane   74m   v1.28.13
+root@manager:~#
+
+ubuntu@node1:~$ sudo su -
+root@node1:~# kubeadm join 172.31.28.213:6443 --token 7kovac.41djmjk39wv2tz86 --discovery-token-ca-cert-hash sha256:587aa7bdeed983db54e7011e8872cd456a37f869a55d89544b2b84c3a57b7312
+[preflight] Running pre-flight checks
+[preflight] Reading configuration from the cluster...
+[preflight] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap...
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
+
+root@node1:~#
+
+ubuntu@node2:~$ sudo su -
+root@node2:~# kubeadm join 172.31.28.213:6443 --token 7kovac.41djmjk39wv2tz86 --discovery-token-ca-cert-hash sha256:587aa7bdeed983db54e7011e8872cd456a37f869a55d89544b2b84c3a57b7312
+[preflight] Running pre-flight checks
+[preflight] Reading configuration from the cluster...
+[preflight] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap...
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
+
+root@node2:~#
+
+QQ: how communication is enabled between all nodes? 
+A: through common Security group in AWS (mykube)
+
+==== CREATE A POD ====
+## IN DOCKER 
+docker run -d --name app01 -p 8080:80 nginx:latest
+
+==== IMPERATIVE THROUGH COMMAND ====
+
+==== DECLARATIVE THROUGH YAML ====
