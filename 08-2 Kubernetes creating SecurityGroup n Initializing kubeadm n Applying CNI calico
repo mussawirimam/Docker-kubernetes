@@ -330,10 +330,88 @@ root@node2:~#
 QQ: how communication is enabled between all nodes? 
 A: through common Security group in AWS (mykube)
 
+==== LINUX AUTOCOMPLETION TIP FOR KUBECTL COMMAND IN BASHRC ===
+root@manager:~# vi .bashrc
+#add this line 
+source <(kubectl completion bash)
+:wq!
+root@manager:~# source .bashrc
+
 ==== CREATE A POD ====
 ## IN DOCKER 
-docker run -d --name app01 -p 8080:80 nginx:latest
+##docker run -d --name app01 -p 8080:80 nginx:latest
 
-==== IMPERATIVE THROUGH COMMAND ====
+## IN KUBERNETES
+root@manager:~# kubectl run mypod --image nginx:latest --port=80
+pod/mypod created
+root@manager:~# kubectl get pod
+NAME    READY   STATUS    RESTARTS   AGE
+mypod   1/1     Running   0          11s
+root@manager:~#
+
+### I want to know the ip address of the pod
+root@manager:~# kubectl get pod -o wide
+NAME    READY   STATUS    RESTARTS   AGE    IP              NODE    NOMINATED NODE   READINESS GATES
+mypod   1/1     Running   0          107s   192.168.104.1   node2   <none>           <none>
+root@manager:~#
+
+==== LOGGING INTO THE POD'S CONTAINER ====
+#### IMPERATIVE THROUGH COMMAND #### 
+##hostname is mypod
+## impperative way of creating pods have limitations like you cannot configure multiple container in a pod, you cannot define volume configuration etc etc 
+## always go for declarative way 
+
+root@manager:~# kubectl exec -it mypod -- bash
+root@mypod:/# ls
+bin  boot  dev	docker-entrypoint.d  docker-entrypoint.sh  etc	home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+root@mypod:/#
+
+
+
+
 
 ==== DECLARATIVE THROUGH YAML ====
+## this way you can get the output in a yaml format and you can tweak and enhance the declarative yaml code to create your pod/deployment/services
+## this gives you a skeleton for yaml file
+root@manager:~# kubectl run mypod --image nginx:latest --port=80 --dry-run=client -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: mypod
+  name: mypod
+spec:
+  containers:
+  - image: nginx:latest
+    name: mypod
+    ports:
+    - containerPort: 80
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+root@manager:~#
+
+### REDIRECT BUT GIVES GARBAGE
+root@manager:~# kubectl run mypod --image nginx:latest --port=80 --dry-run=client -o yaml > pod.yaml
+root@manager:~# cat pod.yaml ###### COMMENTED ARE GARBAGE FOR NOW
+apiVersion: v1
+kind: Pod
+metadata:
+#  creationTimestamp: null
+  labels:
+    run: mypod
+  name: mypod
+spec:
+  containers:
+  - image: nginx:latest
+    name: mypod
+    ports:
+    - containerPort: 80
+    resources: {}
+#  dnsPolicy: ClusterFirst
+#  restartPolicy: Always
+#status: {}
+root@manager:~#
+
