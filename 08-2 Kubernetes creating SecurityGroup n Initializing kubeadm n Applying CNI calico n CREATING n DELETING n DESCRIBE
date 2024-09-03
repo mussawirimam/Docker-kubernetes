@@ -1,4 +1,4 @@
-Go to Security Group
+ Go to Security Group
 1. click on create a security group
   a. give security group name (mykube)
   b. description (kubernetes internal communcation)
@@ -371,6 +371,7 @@ root@mypod:/#
 
 
 ==== DECLARATIVE THROUGH YAML ====
+---- TO CREATE A YAML FILE FROM SKELETON COMMAND ----
 ## this way you can get the output in a yaml format and you can tweak and enhance the declarative yaml code to create your pod/deployment/services
 ## this gives you a skeleton for yaml file
 root@manager:~# kubectl run mypod --image nginx:latest --port=80 --dry-run=client -o yaml
@@ -396,7 +397,7 @@ root@manager:~#
 ### REDIRECT BUT GIVES GARBAGE
 root@manager:~# kubectl run mypod --image nginx:latest --port=80 --dry-run=client -o yaml > pod.yaml
 root@manager:~# cat pod.yaml ###### COMMENTED ARE GARBAGE FOR NOW
-apiVersion: v1
+apiVersion: v1   <---------- ALL THE FUNCTIONS ARE DEFINED IN V1. THIS apiVersionv1 contains so many type of kubernetes object definitions. (everything below you see in file are the part of apiversion1 function)
 kind: Pod
 metadata:
 #  creationTimestamp: null
@@ -415,3 +416,159 @@ spec:
 #status: {}
 root@manager:~#
 
+---- ACTUAL FILE: ----
+"pod.yaml" 12L, 169B                                                                                                             6,13          All
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+  - image: nginx:latest
+    ports:
+    - containerPort: 80
+
+root@manager:~# vi pod.yaml
+root@manager:~# kubectl create -f pod.yaml
+Error from server (AlreadyExists): error when creating "pod.yaml": pods "mypod" already exists
+root@manager:~#
+
+root@manager:~# kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+mypod   1/1     Running   0          3h
+root@manager:~#
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+~
+
+root@manager:~# kubectl create -f pod.yaml
+pod/newpod created
+root@manager:~# kubectl get pods
+NAME     READY   STATUS    RESTARTS   AGE
+mypod    1/1     Running   0          3h1m
+newpod   1/1     Running   0          7s
+root@manager:~#
+
+==== TO DELETE THE POD ====
+root@manager:~# kubectl delete pod mypod
+pod "mypod" deleted
+
+### but I want to delete it through my yaml file 
+### I want to delete all the objects that are defined in the pod.yaml
+
+root@manager:~# kubectl delete -f pod.yaml
+pod "newpod" deleted
+root@manager:~#
+
+root@manager:~# kubectl get pods
+No resources found in default namespace.
+root@manager:~#
+
+==== CREATING THE PODS FROM POD.YAML ==== 
+
+root@manager:~# kubectl create -f pod.yaml
+pod/newpod created
+root@manager:~# kubectl get pods
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   1/1     Running   0          6s
+root@manager:~#
+
+==== TO KNOW WHAT IS HAPPENING UNDER THE HUD TO CREATE A OBJECTS (DESCRIBE COMMAND). TO KNOW WHAT EXACTLY IS KUBERNETES IS DOING TO CREATE AN OBJECT ====
+root@manager:~# kubectl describe pod newpod
+Name:             newpod
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             node2/172.31.28.35
+Start Time:       Tue, 03 Sep 2024 04:38:17 +0000
+Labels:           app=myapp
+Annotations:      cni.projectcalico.org/containerID: 046ffe57cd70fbde9656e259c4bf8c4227f0675dc7df879edd3077f0bc8b3b84
+                  cni.projectcalico.org/podIP: 192.168.104.2/32
+                  cni.projectcalico.org/podIPs: 192.168.104.2/32
+Status:           Running
+IP:               192.168.104.2
+IPs:
+  IP:  192.168.104.2
+Containers:
+  con1:
+    Container ID:   cri-o://b48aee57c2e42c34ab6827244113eb6e5ca5b816fea4059df96753a40756bf9d
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:447a8665cc1dab95b1ca778e162215839ccbb9189104c79d7ec3a81e14577add
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Tue, 03 Sep 2024 04:38:18 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-dk75r (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  kube-api-access-dk75r:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  68s   default-scheduler  Successfully assigned default/newpod to node2
+  Normal  Pulling    67s   kubelet            Pulling image "nginx:latest"
+  Normal  Pulled     67s   kubelet            Successfully pulled image "nginx:latest" in 128ms (128ms including waiting)
+  Normal  Created    67s   kubelet            Created container con1
+  Normal  Started    67s   kubelet            Started container con1
+root@manager:~#
+----------------------- CONTAINER DESCRIBE ENDS -----------------------
+
+==== CREATING MULTIPLE CONTAINERS ====
+root@manager:~# mkdir app
+root@manager:~# cp pod.yaml app/
+root@manager:~# cd app/
+root@manager:~/app# cp pod.yaml multi-con.yaml
+
+
+==== NODEPORT SERVICE AND CREATING YAML FILE WITH DRY RUN ====
+root@manager:~/app# kubectl expose pod newpod --type NodePort  --dry-run=client -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: myapp
+  name: newpod
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: myapp
+  type: NodePort
+status:
+  loadBalancer: {}
+root@manager:~/app# kubectl expose pod newpod --type NodePort  --dry-run=client -o yaml > pod-svc.yaml
