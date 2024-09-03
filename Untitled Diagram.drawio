@@ -1,9 +1,107 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15" version="24.7.10">
   <diagram name="Page-1" id="mjV5ODukJaDs_-uyNFB3">
-    <mxGraphModel>
+    <mxGraphModel dx="2284" dy="802" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-1" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="290" width="140" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-4" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="290" width="140" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-5" value="mypod con1" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-6" value="&lt;p style=&quot;margin: 0px; font-style: normal; font-variant-caps: normal; font-stretch: normal; line-height: normal; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-variant-emoji: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;&quot;&gt;node 1 192.168.0.20&lt;/p&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="70" y="250" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-7" value="&lt;p style=&quot;margin: 0px; font-style: normal; font-variant-caps: normal; font-stretch: normal; line-height: normal; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-variant-emoji: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;&quot;&gt;node 1 192.168.0.21&lt;/p&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="230" y="250" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-9" value="kubectl run mypod --image=nginx:latest --port=80" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-250" y="180" width="270" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-10" value="docker run -d --name app01 -p 8080:80 nginx:latest" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-250" y="150" width="290" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-11" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-220" y="290" width="220" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-12" value="con-1" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="300" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-13" value="con-2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="350" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-14" value="80" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-120" y="305" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-15" value="your pod will get the ip addresses&lt;div&gt;&amp;nbsp;mypod 10.1.2.50&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-219" y="250" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-16" value="your pods will have the ip address but not your container. So how they communicate internally is by the pod name. Pod name works as the hostname common for both the containers existing within the pod.&amp;nbsp;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-270" y="460" width="320" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-18" value="" style="curved=1;endArrow=classic;html=1;rounded=0;dashed=1;" edge="1" parent="1" source="M8-BgbDuDf5HeTWnamSH-16">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-290" y="460" as="sourcePoint" />
+            <mxPoint x="-240" y="360" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="-240" y="460" />
+              <mxPoint x="-290" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-21" value="" style="shape=link;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="100" relative="1" as="geometry">
+            <mxPoint x="-300" y="600" as="sourcePoint" />
+            <mxPoint x="540" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-22" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-220" y="700" width="220" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-23" value="con-1" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="710" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-24" value="con-2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="760" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-25" value="80" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-120" y="715" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-26" value="your pod will get the ip addresses 10.1.2.50" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-220" y="660" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-27" value="if you enable port 80 on container-2, the pod will crash!&lt;div&gt;it is same as in any host machine. You cannot assign the same port to two multiple services, you have to assign it to one.&amp;nbsp;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-270" y="870" width="320" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-28" value="" style="curved=1;endArrow=classic;html=1;rounded=0;dashed=1;" edge="1" parent="1" source="M8-BgbDuDf5HeTWnamSH-27">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-290" y="870" as="sourcePoint" />
+            <mxPoint x="-250" y="770" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="-240" y="870" />
+              <mxPoint x="-290" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-29" value="80" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-120" y="765" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-30" value="" style="shape=mxgraph.mockup.markup.redX;fillColor=#ff0000;html=1;shadow=0;whiteSpace=wrap;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="-70" y="710" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-32" value="mypod=hostname&lt;div&gt;ip=10.1.2.50&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;you enable the same port name for both the containers but hostname and ip can be shared&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fontColor=#000000;darkOpacity=0.05;fillColor=#FFF9B2;strokeColor=none;fillStyle=solid;direction=west;gradientDirection=north;gradientColor=#FFF2A1;shadow=1;size=20;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="-460" y="250" width="140" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-33" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.173;entryY=1.1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;dashed=1;" edge="1" parent="1" source="M8-BgbDuDf5HeTWnamSH-32" target="M8-BgbDuDf5HeTWnamSH-15">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-300" y="340" as="sourcePoint" />
+            <mxPoint x="-250" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
