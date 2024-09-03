@@ -20,10 +20,10 @@
           <mxGeometry x="230" y="250" width="130" height="30" as="geometry" />
         </mxCell>
         <mxCell id="M8-BgbDuDf5HeTWnamSH-9" value="kubectl run mypod --image=nginx:latest --port=80" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="-250" y="180" width="270" height="30" as="geometry" />
+          <mxGeometry x="-255" y="110" width="270" height="30" as="geometry" />
         </mxCell>
         <mxCell id="M8-BgbDuDf5HeTWnamSH-10" value="docker run -d --name app01 -p 8080:80 nginx:latest" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="-250" y="150" width="290" height="30" as="geometry" />
+          <mxGeometry x="-255" y="80" width="290" height="30" as="geometry" />
         </mxCell>
         <mxCell id="M8-BgbDuDf5HeTWnamSH-11" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="-220" y="290" width="220" height="120" as="geometry" />
@@ -101,6 +101,18 @@
             <mxPoint x="-300" y="340" as="sourcePoint" />
             <mxPoint x="-250" y="290" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-34" value="3306" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-120" y="355" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-35" value="my pod:80" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-160" y="550" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-37" value="docker exec -it mycon bash" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-255" y="140" width="270" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M8-BgbDuDf5HeTWnamSH-38" value="kubectl exec -it mypod -- bash" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-255" y="170" width="270" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
