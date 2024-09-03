@@ -1,0 +1,270 @@
+Go to Security Group
+1. click on create a security group
+  a. give security group name (mykube)
+  b. description (kubernetes internal communcation)
+  c. keep the vpc to default
+  d. click on create 
+2. add inboud rule
+  a. under type drop down menu, select (all traffic)
+  b. under Cidr/block drop down next to source, select (mykube) security group
+3. add rule for SSH
+  a. add rule for ssh under type drown down menu select (SSH)
+  b. under source drop down menu, select (Anywhere-IPv4)
+  c. cidr/block next to source is (0.0.0.0/0)
+save the rules
+
+Create Ec2 Instance
+1. create on (launch instances)
+  a. name the node and tag (node)
+  b. select image (ubuntu)
+  c. instance type (t2.medium)
+  d. create a keypair or if you have existing select that.
+  e. In Network select (Select existing Security Group: mykube)
+  f. click on advance setting
+    aa. scroll down to (User data - optional) 
+==== ADD THIS SCRIPT ====
+#!/bin/bash
+sudo swapoff -a
+
+sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo mkdir -p -m 755 /etc/apt/keyrings
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update && sudo apt-get install -y kubelet kubeadm kubectl
+
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# sysctl params required by setup, params persist across reboots
+sudo cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+
+sudo lsmod | grep br_netfilter
+sudo lsmod | grep overlay
+
+sudo sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+
+
+OS=xUbuntu_22.04
+VERSION=1.28
+
+sudo echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+
+sudo echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+
+
+sudo mkdir -p /usr/share/keyrings
+
+sudo curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
+
+sudo curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/Release.key | gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
+
+sudo apt-get update && apt-get install cri-o cri-o-runc cri-tools -y
+
+
+sudo systemctl start crio.service
+
+
+sudo systemctl enable crio.service
+
+
+sudo systemctl status crio.service
+
+########################################################################################################################
+
+### CHANGE THE HOSTNAMES ###
+vi /etc/hostname 
+master
+wq!
+
+vi /etc/hostname 
+node1
+wq!
+
+vi /etc/hostname 
+node2
+wq!
+
+##Reboot the systems
+---------
+
+==== To Initialize the MASTER AND WORKER servers ====
+
+root@manager:~# kubeadm init                      <---------------------<<
+I0902 23:11:04.216440    1656 version.go:256] remote version is much newer: v1.31.0; falling back to: stable-1.28
+[init] Using Kubernetes version: v1.28.13
+[preflight] Running pre-flight checks
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
+[certs] Using certificateDir folder "/etc/kubernetes/pki"
+[certs] Generating "ca" certificate and key
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local manager] and IPs [10.96.0.1 172.31.28.213]
+[certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] Generating "front-proxy-ca" certificate and key
+[certs] Generating "front-proxy-client" certificate and key
+[certs] Generating "etcd/ca" certificate and key
+[certs] Generating "etcd/server" certificate and key
+[certs] etcd/server serving cert is signed for DNS names [localhost manager] and IPs [172.31.28.213 127.0.0.1 ::1]
+[certs] Generating "etcd/peer" certificate and key
+[certs] etcd/peer serving cert is signed for DNS names [localhost manager] and IPs [172.31.28.213 127.0.0.1 ::1]
+[certs] Generating "etcd/healthcheck-client" certificate and key
+[certs] Generating "apiserver-etcd-client" certificate and key
+[certs] Generating "sa" key and public key
+[kubeconfig] Using kubeconfig folder "/etc/kubernetes"
+[kubeconfig] Writing "admin.conf" kubeconfig file
+[kubeconfig] Writing "kubelet.conf" kubeconfig file
+[kubeconfig] Writing "controller-manager.conf" kubeconfig file
+[kubeconfig] Writing "scheduler.conf" kubeconfig file
+[etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
+[control-plane] Using manifest folder "/etc/kubernetes/manifests"
+[control-plane] Creating static Pod manifest for "kube-apiserver"
+[control-plane] Creating static Pod manifest for "kube-controller-manager"
+[control-plane] Creating static Pod manifest for "kube-scheduler"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Starting the kubelet
+[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
+[apiclient] All control plane components are healthy after 5.003051 seconds
+[upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
+[kubelet] Creating a ConfigMap "kubelet-config" in namespace kube-system with the configuration for the kubelets in the cluster
+[upload-certs] Skipping phase. Please see --upload-certs
+[mark-control-plane] Marking the node manager as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
+[mark-control-plane] Marking the node manager as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
+[bootstrap-token] Using token: 7kovac.41djmjk39wv2tz86
+[bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
+[bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to get nodes
+[bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
+[bootstrap-token] Configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+[bootstrap-token] Configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
+[bootstrap-token] Creating the "cluster-info" ConfigMap in the "kube-public" namespace
+[kubelet-finalize] Updating "/etc/kubernetes/kubelet.conf" to point to a rotatable kubelet client certificate and key
+[addons] Applied essential addon: CoreDNS
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 172.31.28.213:6443 --token 7kovac.41djmjk39wv2tz86 \                <---------------------<<
+        --discovery-token-ca-cert-hash sha256:587aa7bdeed983db54e7011e8872cd456a37f869a55d89544b2b84c3a57b7312   
+root@manager:~# 
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+==== COPYING KUBE/CONFIG FILE ====
+## kubectl file looks for admin.conf file (/etc/kubernetes/admin.conf)
+root@manager:~# kubectl get pods 
+E0902 23:38:34.476226    2991 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0902 23:38:34.476459    2991 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0902 23:38:34.477711    2991 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0902 23:38:34.478044    2991 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0902 23:38:34.479725    2991 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+root@manager:~# 
+
+
+## why kube/config file is important because, whenever you will run the kubectl command it will be looking for .kube/config file. This file contains the information about the 
+## kubernetes cluster. 
+root@manager:~# mkdir -p $HOME/.kube
+root@manager:~# cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+root@manager:~# chown $(id -u):$(id -g) $HOME/.kube/config
+
+## CLUSTER AND USER INFORMATION WILL BE STORED IN THE .kube/config file which you copy it from //etc/kubernetes/admin.conf
+vi .kube/config
+
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJUVlqT1psS09hbFl3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TkRBNU1ESXlNekEyTVRaYUZ3MHpOREE0TXpFeU16RXhNVFphTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURVK1lDVFp1dkhWMDBabU9JNnVnd1NrMCthTkM4R1QzcmRIRndjMVZnNnhRMExNTVhsdjdUbndJZEcKUG4xckN0bjg4aTNEQkd5WHhadkQ4azRPRlhmVjJWZFQxOWhZdCtTY29WakRyM1k0YmJUYlFTUnltZVlmZ204dwpwYjBYbVVGRmxZL0JJTFZSVU1zbi9ZSXlxcjhlTDhDL0dWN20yblMya2x6Z3UzbEdLTUhFZmdBOUZNTFFTT3VICmVtSHdrNGxaelNQbHF6WEZYMEhZSG1LZ1JHN1V1dWI0L2FDSVNTdktrN21UZ25iR0xtaUhGclB3TGhMdlR3MXoKcHN1WkdvSWd0ellDL0xQREprUTZaN2RNa1NIK0lsVUxScWF4KzRxd0pKS0h3eHJmZTN1L0xOOUc5VlUwa3pYQgpSdlM4WmZ2eTVKZHFiT1ozbTVRSkdiMXZXU2xWQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJUZzhKdzRrelhxSkZiWWFzUkJUL1pNNHEvVFV6QVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRRERxM0ZJdk41UApYd3ZmWCs1VDJrLzJtME96VWpVck9lMXdDNFdXTUQ0M1ZObm5valkrbUxxNjVVR0F1bG9HTHFHZ3FNNGQ4UmNMCis3Zmx4V1AxRVpIMlFVWjJMMW9adVh6anR0Nnd6cStkNzJPZVJyUTVKUlVFZm51UTJPL2loQmFzV01PK0wzdU0KbGNjczJwSUc3Q2hUTTRoa01jUUt1ZEpZam14NThwaUVEYlRsVTFnbDlVNVZaMGg3ZUxUZDRwSzdjZFhmam9NNgp4TDhncTREbXBuWnAwNkJNNFk0NG1ZTkUvVWtlWlNPL0pIOTZoZHM2VXNZdlkrK3U0VWU2b1l3eFh3MnRTcHBzCjA2UXQzbEpCMTRSajd5aG5MOVJ4SE9MeUhIZXhWQXZWdDdhVWxQcTAvcHNDWTBtVUVYZitQQTY4RHFXcUlQdVMKdnI5Q2dLNWJLdTdYCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K  <--------CLUSTER CERTIFICATE
+    server: https://172.31.28.213:6443  <--------SERVER ADDRESS WHERE YOUR SERVER IS LOCATED (MASTER NODE) 
+  name: kubernetes  <--------NAME OF THER SERVER
+contexts:  <--------CONTEXT IS COMBINATION OF USER AND CLUSTER
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config  <--------KIND OF A FILE IS CONFIG
+preferences: {}
+users:  <--------USER CERTIFICATE AND CLIENT 
+- name: kubernetes-admin
+  user:  
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURJVENDQWdtZ0F3SUJBZ0lJVGJuK0tKSlN2NU13RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TkRBNU1ESXlNekEyTVRaYUZ3MHlOVEE1TURJeU16RXhNVGhhTURReApGekFWQmdOVkJBb1REbk41YzNSbGJUcHRZWE4wWlhKek1Sa3dGd1lEVlFRREV4QnJkV0psY201bGRHVnpMV0ZrCmJXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQTVWeXBCVlpkdnJuaTVsWWEKTDI2WHorbnFzZGhnVzMzUkI4RGl6MnNDckJwcnM3SnVNcFJuZEdYcVVmVHhsbDErYW5ubzBmOGtLUnk1ZnlLNgpjYVhQR0lPdlJUZVVLWFFQQzBDTU8vbXcvclprSnU1ZzBmTFNVSnVwdTRqTVRET0VleFBzR2tMbW1RMGhOM2lHClE3RFhvWnJMSGhjSG1uaExxaHhsOXptcEtSQXMvMFB3VDVIU3U0QUwrMEFObUU1ektFU0VyL0QvT3hRbDFjUkMKL0VQYlh5VkRQR24zdVdIM3RSQm9MQnJLcW9sQ3BjaUdOYnhzaFBrbmdxZVdKemVSM0VKUEhjMmo3RElHYWdPRQpQM09iRUlJVWhCbWJHNzBxUUdLeUcza2tlVmxhM2hySnhQWWJNUlVGdk1keGIzZUFUV01kYTB2T0FVRnNGc3p3ClhaZHRyUUlEQVFBQm8xWXdWREFPQmdOVkhROEJBZjhFQkFNQ0JhQXdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUgKQXdJd0RBWURWUjBUQVFIL0JBSXdBREFmQmdOVkhTTUVHREFXZ0JUZzhKdzRrelhxSkZiWWFzUkJUL1pNNHEvVApVekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBVThvRGNpVmFqS0Z2S0owL1F2VWllajBFN1BMZk9rQ1dreEFmCkFLaklFU1JpeTdBTmF1TFNEWnlhNjhGODVXNFBjK0ZJcWtSZTd1bEN1VzFJZ3V1aTk3bUtTeFJMYnIwcExMWVgKWk41d3Z6UDFkRHdlQmZ3UjJNb3NiWklVb21NaHVDOEJ1Tzc5MVdyVFQ1bXErOEgrdDdvdmlXdXdWaHNkWGhNYgpBdmxZOU5IdFZMbWVnT2VVd3FsRnVRTmwzSnNvdGJTOWFnYlo4UkFoYjc4d3hCUWNvMTJCekZROTdCVzc3NkV1CmF4TU4zK1g4UUVyVXRpYy8rL3I2eWJWNCtQR1RMUExKd2VhQzlHSlBmSTRyZE43ZVpQbTlQT3FtWDBKTWg3YW4KNmdMZ29uM3Bla3EvWDYrb25FUVQzekdMVlFtZ2NRR3YxQVRZaEY2TFlXcXdycmZreFE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBNVZ5cEJWWmR2cm5pNWxZYUwyNlh6K25xc2RoZ1czM1JCOERpejJzQ3JCcHJzN0p1Ck1wUm5kR1hxVWZUeGxsMSthbm5vMGY4a0tSeTVmeUs2Y2FYUEdJT3ZSVGVVS1hRUEMwQ01PL213L3Jaa0p1NWcKMGZMU1VKdXB1NGpNVERPRWV4UHNHa0xtbVEwaE4zaUdRN0RYb1pyTEhoY0htbmhMcWh4bDl6bXBLUkFzLzBQdwpUNUhTdTRBTCswQU5tRTV6S0VTRXIvRC9PeFFsMWNSQy9FUGJYeVZEUEduM3VXSDN0UkJvTEJyS3FvbENwY2lHCk5ieHNoUGtuZ3FlV0p6ZVIzRUpQSGMyajdESUdhZ09FUDNPYkVJSVVoQm1iRzcwcVFHS3lHM2trZVZsYTNockoKeFBZYk1SVUZ2TWR4YjNlQVRXTWRhMHZPQVVGc0ZzendYWmR0clFJREFRQUJBb0lCQUUydS9aeE9MVUF0QzNuQwpUZW9reGd4b2lOSWxuRFZBdnV5bVd1dXZyZDhHcjlYVUtGaS9STzc2bWN1YWI3emkrNjhxalQyYThlOXV5REVVClhSdWk4aXEyWjBYRlZreFgvOFJxMzFSczlKTEF5ZGtad2ZjNkRCdTdMVmpVTTRYWHFSWmFvQXdnL3FOMSsvc2kKdWk3eEZZZXB1d1A4L3RsRnh6TGRuWGVIc3hDeHdxaW53Y2F4U3B5YWVRWnhLdU9KNWVDM1pVYzJPY0JBcGRueQpQMndWcW5nL2VCbnR1d0NCdno2eEYraUNzUWJPNlYyTDJTMGJGR3AwNHpONTZqc1RBNVhvS3lWSmEybzRyMWhhCmVSNnhFQUNVM3RmaTFWb0hxNEZjMzArUGxLZ0ZPL1BneGF3aExCRDgwRkdzeFFKK1F2cXFDSzk5UUdDTDU5VnMKeFJiRmpBRUNnWUVBK0xlTEVhR3lncWduUVh6TGs3VGIrWlJqSkFNRkFPZ016azg2dUFVSi81N2dyTm9wZi9TaAptS2xCRk5hTll3akJDT01ldHdUOFAxcVVqWG1zNWd3MVNUYnZLNUdaaWVHTTcrUEtxdEtYWVdMVDBRQkFzZ2dWCkhuL2NtOWdYVGZlSUJZeVJwZGNaelBpeTZ4NXFuVEdmcWpGWXdwVms0cXRUTWo2UkJwbWFaUUVDZ1lFQTdCUUcKcXNaczdKRzhxLzFycVRsQmZUUVlURnZUcnFBS3hCcE1UelY5L1ZBMmp5WGd4MUl5TjU3MzIzK1lWL0R5SzJLSQpWUHlBdWhVTm9uWXBZNGFpQlYvTGFyYU8yK3ErUWhpTFl0ejRxR3hiMStjUEJWNTRxV3Vvc0tQaGU5RERVaVZHClhuTDlJMU9zQVNYZEpsMmRGOGVoTGpnekJDSlcvUGdkdHEzbExLMENnWUJ4QW1UTUpCNktRNEZpdmlONS84bWIKdzVLd2dEYTd6TFJVNGFjYWloK2E2RVBLQm02bzF5eTl3dG54Yi9OYU5sWVBoYk1sRWJ6VHhJS1BMZVFqdXhSVApLZ1RPVlIvZ2lIMlRXbnR4MXJJMTY4TzJ5VmljREJRY2daaHByMndYWHd1TkNldjc0SnEyaWFJeU51WFdldi9EClF4ekRmVUlUeENqUFFhSi96emRhQVFLQmdRQ29wZjNGVGc5T1NTYUJyMzZUMjRVL1RsSDFhcndrU2N5bkh5cFkKZzV4SHRGL2xqMmV1dkxlSEtKZGtSUml0NmtEMllXT0hZd01LN0ROYlZoSm5PU3pScmdlQmFuMVArYmlGTzBlSQpEdGZNYWV5S3BsUUN2K1J2RTZ2azFJNG1oNUtoUW1PczRYU1pJaE1FbHVvUG1GeTdPaStZOXlqcTBTVlhmbUNyCnVqcTMyUUtCZ1FDM0NKWDZZa0lFU05xTUJ5Um01Rkpla0VCVUd4Yk9oTmh3eXpGUWZCTmJsL0tlTlJIY0RBL3cKdjB4ckZVdXN6dnoveDVwVk5ZKytxa0dMNGdnSXc0eVZPNXBFMDErcklVQm8yYUlPLzB3QjVFK2U4RFo5TkFxSwpJYUx0WGNsTDJTSjFhZXJaQ0xFQ0tKb0hkd0lTNFlzd2svVlJkbUxVVXJhYVJOTlJUUVJ3K0E9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+root@manager:~#
+
+
+## now you will be able to run kubectl command 
+root@manager:~# kubectl get pods
+No resources found in default namespace.
+root@manager:~#
+
+
+===== APPLY POD NETWORK CNI =====
+## Q which pod network we will be installing? 
+## to install calico
+# curl https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/calico.yaml
+
+### instead of curl, you can use to apply the cni calico in one shot using the command below:
+# kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/calico.yaml
+
+root@manager:~# kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/calico.yaml
+poddisruptionbudget.policy/calico-kube-controllers created
+serviceaccount/calico-kube-controllers created
+serviceaccount/calico-node created
+serviceaccount/calico-cni-plugin created
+configmap/calico-config created
+customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipreservations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
+clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created
+clusterrole.rbac.authorization.k8s.io/calico-node created
+clusterrole.rbac.authorization.k8s.io/calico-cni-plugin created
+clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created
+clusterrolebinding.rbac.authorization.k8s.io/calico-node created
+clusterrolebinding.rbac.authorization.k8s.io/calico-cni-plugin created
+daemonset.apps/calico-node created
+deployment.apps/calico-kube-controllers created
+root@manager:~#
