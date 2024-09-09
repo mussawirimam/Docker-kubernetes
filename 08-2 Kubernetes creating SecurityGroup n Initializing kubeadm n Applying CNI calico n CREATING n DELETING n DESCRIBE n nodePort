@@ -824,7 +824,7 @@ root@manager:~/app# kubectl logs mycon-pod -c con1
 2024/09/03 17:48:49 [notice] 1#1: start worker process 29
 
 ---- LOGS FOR CONTAINER 2 
-root@manager:~/app# kubectl logs mycon-pod -c con2
+root@manager:~/app# kubectl logs -f mycon-pod -c con2 <-------  -f is to stream the logs
 03-Sep-2024 17:48:56.810 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version name:   Apache Tomcat/10.1.28
 03-Sep-2024 17:48:56.818 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server built:          Aug 2 2024 15:14:43 UTC
 03-Sep-2024 17:48:56.818 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version number: 10.1.28.0
