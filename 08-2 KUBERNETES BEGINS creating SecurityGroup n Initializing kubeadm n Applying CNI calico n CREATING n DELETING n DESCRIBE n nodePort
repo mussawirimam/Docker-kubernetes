@@ -660,6 +660,7 @@ you need to enable the port 30123 in the security group from aws for inbound or 
  b. in port range add 30000 - 32767
 save the rule
 
+# paste in browser: publicipfromanycluster:port(30123 in this case)
 Welcome to nginx!
 If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
 
