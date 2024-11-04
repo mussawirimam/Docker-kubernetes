@@ -1,3 +1,12 @@
+COMMON IMPORTANT SERVICES WHICH ARE REQUIRED TO ACCESS OUR APPLICATION OUTSIDE OF THE CLUSTER:
+Kubernetes Services
+1. internal comm.
+clusterlP
+2. external comm.
+a. NodePort IP: 30000 - 32767
+b. LoadBalancer (on-prem Metal-LB)
+
+==== CREATING THE AWS CLOUD RESOURCES REQUIRED FOR CREATE K8S CLUSTER ==== 
  Go to Security Group
 1. click on create a security group
   a. give security group name (mykube)
