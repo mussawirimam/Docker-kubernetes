@@ -567,7 +567,8 @@ NAME     READY   STATUS    RESTARTS   AGE     LABELS
 newpod   1/1     Running   0          5m29s   app=myapp
 
 
-==== NODEPORT SERVICE AND CREATING YAML FILE WITH DRY RUN ====
+==== CREATING SERVICE NODEPORT FOR THE POD AND CREATING YAML FILE WITH DRY RUN ====
+
 root@manager:~/app# kubectl expose pod newpod --type NodePort  --dry-run=client -o yaml
 ## GARBAGE SCRIPT DRAFT
 apiVersion: v1
