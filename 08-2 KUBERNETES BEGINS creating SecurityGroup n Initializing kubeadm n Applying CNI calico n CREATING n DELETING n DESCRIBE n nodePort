@@ -666,7 +666,7 @@ If you see this page, the nginx web server is successfully installed and working
 
 
 ==== CREATING POD WITH MULTI CONTAINER ==== 
-
+### NOTE: we cannot use the same port number in a pod, that is why we are using tomcat for different port for the reason it shouldnt conflict
 root@manager:~/app# vi multi-con.yaml
 apiVersion: v1
 kind: Pod
