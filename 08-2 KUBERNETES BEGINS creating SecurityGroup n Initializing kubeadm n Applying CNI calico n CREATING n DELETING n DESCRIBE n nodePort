@@ -665,7 +665,7 @@ Welcome to nginx!
 If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
 
 
-==== MULTI CONTAINER POD ==== 
+==== CREATING POD WITH MULTY CONTAINER ==== 
 
 root@manager:~/app# vi multi-con.yaml
 apiVersion: v1
