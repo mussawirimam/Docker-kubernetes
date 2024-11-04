@@ -773,12 +773,15 @@ root@manager:~/app# kubectl get pods
 NAME        READY   STATUS    RESTARTS   AGE
 mycon-pod   2/2     Running   0          3m59s
 newpod      1/1     Running   1          13h
+
+## con1 = Nginx
 root@manager:~/app# kubectl exec -it mycon-pod -c con1 -- bash
 root@mycon-pod:/# ls
 bin   dev		   docker-entrypoint.sh  home  lib64  mnt  proc  run   srv  tmp  var
 boot  docker-entrypoint.d  etc			 lib   media  opt  root  sbin  sys  usr
 exit
 
+## con2 = Tomcat
 root@manager:~/app# kubectl exec -it mycon-pod -c con2 -- bash
 root@mycon-pod:/usr/local/tomcat# ls
 bin           conf             lib      logs            NOTICE     RELEASE-NOTES  temp     webapps.dist
