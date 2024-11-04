@@ -551,6 +551,12 @@ root@manager:~# cp pod.yaml app/
 root@manager:~# cd app/
 root@manager:~/app# cp pod.yaml multi-con.yaml
 
+----TO SEE THE LABEL OF PODS ---- 
+## you create labels for the references e.g in case of attaching a service to a pod etc etc or in case of call and response or accesssing
+root@master:~/app# kubectl get pod --show-labels
+NAME     READY   STATUS    RESTARTS   AGE     LABELS
+newpod   1/1     Running   0          5m29s   app=myapp
+
 
 ==== NODEPORT SERVICE AND CREATING YAML FILE WITH DRY RUN ====
 root@manager:~/app# kubectl expose pod newpod --type NodePort  --dry-run=client -o yaml
