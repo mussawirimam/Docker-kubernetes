@@ -620,6 +620,10 @@ newpod-svc   NodePort    10.109.216.200   <none>        80:31507/TCP   40s <----
 ## you can define the port in your yaml if you want a fixed port to map the pod port to 
 ## nodePort IP range: 30000 - 32767
 
+root@master:~# kubectl delete -f pod-svc.yaml
+service "newpod-svc" deleted
+root@master:~#
+
 root@manager:~/app# vim pod-svc.yaml
 apiVersion: v1
 kind: Service
@@ -649,6 +653,7 @@ newpod-svc   NodePort    10.103.17.74   <none>        80:30123/TCP   25s
 Get the public ip address of node1 from aws
 54.xxx.xxx.xxx:30123 ## <--- paste it in the browser
 you need to enable the port 30123 in the security group from aws for inbound or you can define the whole range for kubernetes service from 30000 - 32767
+--- IN AWS --- 
 1. go to security group
 2. edit inbound rule
  a. add rule
