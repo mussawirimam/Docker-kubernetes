@@ -1,1 +1,23 @@
+we will create two pods exanmmple: 
+node1 
+192.168.0.20
+wordpress
 
+node2 
+192.168.0.21
+db 
+  labels:
+    app:mydb
+
+these two pods above will be communicating through ClusterIP service 
+
+## this service will be used as the hostname while connecting to the database
+apiVersion:v1
+metadata:
+  name: mydb
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3306
+  selector:
+    app: mydb
