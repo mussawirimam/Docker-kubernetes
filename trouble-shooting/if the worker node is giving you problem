@@ -1,0 +1,9 @@
+check if the 
+ufw is allowing the ports
+swap is off
+make sure if you are using containerd or crio define it
+
+in my case when I parameterized the crio in /etc/default/kubelet, for some reason it wasnt working
+so disabled the containerd and deleted the related files for the containerd
+
+https://chatgpt.com/share/67304908-71f8-8001-811f-cd6bce7ac3aa
