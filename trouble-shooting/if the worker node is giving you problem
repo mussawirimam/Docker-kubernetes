@@ -27,6 +27,25 @@ root@node1:~# history
    15  rm -rf /var/run/containerd
    16  systemctl status containerd
    17  cd /usr/lib/systemd/system/
+root@master:~# cd /usr/lib/systemd/system/
+root@master:/usr/lib/systemd/system# rm -rf containerd.service
+
+root@master:/usr/lib/systemd/system# cd /var/run/
+root@master:/var/run# ls
+alsa           containers    dbus             gdm3.pid   lxd-installer.socket  network          prlrosettad.sock  snapd-snap.socket  systemd           utmp
+apport.lock    credentials   dmeventd-client  initctl    motd.dynamic          NetworkManager   prltoolsd.lock    snapd.socket       tmpfiles.d        utsns
+avahi-daemon   crio          dmeventd-server  initramfs  mount                 openvpn          prltoolsd.pid     speech-dispatcher  ubuntu-advantage  uuidd
+blkid          crond.pid     docker           ipcns      multipath             openvpn-client   screen            spice-vdagentd     udev              wpa_supplicant
+cloud-init     crond.reboot  docker.pid       lock       multipathd.pid        openvpn-server   sendsigs.omit.d   sshd               udisks2
+console-setup  cryptsetup    docker.sock      log        needrestart           pidns            setrans           sshd.pid           user
+containerd     cups          gdm3             lvm        netns                 prlrosettad.pid  shm               sudo               userns
+root@master:/var/run# ls container
+ls: cannot access 'container': No such file or directory
+root@master:/var/run# cd containerd/
+root@master:/var/run/containerd# ls
+containerd.sock  containerd.sock.ttrpc  io.containerd.runtime.v1.linux  io.containerd.runtime.v2.task
+root@master:/var/run/containerd# cd ..
+root@master:/var/run# rm -rf containerd
    18  systemctl status containerd
    19  cd ~
    20  vi installk8s.sh
