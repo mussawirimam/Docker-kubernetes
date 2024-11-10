@@ -1,0 +1,890 @@
+root@master:/usr/lib/systemd/system# ls
+ accounts-daemon.service                  initrd-root-fs.target.wants              runlevel4.target                         systemd-networkd.service
+ alsa-restore.service                     initrd-switch-root.service               runlevel5.target                         systemd-networkd.socket
+ alsa-state.service                       initrd-switch-root.target                runlevel6.target                         systemd-networkd-wait-online.service
+ alsa-utils.service                       initrd-switch-root.target.wants          saned.service                            systemd-networkd-wait-online@.service
+ anacron.service                          initrd.target                            saned@.service                           systemd-network-generator.service
+ anacron.timer                            initrd.target.wants                      saned.socket                             systemd-oomd.service
+ apparmor.service                         initrd-udevadm-cleanup-db.service        screen-cleanup.service                   systemd-oomd.socket
+ apport-autoreport.path                   initrd-usr-fs.target                     secureboot-db.service                    systemd-pcrextend@.service
+ apport-autoreport.service                integritysetup-pre.target                serial-getty@.service                    systemd-pcrextend.socket
+ apport-autoreport.timer                  integritysetup.target                    setvtrgb.service                         systemd-pcrfs-root.service
+ apport-coredump-hook@.service            ipp-usb.service                          shutdown.target                          systemd-pcrfs@.service
+ apport-forward@.service                  iscsid.service                           sigpwr.target                            systemd-pcrlock-file-system.service
+ apport-forward.socket                    iscsid.socket                            sleep.target                             systemd-pcrlock-firmware-code.service
+ apport.service                           kerneloops.service                       -.slice.d                                systemd-pcrlock-firmware-config.service
+ apt-daily.service                        kexec.target                             slices.target                            systemd-pcrlock-machine-id.service
+ apt-daily.timer                          kexec.target.wants                       smartcard.target                         systemd-pcrlock-make-policy.service
+ apt-daily-upgrade.service                keyboard-setup.service                   snapd.apparmor.service                   systemd-pcrlock-secureboot-authority.service
+ apt-daily-upgrade.timer                  kmod.service                             snapd.autoimport.service                 systemd-pcrlock-secureboot-policy.service
+ apt-news.service                         kmod-static-nodes.service                snapd.core-fixup.service                 systemd-pcrmachine.service
+ autovt@.service                          ldconfig.service                         snapd.failure.service                    systemd-pcrphase-initrd.service
+ avahi-daemon.service                     local-fs-pre.target                      snapd.mounts-pre.target                  systemd-pcrphase.service
+ avahi-daemon.socket                      local-fs.target                          snapd.mounts.target                      systemd-pcrphase-sysinit.service
+ basic.target                             logrotate.service                        snapd.recovery-chooser-trigger.service   systemd-poweroff.service
+ binfmt-support.service                   logrotate.timer                          snapd.seeded.service                     systemd-pstore.service
+ blk-availability.service                 lvm2-lvmpolld.service                    snapd.service                            systemd-quotacheck.service
+ blockdev@.target                         lvm2-lvmpolld.socket                     snapd.snap-repair.service                systemd-random-seed.service
+ bluetooth.service                        lvm2-monitor.service                     snapd.snap-repair.timer                  systemd-reboot.service
+ bluetooth.target                         lxd-agent.service                        snapd.socket                             systemd-remount-fs.service
+ bolt.service                             lxd-installer@.service                   snapd.system-shutdown.service            systemd-repart.service
+ boot-complete.target                     lxd-installer.socket                     sockets.target                           systemd-resolved.service
+ brltty.service                           machine.slice                            sockets.target.wants                     systemd-rfkill.service
+ brltty-udev.service                      man-db.service                           soft-reboot.target                       systemd-rfkill.socket
+ cloud-config.service                     man-db.timer                             sound.target                             systemd-soft-reboot.service
+ cloud-config.target                      mdadm-grow-continue@.service             sound.target.wants                       systemd-storagetm.service
+ cloud-final.service                      mdadm-last-resort@.service               speech-dispatcherd.service               systemd-suspend.service
+ cloud-init-hotplugd.service              mdadm-last-resort@.timer                 spice-vdagentd.service                   systemd-suspend-then-hibernate.service
+ cloud-init-hotplugd.socket               mdcheck_continue.service                 spice-vdagentd.socket                    systemd-sysctl.service
+ cloud-init-local.service                 mdcheck_continue.timer                   spice-vdagent.service                    systemd-sysext.service
+ cloud-init.service                       mdcheck_start.service                    ssh.service                              systemd-sysext@.service
+ cloud-init.target                        mdcheck_start.timer                      ssh.socket                               systemd-sysext.socket
+ colord.service                           mdmonitor-oneshot.service                ssl-cert.service                         systemd-sysupdate-reboot.service
+ configure-printer@.service               mdmonitor-oneshot.timer                  sssd-autofs.service                      systemd-sysupdate-reboot.timer
+ console-getty.service                    mdmonitor.service                        sssd-autofs.socket                       systemd-sysupdate.service
+ console-setup.service                    mdmon@.service                           sssd-nss.service                         systemd-sysupdate.timer
+ container-getty@.service                 ModemManager.service                     sssd-nss.socket                          systemd-sysusers.service
+ cron.service                             modprobe@.service                        sssd-pac.service                         systemd-timedated.service
+ cryptdisks-early.service                 motd-news.service                        sssd-pac.socket                          systemd-timesyncd.service
+ cryptdisks.service                       motd-news.timer                          sssd-pam-priv.socket                     systemd-time-wait-sync.service
+ cryptsetup-pre.target                    multipathd.service                       sssd-pam.service                         systemd-tmpfiles-clean.service
+ cryptsetup.target                        multipathd.socket                        sssd-pam.socket                          systemd-tmpfiles-clean.timer
+ ctrl-alt-del.target                      multipath-tools-boot.service             sssd.service                             systemd-tmpfiles-setup-dev-early.service
+ cups-browsed.service                     multipath-tools.service                  sssd-ssh.service                         systemd-tmpfiles-setup-dev.service
+ cups.path                                multi-user.target                        sssd-ssh.socket                          systemd-tmpfiles-setup.service
+ cups.service                             multi-user.target.wants                  sssd-sudo.service                        systemd-tpm2-setup-early.service
+ cups.socket                              networkd-dispatcher.service              sssd-sudo.socket                         systemd-tpm2-setup.service
+ dbus-org.freedesktop.hostname1.service   NetworkManager-dispatcher.service        storage-target-mode.target               systemd-udevd-control.socket
+ dbus-org.freedesktop.locale1.service     NetworkManager.service                   sudo.service                             systemd-udevd-kernel.socket
+ dbus-org.freedesktop.login1.service      NetworkManager-wait-online.service       suspend.target                           systemd-udevd.service
+ dbus-org.freedesktop.timedate1.service   network-online.target                    suspend-then-hibernate.target            systemd-udevd.service.d
+ dbus.service                             network-pre.target                       swap.target                              systemd-udev-settle.service
+ dbus.socket                              network.target                           switcheroo-control.service               systemd-udev-trigger.service
+ debug-shell.service                      nftables.service                         sys-fs-fuse-connections.mount            systemd-update-done.service
+ default.target                           nm-priv-helper.service                   sysinit.target                           systemd-update-utmp-runlevel.service
+ dev-hugepages.mount                      nss-lookup.target                        sysinit.target.wants                     systemd-update-utmp.service
+ dev-mqueue.mount                         nss-user-lookup.target                   sys-kernel-config.mount                  systemd-user-sessions.service
+ dmesg.service                            open-iscsi.service                       sys-kernel-debug.mount                   systemd-volatile-root.service
+ dm-event.service                         open-vm-tools.service                    sys-kernel-tracing.mount                'system-systemd\x2dcryptsetup.slice'
+ dm-event.socket                          openvpn-client@.service                  syslog.socket                           'system-systemd\x2dveritysetup.slice'
+ docker.service                           openvpn-server@.service                  sysstat-collect.service                  system-update-cleanup.service
+ docker.socket                            openvpn.service                          sysstat-collect.timer                    system-update-pre.target
+ dpkg-db-backup.service                   openvpn@.service                         sysstat.service                          system-update.target
+ dpkg-db-backup.timer                     packagekit-offline-update.service        sysstat-summary.service                  system-update.target.wants
+ e2scrub_all.service                      packagekit.service                       sysstat-summary.timer                    timers.target
+ e2scrub_all.timer                        pam_namespace.service                    systemd-ask-password-console.path        timers.target.wants
+ e2scrub_fail@.service                    paths.target                             systemd-ask-password-console.service     time-set.target
+ e2scrub_reap.service                     pd-mapper.service                        systemd-ask-password-plymouth.path       time-sync.target
+ e2scrub@.service                         plymouth-halt.service                    systemd-ask-password-plymouth.service    tpm-udev.path
+ emergency.service                        plymouth-kexec.service                   systemd-ask-password-wall.path           tpm-udev.service
+ emergency.target                         plymouth-log.service                     systemd-ask-password-wall.service        ua-reboot-cmds.service
+ esm-cache.service                        plymouth-poweroff.service                systemd-backlight@.service               ua-timer.service
+ exit.target                              plymouth-quit.service                    systemd-battery-check.service            ua-timer.timer
+ factory-reset.target                     plymouth-quit-wait.service               systemd-binfmt.service                   ubuntu-advantage-desktop-daemon.service
+ finalrd.service                          plymouth-read-write.service              systemd-boot-check-no-failures.service   ubuntu-advantage.service
+ final.target                             plymouth-reboot.service                  systemd-bsod.service                     udev.service
+ first-boot-complete.target               plymouth.service                         systemd-confext.service                  udisks2.service
+ fprintd.service                          plymouth-start.service                   systemd-coredump@.service.d              ufw.service
+ friendly-recovery.service                plymouth-switch-root-initramfs.service   systemd-exit.service                     umount.target
+ friendly-recovery.target                 plymouth-switch-root.service             systemd-firstboot.service                unattended-upgrades.service
+ fstrim.service                           polkit.service                           systemd-fsckd.service                    update-notifier-download.service
+ fstrim.timer                             pollinate.service                        systemd-fsckd.socket                     update-notifier-download.timer
+ fwupd-offline-update.service             poweroff.target                          systemd-fsck-root.service                update-notifier-motd.service
+ fwupd-refresh.service                    poweroff.target.wants                    systemd-fsck@.service                    update-notifier-motd.timer
+ fwupd-refresh.timer                      power-profiles-daemon.service            systemd-growfs-root.service              upower.service
+ fwupd.service                            printer.target                           systemd-growfs@.service                  usb-gadget.target
+ gdm3.service                             procps.service                           systemd-halt.service                     usb_modeswitch@.service
+ gdm.service                              proc-sys-fs-binfmt_misc.automount        systemd-hibernate-resume.service         usbmuxd.service
+ geoclue.service                          proc-sys-fs-binfmt_misc.mount            systemd-hibernate.service                user@0.service.d
+ getty-pre.target                         qrtr-ns.service                          systemd-hostnamed.service                user-runtime-dir@.service
+ getty@.service                           quotaon.service                          systemd-hwdb-update.service              user@.service
+ getty-static.service                     rc-local.service                         systemd-hybrid-sleep.service             user@.service.d
+ getty.target                             rc-local.service.d                       systemd-initctl.service                  user.slice
+ getty.target.wants                       reboot.target                            systemd-initctl.socket                   user-.slice.d
+ gnome-remote-desktop.service             reboot.target.wants                      systemd-journal-catalog-update.service   uuidd.service
+ graphical.target                         remote-cryptsetup.target                 systemd-journald-audit.socket            uuidd.socket
+ graphical.target.wants                   remote-fs-pre.target                     systemd-journald-dev-log.socket          veritysetup-pre.target
+ grub-common.service                      remote-fs.target                         systemd-journald.service                 veritysetup.target
+ grub-initrd-fallback.service             remote-veritysetup.target                systemd-journald@.service                vgauth.service
+ halt.target                              rescue.service                           systemd-journald.service.d               wacom-inputattach@.service
+ halt.target.wants                        rescue-ssh.target                        systemd-journald.socket                  whoopsie.path
+ hibernate.target                         rescue.target                            systemd-journald@.socket                 whoopsie.service
+ hwclock.service                          rescue.target.wants                      systemd-journald-varlink@.socket         wpa_supplicant-nl80211@.service
+ hybrid-sleep.target                      rpcbind.target                           systemd-journal-flush.service            wpa_supplicant.service
+ iio-sensor-proxy.service                 rsync.service                            systemd-kexec.service                    wpa_supplicant@.service
+ initrd-cleanup.service                   rsyslog.service                          systemd-localed.service                  wpa_supplicant-wired@.service
+ initrd-fs.target                         rtkit-daemon.service                     systemd-localed.service.d                x11-common.service
+ initrd-parse-etc.service                 runlevel0.target                         systemd-logind.service                   xfs_scrub_all.service
+ initrd-root-device.target                runlevel1.target                         systemd-logind.service.d                 xfs_scrub_all.timer
+ initrd-root-device.target.wants          runlevel2.target                         systemd-machine-id-commit.service        xfs_scrub_fail@.service
+ initrd-root-fs.target                    runlevel3.target                         systemd-modules-load.service             xfs_scrub@.service
+root@master:/usr/lib/systemd/system# cd ~
+root@master:~# ls
+installk8s.sh  snap
+root@master:~# ./installk8s.sh
+Warning: The unit file, source configuration file or drop-ins of apt-news.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+Warning: The unit file, source configuration file or drop-ins of esm-cache.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+Hit:1 http://us.archive.ubuntu.com/ubuntu noble InRelease
+Get:2 http://us.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:3 https://download.docker.com/linux/ubuntu noble InRelease [48.8 kB]
+Hit:4 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Get:5 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:6 https://download.docker.com/linux/ubuntu noble/stable arm64 Packages [15.3 kB]
+Get:7 http://us.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:8 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease [126 kB]
+Get:9 http://us.archive.ubuntu.com/ubuntu noble-proposed InRelease [265 kB]
+Get:10 http://us.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [623 kB]
+Get:11 http://us.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [151 kB]
+Get:12 http://us.archive.ubuntu.com/ubuntu noble-updates/main arm64 Components [113 kB]
+Get:13 http://us.archive.ubuntu.com/ubuntu noble-updates/main Icons (48x48) [30.1 kB]
+Get:14 http://us.archive.ubuntu.com/ubuntu noble-updates/main Icons (64x64) [43.9 kB]
+Get:15 http://us.archive.ubuntu.com/ubuntu noble-updates/main arm64 c-n-f Metadata [10.1 kB]
+Get:16 http://us.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [428 kB]
+Get:17 http://us.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [82.7 kB]
+Get:18 http://us.archive.ubuntu.com/ubuntu noble-updates/restricted arm64 Components [208 B]
+Get:19 http://us.archive.ubuntu.com/ubuntu noble-updates/restricted arm64 c-n-f Metadata [372 B]
+Get:20 http://us.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [716 kB]
+Get:21 http://us.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [212 kB]
+Get:22 http://us.archive.ubuntu.com/ubuntu noble-updates/universe arm64 Components [308 kB]
+Get:23 http://us.archive.ubuntu.com/ubuntu noble-updates/universe Icons (48x48) [170 kB]
+Get:24 http://us.archive.ubuntu.com/ubuntu noble-updates/universe Icons (64x64) [269 kB]
+Get:25 http://us.archive.ubuntu.com/ubuntu noble-updates/universe arm64 c-n-f Metadata [19.4 kB]
+Get:26 http://us.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [15.0 kB]
+Get:27 http://us.archive.ubuntu.com/ubuntu noble-updates/multiverse Translation-en [3,820 B]
+Get:28 http://us.archive.ubuntu.com/ubuntu noble-updates/multiverse arm64 Components [208 B]
+Get:29 http://us.archive.ubuntu.com/ubuntu noble-updates/multiverse Icons (48x48) [1,867 B]
+Get:30 http://us.archive.ubuntu.com/ubuntu noble-updates/multiverse Icons (64x64) [2,497 B]
+Get:31 http://us.archive.ubuntu.com/ubuntu noble-updates/multiverse arm64 c-n-f Metadata [364 B]
+Get:32 http://us.archive.ubuntu.com/ubuntu noble-backports/main arm64 Components [208 B]
+Get:33 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [456 kB]
+Get:34 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease [126 kB]
+Get:35 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease [126 kB]
+Get:36 http://security.ubuntu.com/ubuntu noble-security/main Translation-en [97.2 kB]
+Get:37 http://security.ubuntu.com/ubuntu noble-security/main arm64 Components [5,672 B]
+Get:38 http://security.ubuntu.com/ubuntu noble-security/main Icons (48x48) [11.3 kB]
+Get:39 http://security.ubuntu.com/ubuntu noble-security/main Icons (64x64) [17.1 kB]
+Get:40 http://security.ubuntu.com/ubuntu noble-security/main arm64 c-n-f Metadata [5,636 B]
+Get:41 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [428 kB]
+Get:42 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 Packages [622 kB]
+Get:43 http://security.ubuntu.com/ubuntu noble-security/restricted Translation-en [82.7 kB]
+Get:44 http://security.ubuntu.com/ubuntu noble-security/restricted arm64 Components [208 B]
+Get:45 http://security.ubuntu.com/ubuntu noble-security/restricted arm64 c-n-f Metadata [376 B]
+Get:46 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [557 kB]
+Get:47 http://security.ubuntu.com/ubuntu noble-security/universe Translation-en [149 kB]
+Get:48 http://security.ubuntu.com/ubuntu noble-security/universe arm64 Components [51.9 kB]
+Get:49 http://security.ubuntu.com/ubuntu noble-security/universe Icons (48x48) [47.0 kB]
+Get:50 http://security.ubuntu.com/ubuntu noble-security/universe Icons (64x64) [73.4 kB]
+Get:51 http://security.ubuntu.com/ubuntu noble-security/universe arm64 c-n-f Metadata [13.3 kB]
+Get:52 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [12.2 kB]
+Get:53 http://ports.ubuntu.com/ubuntu-ports noble-updates/main Translation-en [151 kB]
+Get:54 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 Components [113 kB]
+Get:55 http://ports.ubuntu.com/ubuntu-ports noble-updates/main Icons (48x48) [30.1 kB]
+Get:56 http://ports.ubuntu.com/ubuntu-ports noble-updates/main Icons (64x64) [43.9 kB]
+Get:57 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 c-n-f Metadata [10.1 kB]
+Get:58 http://ports.ubuntu.com/ubuntu-ports noble-updates/restricted arm64 Packages [458 kB]
+Get:59 http://security.ubuntu.com/ubuntu noble-security/multiverse Translation-en [2,940 B]
+Get:60 http://security.ubuntu.com/ubuntu noble-security/multiverse arm64 Components [208 B]
+Get:61 http://security.ubuntu.com/ubuntu noble-security/multiverse arm64 c-n-f Metadata [344 B]
+Get:62 http://ports.ubuntu.com/ubuntu-ports noble-updates/restricted Translation-en [82.7 kB]
+Get:63 http://ports.ubuntu.com/ubuntu-ports noble-updates/restricted arm64 Components [208 B]
+Get:64 http://ports.ubuntu.com/ubuntu-ports noble-updates/restricted arm64 c-n-f Metadata [372 B]
+Get:65 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 Packages [700 kB]
+Get:66 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe Translation-en [212 kB]
+Get:67 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 Components [308 kB]
+Get:68 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe Icons (48x48) [170 kB]
+Get:69 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe Icons (64x64) [269 kB]
+Get:70 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 c-n-f Metadata [19.4 kB]
+Get:71 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse arm64 Packages [11.1 kB]
+Get:72 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse Translation-en [3,820 B]
+Get:73 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse arm64 Components [208 B]
+Get:74 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse Icons (48x48) [1,867 B]
+Get:75 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse Icons (64x64) [2,497 B]
+Get:76 http://ports.ubuntu.com/ubuntu-ports noble-updates/multiverse arm64 c-n-f Metadata [364 B]
+Get:77 http://ports.ubuntu.com/ubuntu-ports noble-backports/main arm64 Components [208 B]
+Get:78 http://ports.ubuntu.com/ubuntu-ports noble-backports/restricted arm64 Components [212 B]
+Get:79 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe arm64 Packages [10.6 kB]
+Get:80 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe Translation-en [10.8 kB]
+Get:81 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe arm64 Components [21.1 kB]
+Get:82 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe Icons (48x48) [5,789 B]
+Get:83 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe Icons (64x64) [11.4 kB]
+Get:84 http://ports.ubuntu.com/ubuntu-ports noble-backports/universe arm64 c-n-f Metadata [1,104 B]
+Get:85 http://ports.ubuntu.com/ubuntu-ports noble-backports/multiverse arm64 Components [212 B]
+Get:86 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 Packages [455 kB]
+Get:87 http://us.archive.ubuntu.com/ubuntu noble-backports/restricted arm64 Components [212 B]
+Get:88 http://us.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [10.6 kB]
+Get:89 http://us.archive.ubuntu.com/ubuntu noble-backports/universe Translation-en [10.8 kB]
+Get:90 http://us.archive.ubuntu.com/ubuntu noble-backports/universe arm64 Components [21.1 kB]
+Get:91 http://us.archive.ubuntu.com/ubuntu noble-backports/universe Icons (48x48) [5,789 B]
+Get:92 http://us.archive.ubuntu.com/ubuntu noble-backports/universe Icons (64x64) [11.4 kB]
+Get:93 http://ports.ubuntu.com/ubuntu-ports noble-security/main Translation-en [97.2 kB]
+Get:94 http://us.archive.ubuntu.com/ubuntu noble-backports/universe arm64 c-n-f Metadata [1,104 B]
+Get:95 http://us.archive.ubuntu.com/ubuntu noble-backports/multiverse arm64 Components [212 B]
+Get:96 http://us.archive.ubuntu.com/ubuntu noble-proposed/main amd64 Packages [144 kB]
+Get:97 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 Components [5,672 B]
+Get:98 http://ports.ubuntu.com/ubuntu-ports noble-security/main Icons (48x48) [11.3 kB]
+Get:99 http://us.archive.ubuntu.com/ubuntu noble-proposed/main Translation-en [42.5 kB]
+Get:100 http://us.archive.ubuntu.com/ubuntu noble-proposed/main arm64 Components [22.0 kB]
+Get:101 http://us.archive.ubuntu.com/ubuntu noble-proposed/main Icons (48x48) [5,691 B]
+Get:102 http://ports.ubuntu.com/ubuntu-ports noble-security/main Icons (64x64) [17.1 kB]
+Get:103 http://us.archive.ubuntu.com/ubuntu noble-proposed/main Icons (64x64) [11.2 kB]
+Get:104 http://us.archive.ubuntu.com/ubuntu noble-proposed/main arm64 c-n-f Metadata [3,756 B]
+Get:105 http://us.archive.ubuntu.com/ubuntu noble-proposed/restricted amd64 Packages [60.8 kB]
+Get:106 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 c-n-f Metadata [5,636 B]
+Get:107 http://us.archive.ubuntu.com/ubuntu noble-proposed/restricted Translation-en [14.1 kB]
+Get:108 http://us.archive.ubuntu.com/ubuntu noble-proposed/restricted arm64 Components [212 B]
+Get:109 http://ports.ubuntu.com/ubuntu-ports noble-security/restricted arm64 Packages [458 kB]
+Get:110 http://us.archive.ubuntu.com/ubuntu noble-proposed/restricted arm64 c-n-f Metadata [352 B]
+Get:111 http://us.archive.ubuntu.com/ubuntu noble-proposed/universe amd64 Packages [643 kB]
+Get:112 http://us.archive.ubuntu.com/ubuntu noble-proposed/universe Translation-en [79.7 kB]
+Get:113 http://us.archive.ubuntu.com/ubuntu noble-proposed/universe arm64 Components [67.7 kB]
+Get:114 http://us.archive.ubuntu.com/ubuntu noble-proposed/universe Icons (48x48) [45.1 kB]
+Get:115 http://us.archive.ubuntu.com/ubuntu noble-proposed/universe Icons (64x64) [90.3 kB]
+Get:116 http://ports.ubuntu.com/ubuntu-ports noble-security/restricted Translation-en [82.7 kB]
+Get:117 http://us.archive.ubuntu.com/ubuntu noble-proposed/universe arm64 c-n-f Metadata [9,620 B]
+Get:118 http://us.archive.ubuntu.com/ubuntu noble-proposed/multiverse arm64 Components [212 B]
+Get:119 http://us.archive.ubuntu.com/ubuntu noble-proposed/multiverse Icons (48x48) [29 B]
+Get:120 http://us.archive.ubuntu.com/ubuntu noble-proposed/multiverse Icons (64x64) [29 B]
+Get:121 http://us.archive.ubuntu.com/ubuntu noble-proposed/multiverse arm64 c-n-f Metadata [344 B]
+Get:122 http://ports.ubuntu.com/ubuntu-ports noble-security/restricted arm64 Components [208 B]
+Get:123 http://ports.ubuntu.com/ubuntu-ports noble-security/restricted arm64 c-n-f Metadata [376 B]
+Get:124 http://ports.ubuntu.com/ubuntu-ports noble-security/universe arm64 Packages [546 kB]
+Get:125 http://ports.ubuntu.com/ubuntu-ports noble-security/universe Translation-en [149 kB]
+Get:126 http://ports.ubuntu.com/ubuntu-ports noble-security/universe arm64 Components [51.9 kB]
+Get:127 http://ports.ubuntu.com/ubuntu-ports noble-security/universe Icons (48x48) [47.0 kB]
+Get:128 http://ports.ubuntu.com/ubuntu-ports noble-security/universe Icons (64x64) [73.4 kB]
+Get:129 http://ports.ubuntu.com/ubuntu-ports noble-security/universe arm64 c-n-f Metadata [13.3 kB]
+Get:130 http://ports.ubuntu.com/ubuntu-ports noble-security/multiverse arm64 Packages [10.7 kB]
+Get:131 http://ports.ubuntu.com/ubuntu-ports noble-security/multiverse Translation-en [2,940 B]
+Get:132 http://ports.ubuntu.com/ubuntu-ports noble-security/multiverse arm64 Components [208 B]
+Get:133 http://ports.ubuntu.com/ubuntu-ports noble-security/multiverse arm64 c-n-f Metadata [344 B]
+Fetched 12.9 MB in 9s (1,433 kB/s)
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+ca-certificates is already the newest version (20240203).
+The following additional packages will be installed:
+  libcurl3t64-gnutls libcurl4t64
+The following NEW packages will be installed:
+  apt-transport-https
+The following packages will be upgraded:
+  curl libcurl3t64-gnutls libcurl4t64
+3 upgraded, 1 newly installed, 0 to remove and 312 not upgraded.
+Need to get 886 kB of archives.
+After this operation, 38.9 kB of additional disk space will be used.
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 apt-transport-https all 2.7.14build2 [3,974 B]
+Get:2 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 curl arm64 8.5.0-2ubuntu10.4 [222 kB]
+Get:3 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libcurl4t64 arm64 8.5.0-2ubuntu10.4 [333 kB]
+Get:4 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 libcurl3t64-gnutls arm64 8.5.0-2ubuntu10.4 [327 kB]
+Fetched 886 kB in 1s (1,042 kB/s)
+Selecting previously unselected package apt-transport-https.
+(Reading database ... 172400 files and directories currently installed.)
+Preparing to unpack .../apt-transport-https_2.7.14build2_all.deb ...
+Unpacking apt-transport-https (2.7.14build2) ...
+Preparing to unpack .../curl_8.5.0-2ubuntu10.4_arm64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.4) over (8.5.0-2ubuntu10.2) ...
+Preparing to unpack .../libcurl4t64_8.5.0-2ubuntu10.4_arm64.deb ...
+Unpacking libcurl4t64:arm64 (8.5.0-2ubuntu10.4) over (8.5.0-2ubuntu10.2) ...
+Preparing to unpack .../libcurl3t64-gnutls_8.5.0-2ubuntu10.4_arm64.deb ...
+Unpacking libcurl3t64-gnutls:arm64 (8.5.0-2ubuntu10.4) over (8.5.0-2ubuntu10.2) ...
+Setting up apt-transport-https (2.7.14build2) ...
+Setting up libcurl4t64:arm64 (8.5.0-2ubuntu10.4) ...
+Setting up libcurl3t64-gnutls:arm64 (8.5.0-2ubuntu10.4) ...
+Setting up curl (8.5.0-2ubuntu10.4) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.2) ...
+Scanning processes...
+Scanning candidates...
+Scanning linux images...
+
+Running kernel seems to be up-to-date.
+
+Restarting services...
+ systemctl restart cups-browsed.service packagekit.service
+Warning: The unit file, source configuration file or drop-ins of cups-browsed.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+Warning: The unit file, source configuration file or drop-ins of packagekit.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+
+Service restarts being deferred:
+ systemctl restart NetworkManager.service
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /
+Warning: The unit file, source configuration file or drop-ins of apt-news.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+Warning: The unit file, source configuration file or drop-ins of esm-cache.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+Hit:1 http://us.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 http://us.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:3 https://download.docker.com/linux/ubuntu noble InRelease
+Hit:4 http://us.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:6 http://us.archive.ubuntu.com/ubuntu noble-proposed InRelease
+Hit:7 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Hit:8 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:9 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease
+Get:5 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  InRelease [1,192 B]
+Get:10 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  Packages [21.3 kB]
+Hit:11 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Hit:12 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease
+Fetched 22.5 kB in 1s (43.2 kB/s)
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  conntrack cri-tools kubernetes-cni
+The following NEW packages will be installed:
+  conntrack cri-tools kubeadm kubectl kubelet kubernetes-cni
+0 upgraded, 6 newly installed, 0 to remove and 312 not upgraded.
+Need to get 78.4 MB of archives.
+After this operation, 325 MB of additional disk space will be used.
+Get:2 http://ports.ubuntu.com/ubuntu-ports noble/main arm64 conntrack arm64 1:1.4.8-1ubuntu1 [37.4 kB]
+Get:1 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  cri-tools 1.28.0-1.1 [18.0 MB]
+Get:3 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  kubernetes-cni 1.2.0-2.1 [25.8 MB]
+Get:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  kubelet 1.28.15-1.1 [17.0 MB]
+Get:5 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  kubectl 1.28.15-1.1 [8,948 kB]
+Get:6 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  kubeadm 1.28.15-1.1 [8,704 kB]
+Fetched 78.4 MB in 3s (29.6 MB/s)
+Selecting previously unselected package conntrack.
+(Reading database ... 172404 files and directories currently installed.)
+Preparing to unpack .../0-conntrack_1%3a1.4.8-1ubuntu1_arm64.deb ...
+Unpacking conntrack (1:1.4.8-1ubuntu1) ...
+Selecting previously unselected package cri-tools.
+Preparing to unpack .../1-cri-tools_1.28.0-1.1_arm64.deb ...
+Unpacking cri-tools (1.28.0-1.1) ...
+Selecting previously unselected package kubernetes-cni.
+Preparing to unpack .../2-kubernetes-cni_1.2.0-2.1_arm64.deb ...
+Unpacking kubernetes-cni (1.2.0-2.1) ...
+Selecting previously unselected package kubelet.
+Preparing to unpack .../3-kubelet_1.28.15-1.1_arm64.deb ...
+Unpacking kubelet (1.28.15-1.1) ...
+Selecting previously unselected package kubectl.
+Preparing to unpack .../4-kubectl_1.28.15-1.1_arm64.deb ...
+Unpacking kubectl (1.28.15-1.1) ...
+Selecting previously unselected package kubeadm.
+Preparing to unpack .../5-kubeadm_1.28.15-1.1_arm64.deb ...
+Unpacking kubeadm (1.28.15-1.1) ...
+Setting up conntrack (1:1.4.8-1ubuntu1) ...
+Setting up kubectl (1.28.15-1.1) ...
+Setting up cri-tools (1.28.0-1.1) ...
+Setting up kubernetes-cni (1.2.0-2.1) ...
+Setting up kubelet (1.28.15-1.1) ...
+Setting up kubeadm (1.28.15-1.1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Scanning processes...
+Scanning candidates...
+Scanning linux images...
+
+Running kernel seems to be up-to-date.
+
+Restarting services...
+
+Service restarts being deferred:
+ systemctl restart NetworkManager.service
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+overlay
+br_netfilter
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+* Applying /usr/lib/sysctl.d/10-apparmor.conf ...
+* Applying /etc/sysctl.d/10-console-messages.conf ...
+* Applying /etc/sysctl.d/10-ipv6-privacy.conf ...
+* Applying /etc/sysctl.d/10-kernel-hardening.conf ...
+* Applying /etc/sysctl.d/10-magic-sysrq.conf ...
+* Applying /etc/sysctl.d/10-map-count.conf ...
+* Applying /etc/sysctl.d/10-network-security.conf ...
+* Applying /etc/sysctl.d/10-ptrace.conf ...
+* Applying /etc/sysctl.d/10-zeropage.conf ...
+* Applying /usr/lib/sysctl.d/30-tracker.conf ...
+* Applying /usr/lib/sysctl.d/50-bubblewrap.conf ...
+* Applying /usr/lib/sysctl.d/50-pid-max.conf ...
+* Applying /usr/lib/sysctl.d/99-protect-links.conf ...
+* Applying /etc/sysctl.d/99-sysctl.conf ...
+* Applying /etc/sysctl.d/k8s.conf ...
+* Applying /etc/sysctl.conf ...
+kernel.apparmor_restrict_unprivileged_userns = 1
+kernel.printk = 4 4 1 7
+net.ipv6.conf.all.use_tempaddr = 2
+net.ipv6.conf.default.use_tempaddr = 2
+kernel.kptr_restrict = 1
+kernel.sysrq = 176
+vm.max_map_count = 1048576
+net.ipv4.conf.default.rp_filter = 2
+net.ipv4.conf.all.rp_filter = 2
+kernel.yama.ptrace_scope = 1
+vm.mmap_min_addr = 32768
+fs.inotify.max_user_watches = 65536
+kernel.unprivileged_userns_clone = 1
+kernel.pid_max = 4194304
+fs.protected_fifos = 1
+fs.protected_hardlinks = 1
+fs.protected_regular = 2
+fs.protected_symlinks = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+br_netfilter           32768  0
+bridge                401408  1 br_netfilter
+overlay               204800  0
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1093  100  1093    0     0   2983      0 --:--:-- --:--:-- --:--:--  2978
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1093  100  1093    0     0   2913      0 --:--:-- --:--:-- --:--:--  2914
+Hit:1 http://us.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 https://download.docker.com/linux/ubuntu noble InRelease
+Hit:3 http://us.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:4 http://us.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:5 http://us.archive.ubuntu.com/ubuntu noble-proposed InRelease
+Hit:7 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:8 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Hit:9 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease
+Hit:6 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  InRelease
+Hit:10 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Hit:11 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease
+Get:12 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  InRelease [1,639 B]
+Get:13 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.28/xUbuntu_22.04  InRelease [1,632 B]
+Get:14 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  Packages [8,845 B]
+Get:15 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.28/xUbuntu_22.04  Packages [1,802 B]
+Fetched 13.9 kB in 1s (15.0 kB/s)
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+cri-tools is already the newest version (1.28.0-1.1).
+cri-tools set to manually installed.
+The following additional packages will be installed:
+  conmon containers-common
+Suggested packages:
+  containernetworking-plugins
+The following NEW packages will be installed:
+  conmon containers-common cri-o cri-o-runc
+0 upgraded, 4 newly installed, 0 to remove and 316 not upgraded.
+Need to get 24.1 MB of archives.
+After this operation, 93.8 MB of additional disk space will be used.
+Get:1 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  conmon 100:2.1.2~0 [32.8 kB]
+Get:2 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  containers-common 100:1-22 [52.5 kB]
+Get:3 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.28/xUbuntu_22.04  cri-o 1.28.4~0 [21.2 MB]
+Get:4 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  cri-o-runc 1.1.12~0 [2,810 kB]
+Fetched 24.1 MB in 7s (3,556 kB/s)
+Selecting previously unselected package conmon.
+(Reading database ... 172460 files and directories currently installed.)
+Preparing to unpack .../conmon_100%3a2.1.2~0_arm64.deb ...
+Unpacking conmon (100:2.1.2~0) ...
+Selecting previously unselected package containers-common.
+Preparing to unpack .../containers-common_100%3a1-22_all.deb ...
+Unpacking containers-common (100:1-22) ...
+Selecting previously unselected package cri-o.
+Preparing to unpack .../cri-o_1.28.4~0_arm64.deb ...
+Unpacking cri-o (1.28.4~0) ...
+Selecting previously unselected package cri-o-runc.
+Preparing to unpack .../cri-o-runc_1.1.12~0_arm64.deb ...
+Unpacking cri-o-runc (1.1.12~0) ...
+Setting up cri-o-runc (1.1.12~0) ...
+Setting up conmon (100:2.1.2~0) ...
+Setting up containers-common (100:1-22) ...
+Setting up cri-o (1.28.4~0) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Scanning processes...
+Scanning candidates...
+Scanning linux images...
+
+Running kernel seems to be up-to-date.
+
+Restarting services...
+
+Service restarts being deferred:
+ systemctl restart NetworkManager.service
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Created symlink /etc/systemd/system/cri-o.service → /usr/lib/systemd/system/crio.service.
+Created symlink /etc/systemd/system/multi-user.target.wants/crio.service → /usr/lib/systemd/system/crio.service.
+● crio.service - Container Runtime Interface for OCI (CRI-O)
+     Loaded: loaded (/usr/lib/systemd/system/crio.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2024-11-10 14:56:04 EST; 195ms ago
+       Docs: https://github.com/cri-o/cri-o
+   Main PID: 6509 (crio)
+      Tasks: 9
+     Memory: 10.1M (peak: 12.3M)
+        CPU: 68ms
+     CGroup: /system.slice/crio.service
+             └─6509 /usr/bin/crio
+
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.362206129-05:00" level=info msg="Found CNI network loopback (type=loopback) at /etc/cni/net.d/200-loopback.c>
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.362217546-05:00" level=info msg="Updated default CNI network name to crio"
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.362477245-05:00" level=info msg="Attempting to restore irqbalance config from /etc/sysconfig/orig_irq_banned>
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.362552325-05:00" level=info msg="Restore irqbalance config: failed to get current CPU ban list, ignoring"
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.364093645-05:00" level=warning msg="Error encountered when checking whether cri-o should wipe containers: op>
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.364239640-05:00" level=info msg="Registered SIGHUP reload watcher"
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.364253015-05:00" level=info msg="Starting seccomp notifier watcher"
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.364280472-05:00" level=info msg="Create NRI interface"
+Nov 10 14:56:04 master crio[6509]: time="2024-11-10 14:56:04.364284555-05:00" level=info msg="NRI interface is disabled in the configuration."
+Nov 10 14:56:04 master systemd[1]: Started crio.service - Container Runtime Interface for OCI (CRI-O).
+root@master:~# kubeadm init
+I1110 14:56:11.152331    6674 version.go:256] remote version is much newer: v1.31.2; falling back to: stable-1.28
+[init] Using Kubernetes version: v1.28.15
+[preflight] Running pre-flight checks
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
+[certs] Using certificateDir folder "/etc/kubernetes/pki"
+[certs] Generating "ca" certificate and key
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local master] and IPs [10.96.0.1 192.168.1.82]
+[certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] Generating "front-proxy-ca" certificate and key
+[certs] Generating "front-proxy-client" certificate and key
+[certs] Generating "etcd/ca" certificate and key
+[certs] Generating "etcd/server" certificate and key
+[certs] etcd/server serving cert is signed for DNS names [localhost master] and IPs [192.168.1.82 127.0.0.1 ::1]
+[certs] Generating "etcd/peer" certificate and key
+[certs] etcd/peer serving cert is signed for DNS names [localhost master] and IPs [192.168.1.82 127.0.0.1 ::1]
+[certs] Generating "etcd/healthcheck-client" certificate and key
+[certs] Generating "apiserver-etcd-client" certificate and key
+[certs] Generating "sa" key and public key
+[kubeconfig] Using kubeconfig folder "/etc/kubernetes"
+[kubeconfig] Writing "admin.conf" kubeconfig file
+[kubeconfig] Writing "kubelet.conf" kubeconfig file
+[kubeconfig] Writing "controller-manager.conf" kubeconfig file
+[kubeconfig] Writing "scheduler.conf" kubeconfig file
+[etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
+[control-plane] Using manifest folder "/etc/kubernetes/manifests"
+[control-plane] Creating static Pod manifest for "kube-apiserver"
+[control-plane] Creating static Pod manifest for "kube-controller-manager"
+[control-plane] Creating static Pod manifest for "kube-scheduler"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Starting the kubelet
+[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
+[apiclient] All control plane components are healthy after 3.001294 seconds
+[upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
+[kubelet] Creating a ConfigMap "kubelet-config" in namespace kube-system with the configuration for the kubelets in the cluster
+[upload-certs] Skipping phase. Please see --upload-certs
+[mark-control-plane] Marking the node master as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
+[mark-control-plane] Marking the node master as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
+[bootstrap-token] Using token: a96mtl.ejfbdnjurc7ak6sy
+[bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
+[bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to get nodes
+[bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
+[bootstrap-token] Configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+[bootstrap-token] Configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
+[bootstrap-token] Creating the "cluster-info" ConfigMap in the "kube-public" namespace
+[kubelet-finalize] Updating "/etc/kubernetes/kubelet.conf" to point to a rotatable kubelet client certificate and key
+[addons] Applied essential addon: CoreDNS
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 192.168.1.82:6443 --token a96mtl.ejfbdnjurc7ak6sy \
+	--discovery-token-ca-cert-hash sha256:9d3c0fbfc49207f70534abe6c24eb5c8c677e0d0ab21b71d807232722eb55922
+root@master:~#   mkdir -p $HOME/.kube
+root@master:~# cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+root@master:~# chown $(id -u):$(id -g) $HOME/.kube/config
+root@master:~# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   54s   v1.28.15
+root@master:~# reboot
+
+Broadcast message from root@master on pts/1 (Sun 2024-11-10 14:57:31 EST):
+
+The system will reboot now!
+
+root@master:~# Read from remote host 192.168.1.82: Connection reset by peer
+Connection to 192.168.1.82 closed.
+client_loop: send disconnect: Broken pipe
+mussawirimam@Mussawirs-MacBook-Pro ~ % ssh parallels@192.168.1.82
+parallels@192.168.1.82's password:
+Welcome to Ubuntu 24.04 LTS (GNU/Linux 6.8.0-40-generic aarch64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Sun Nov 10 02:58:23 PM EST 2024
+
+  System load:  0.0                Processes:               222
+  Usage of /:   15.9% of 61.66GB   Users logged in:         0
+  Memory usage: 7%                 IPv4 address for enp0s5: 192.168.1.82
+  Swap usage:   0%
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+324 updates can be applied immediately.
+110 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+Last login: Sun Nov 10 14:50:02 2024 from 192.168.1.22
+parallels@master:~$ ifconfig
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.82  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::3429:c6f1:7f64:c6a3  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:f0:bc:7f  txqueuelen 1000  (Ethernet)
+        RX packets 261  bytes 63672 (63.6 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 165  bytes 27483 (27.4 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 134  bytes 11846 (11.8 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 134  bytes 11846 (11.8 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+parallels@master:~$ sudo su 0
+[sudo] password for parallels:
+sudo: a password is required
+parallels@master:~$ sudo su -
+[sudo] password for parallels:
+root@master:~# ifconfig
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.82  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::3429:c6f1:7f64:c6a3  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:f0:bc:7f  txqueuelen 1000  (Ethernet)
+        RX packets 1597  bytes 185489 (185.4 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 790  bytes 93075 (93.0 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 148  bytes 13010 (13.0 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 148  bytes 13010 (13.0 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@master:~# kubectl get nodes
+The connection to the server 192.168.1.82:6443 was refused - did you specify the right host or port? <---------------<<<  ERROR IM GETTING
+root@master:~# systemctl status crio
+● crio.service - Container Runtime Interface for OCI (CRI-O)
+     Loaded: loaded (/usr/lib/systemd/system/crio.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2024-11-10 14:58:04 EST; 2min 5s ago
+       Docs: https://github.com/cri-o/cri-o
+   Main PID: 1735 (crio)
+      Tasks: 10
+     Memory: 66.5M (peak: 67.1M)
+        CPU: 180ms
+     CGroup: /system.slice/crio.service
+             └─1735 /usr/bin/crio
+
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045012378-05:00" level=info msg="cleanup sandbox network"
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045018878-05:00" level=info msg="Successfully cleaned up network for pod 5cccccb6c03e9b05f6ef71ea6ebadb92c52>
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045025919-05:00" level=info msg="cleanup sandbox network"
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045030169-05:00" level=info msg="Successfully cleaned up network for pod 3f1870c85f4bb149f764a8b3ca06f119356>
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045036836-05:00" level=info msg="cleanup sandbox network"
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045040753-05:00" level=info msg="Successfully cleaned up network for pod 3e9ab9aa0dc5d71ce66779e1b871ad54d20>
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045047294-05:00" level=info msg="cleanup sandbox network"
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045050586-05:00" level=info msg="Successfully cleaned up network for pod 360e90345e51b910323f3ba74e29eef0f39>
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045057086-05:00" level=info msg="cleanup sandbox network"
+Nov 10 14:58:04 master crio[1735]: time="2024-11-10 14:58:04.045060544-05:00" level=info msg="Successfully cleaned up network for pod 076cdb00feace9021cb3b97829eec615988>
+lines 1-21/21 (END)
+^C
+root@master:~# ^C
+root@master:~# systemctl restart crio
+root@master:~# systemctl restart crio.service
+root@master:~# ifconfig
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.82  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::3429:c6f1:7f64:c6a3  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:f0:bc:7f  txqueuelen 1000  (Ethernet)
+        RX packets 4191  bytes 409031 (409.0 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1958  bytes 215649 (215.6 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 152  bytes 13256 (13.2 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 152  bytes 13256 (13.2 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@master:~# sudo apt-get update && apt-get install cri-o cri-o-runc cri-tools -y
+
+
+sudo systemctl start crio.service
+
+
+sudo systemctl enable crio.service
+
+
+sudo systemctl status crio.service
+Hit:1 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:2 http://us.archive.ubuntu.com/ubuntu noble InRelease
+Hit:3 http://us.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:4 https://download.docker.com/linux/ubuntu noble InRelease
+Hit:6 http://us.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:7 http://us.archive.ubuntu.com/ubuntu noble-proposed InRelease
+Hit:8 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Hit:9 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease
+Hit:5 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb  InRelease
+Hit:10 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Hit:11 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease
+Hit:12 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  InRelease
+Hit:13 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.28/xUbuntu_22.04  InRelease
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+cri-o is already the newest version (1.28.4~0).
+cri-o-runc is already the newest version (1.1.12~0).
+cri-tools is already the newest version (1.28.0-1.1).
+0 upgraded, 0 newly installed, 0 to remove and 316 not upgraded.
+● crio.service - Container Runtime Interface for OCI (CRI-O)
+     Loaded: loaded (/usr/lib/systemd/system/crio.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2024-11-10 15:00:24 EST; 27s ago
+       Docs: https://github.com/cri-o/cri-o
+   Main PID: 3307 (crio)
+      Tasks: 10
+     Memory: 10.9M (peak: 12.0M)
+        CPU: 71ms
+     CGroup: /system.slice/crio.service
+             └─3307 /usr/bin/crio
+
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.605293068-05:00" level=info msg="Found CNI network crio (type=bridge) at /etc/cni/net.d/100-crio-bridge.conf>
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.606106182-05:00" level=info msg="Found CNI network loopback (type=loopback) at /etc/cni/net.d/200-loopback.c>
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.606124342-05:00" level=info msg="Updated default CNI network name to crio"
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.606489998-05:00" level=info msg="Attempting to restore irqbalance config from /etc/sysconfig/orig_irq_banned>
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.606517779-05:00" level=info msg="Restore irqbalance config: failed to get current CPU ban list, ignoring"
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.607621327-05:00" level=info msg="Registered SIGHUP reload watcher"
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.607696091-05:00" level=info msg="Starting seccomp notifier watcher"
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.607723206-05:00" level=info msg="Create NRI interface"
+Nov 10 15:00:24 master crio[3307]: time="2024-11-10 15:00:24.607727496-05:00" level=info msg="NRI interface is disabled in the configuration."
+Nov 10 15:00:24 master systemd[1]: Started crio.service - Container Runtime Interface for OCI (CRI-O).
+root@master:~# ifconfig
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.82  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::3429:c6f1:7f64:c6a3  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:f0:bc:7f  txqueuelen 1000  (Ethernet)
+        RX packets 5208  bytes 526185 (526.1 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 2580  bytes 296627 (296.6 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 216  bytes 20538 (20.5 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 216  bytes 20538 (20.5 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@master:~# swapoff -a
+root@master:~# ifconfig
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.82  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::3429:c6f1:7f64:c6a3  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:f0:bc:7f  txqueuelen 1000  (Ethernet)
+        RX packets 5950  bytes 592368 (592.3 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 2919  bytes 332169 (332.1 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 278  bytes 24406 (24.4 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 278  bytes 24406 (24.4 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@master:~# lsmod | grep br_netfilter       
+br_netfilter           32768  0
+bridge                401408  1 br_netfilter
+root@master:~# ifconfig
+cni0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.85.0.1  netmask 255.255.0.0  broadcast 10.85.255.255
+        inet6 1100:200::1  prefixlen 24  scopeid 0x0<global>
+        inet6 fe80::8c8f:e7ff:fe64:5aa0  prefixlen 64  scopeid 0x20<link>
+        ether 8e:8f:e7:64:5a:a0  txqueuelen 1000  (Ethernet)
+        RX packets 49  bytes 3729 (3.7 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 52  bytes 6251 (6.2 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.82  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::3429:c6f1:7f64:c6a3  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:f0:bc:7f  txqueuelen 1000  (Ethernet)
+        RX packets 6492  bytes 641107 (641.1 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 3204  bytes 364570 (364.5 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 7067  bytes 2691029 (2.6 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 7067  bytes 2691029 (2.6 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+veth99bdf8df: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::5013:c2ff:fe53:7653  prefixlen 64  scopeid 0x20<link>
+        ether 52:13:c2:53:76:53  txqueuelen 0  (Ethernet)
+        RX packets 25  bytes 2217 (2.2 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 71  bytes 8975 (8.9 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+vethca568095: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::e06d:22ff:fece:f19c  prefixlen 64  scopeid 0x20<link>
+        ether e2:6d:22:ce:f1:9c  txqueuelen 0  (Ethernet)
+        RX packets 26  bytes 2282 (2.2 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 65  bytes 8268 (8.2 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@master:~# kubectl get nodes
+NAME     STATUS   ROLES           AGE    VERSION
+master   Ready    control-plane   5m6s   v1.28.15
+root@master:~#
