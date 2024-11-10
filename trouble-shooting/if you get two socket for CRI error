@@ -1,0 +1,51 @@
+how to resolve this in ubuntu 23.4 in my parallels Found multiple CRI endpoints on the host. Please define which one do you wish to use by setting the 'criSocket' field in the kubeadm configuration file: unix:///var/run/containerd/containerd.sock, unix:///var/run/crio/crio.sock
+To see the stack trace of this error execute with --v=5 or higher
+
+The error occurs because Kubernetes detected multiple Container Runtime Interfaces (CRIs) on the host, and it needs a specific CRI socket to be defined in the kubeadm configuration file. Here’s how to resolve this issue by specifying the criSocket in your kubeadm configuration:
+
+Solution Steps:
+---------------
+1st step 
+Determine the Desired CRI Socket:
+Decide which container runtime you want to use: containerd or cri-o.
+ 
+  The available sockets are: 
+containerd: unix:///var/run/containerd/containerd.sock
+cri-o: unix:///var/run/crio/crio.sock
+
+2nd step 
+Create or Modify the Kubeadm Configuration File:
+Create a kubeadm configuration file if you don’t have one. You can name it kubeadm-config.yaml.
+Add the criSocket field to specify the CRI you want to use.
+ 
+  Here’s an example configuration to use containerd:
+
+vi kubeadm-config.yaml
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+
+Alternatively, to use cri-o, specify:
+
+nodeRegistration:
+  criSocket: unix:///var/run/crio/crio.sock
+
+3rd step 
+Initialize Kubeadm Using the Configuration File:
+Run the kubeadm init command with the configuration file:
+
+sudo kubeadm init --config=kubeadm-config.yaml
+
+4th step 
+Verify the Setup:
+Ensure that the cluster is initialized and the nodes are using the correct container runtime by checking the CRI socket:
+
+kubectl describe node <node-name> | grep -i "Container Runtime"
+
+I am using crio, so I am going to stop containerd
+sudo systemctl stop containerd
+sudo systemctl disable containerd
+
+if crio is not installed then follow these steps from GITHUB
+https://github.com/cri-o/cri-o
