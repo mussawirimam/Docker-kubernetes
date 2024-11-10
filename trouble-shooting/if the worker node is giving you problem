@@ -7,3 +7,32 @@ in my case when I parameterized the crio in /etc/default/kubelet, for some reaso
 so disabled the containerd and deleted the related files for the containerd
 
 https://chatgpt.com/share/67304908-71f8-8001-811f-cd6bce7ac3aa
+
+to fix it I followed these commands to remove containerd, so that there isnt conflict of CRI
+root@node1:~# history
+    1  poweroff
+    2  vi /etc/hostname
+    3  reboot
+    4  sudo su -
+    5  apt remove docker
+    6  apt-get remove docker
+    7  apt-get remove containerd
+    8  system disable containerd
+    9  systemctl disable containerd
+   10  systemctl stop containerd
+   11  systemctl remove containerd
+   12  apt-get purge docker-engine
+   13  apt-get autoremove --purge docker-engine
+   14  rm -rf /var/run/docker.sock
+   15  rm -rf /var/run/containerd
+   16  systemctl status containerd
+   17  cd /usr/lib/systemd/system/
+   18  systemctl status containerd
+   19  cd ~
+   20  vi installk8s.sh
+   21  chmod +x installk8s.sh
+   22  head installk8s.sh
+   23  ./installk8s.sh
+   24  kubeadm join 10.211.55.9:6443 --token xxxxxxxx --discovery-token-ca-cert-hash sha256:xxxxxxxx
+   25  history
+root@node1:~#
