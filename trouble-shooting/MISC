@@ -1,0 +1,11 @@
+root@master:/usr/lib/systemd/system# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   10m   v1.28.15
+node1    Ready    <none>          17s   v1.28.15
+root@master:/usr/lib/systemd/system# kubectl label node node1 node-role.kubernetes.io/worker="worker"
+node/node1 labeled
+root@master:/usr/lib/systemd/system# kubectl get nodes
+NAME     STATUS   ROLES           AGE     VERSION
+master   Ready    control-plane   14m     v1.28.15
+node1    Ready    worker          4m13s   v1.28.15
+root@master:/usr/lib/systemd/system#
