@@ -1,0 +1,65 @@
+root@master:~/.kube# swapoff -a
+root@master:~/.kube# kubectl get config
+E1113 16:17:14.227647    5539 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:14.227835    5539 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:14.229255    5539 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:14.229412    5539 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:14.230902    5539 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+The connection to the server 192.168.1.236:6443 was refused - did you specify the right host or port?
+root@master:~/.kube# kubectl get nodes
+E1113 16:17:21.274129    5568 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:21.274335    5568 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:21.275551    5568 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:21.275640    5568 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+E1113 16:17:21.276878    5568 memcache.go:265] couldn't get current server API group list: Get "https://192.168.1.236:6443/api?timeout=32s": dial tcp 192.168.1.236:6443: connect: connection refused
+The connection to the server 192.168.1.236:6443 was refused - did you specify the right host or port?
+root@master:~/.kube# systemctl start kubelet.service
+root@master:~/.kube# kubectl get nodes
+NAME     STATUS   ROLES           AGE     VERSION
+master   Ready    control-plane   8m59s   v1.28.15
+root@master:~/.kube# ifconfig
+cni0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.85.0.1  netmask 255.255.0.0  broadcast 10.85.255.255
+        inet6 1100:200::1  prefixlen 24  scopeid 0x0<global>
+        inet6 fe80::d889:c7ff:fe00:4b26  prefixlen 64  scopeid 0x20<link>
+        ether da:89:c7:00:4b:26  txqueuelen 1000  (Ethernet)
+        RX packets 24  bytes 1648 (1.6 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 28  bytes 3922 (3.9 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+enp0s5: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.236  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::2b52:3c8:95a1:3ffb  prefixlen 64  scopeid 0x20<link>
+        ether 00:1c:42:ef:36:c0  txqueuelen 1000  (Ethernet)
+        RX packets 1392  bytes 266300 (266.3 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 187  bytes 23236 (23.2 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 6892  bytes 2604808 (2.6 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 6892  bytes 2604808 (2.6 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+vethce23e2bd: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::9cf8:9aff:fe44:ca1  prefixlen 64  scopeid 0x20<link>
+        ether 9e:f8:9a:44:0c:a1  txqueuelen 0  (Ethernet)
+        RX packets 13  bytes 1034 (1.0 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 55  bytes 7346 (7.3 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+vethce71f14a: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::4ccf:3cff:fe9b:27f5  prefixlen 64  scopeid 0x20<link>
+        ether 4e:cf:3c:9b:27:f5  txqueuelen 0  (Ethernet)
+        RX packets 13  bytes 1034 (1.0 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 50  bytes 6706 (6.7 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@master:~/.kube# 
