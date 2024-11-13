@@ -1,0 +1,58 @@
+HOW TO ALIAS:
+------------------------
+In Linux, you can create an alias for a command to make it easier and quicker to type. Here’s how:
+
+1. Creating a Temporary Alias
+To create an alias that lasts only for the current session, use the alias command in the terminal:
+
+alias shortname='your_command_here'
+For example, if you want to alias kubeadm token create --print-join-command to kube-token, you would run:
+
+alias kube-token='kubeadm token create --print-join-command'
+Now, typing kube-token in your terminal will execute the original command.
+
+HOW TO ALIAS PERMANENT:
+------------------------
+2. Making an Alias Permanent
+To make an alias permanent (so it’s available even after restarting the terminal), add it to your shell’s configuration file. Here are common files based on the shell you’re using:
+
+Bash: Add the alias to ~/.bashrc.
+Zsh: Add the alias to ~/.zshrc.
+For example:
+
+echo "alias kube-token='kubeadm token create --print-join-command'" >> ~/.bashrc
+Then, reload your configuration file with:
+
+source ~/.bashrc  # or source ~/.zshrc if using Zsh
+Now, the alias will persist across sessions.
+
+
+HOW TO UNALIAS:
+------------------------
+how to remove alias
+
+To remove an alias in Linux, you can use the unalias command.
+
+1. Removing a Temporary Alias
+If the alias was created temporarily in the current session, you can remove it with:
+
+unalias alias_name
+For example, if you created an alias called kube-token, you would remove it like this:
+
+unalias kube-token
+2. Removing a Permanent Alias
+If the alias was added to a configuration file (like ~/.bashrc or ~/.zshrc), you’ll need to edit that file and delete the alias line.
+
+Open the configuration file in a text editor, such as nano:
+nano ~/.bashrc
+Find and delete the line containing the alias, e.g., alias kube-token='kubeadm token create --print-join-command'.
+Save and close the file.
+Reload the configuration file for changes to take effect:
+source ~/.bashrc  # or source ~/.zshrc for Zsh
+This will remove the alias permanently.
+
+
+
+
+
+
