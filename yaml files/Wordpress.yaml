@@ -24,11 +24,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: newpod-svc
+  name: wordpress-svc
 spec:
   type: NodePort
   selector:
-    app: myapp
+    app: mywp
   ports:
   - port: 80
     protocol: TCP
