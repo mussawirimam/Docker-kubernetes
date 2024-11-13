@@ -165,3 +165,6 @@ root@node1:~# history
    33  kubeadm join 192.168.1.236:6443 --token o76imh.73jyoyo3ph3sxyj0 --discovery-token-ca-cert-hash sha256:536a69f7241fcb99587d2d2114568f19fa7dc55d3649c014b88b8fe04df84fba 
    34  history
 
+### check if they are loaded and enabled and started
+systemctl status crio.service
+systemctl status kubelet.service
