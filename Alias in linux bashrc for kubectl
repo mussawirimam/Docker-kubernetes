@@ -7,10 +7,10 @@ alias kkg='kubectl get'
 alias kkd='kubectl describe'
 alias kkgp='kubectl get pod'
 alias kkgn='kubectl get node'
-alias kkgp='kubectl get service'
+alias kkgs='kubectl get service'
 alias kkdp='kubectl describe pod'
 alias kkdn='kubectl describe node'
-alias kkdn='kubectl describe service'
+alias kkds='kubectl describe service'
 
 # type this in command prompt to load the aliases
 source ~/.bashrc
