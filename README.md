@@ -146,7 +146,9 @@ docker tag myapp:v1 <username>/myapp01:v1
 ```
 docker push <username>/myapp01:v1
 ```
+**To get all the system pods running on the system
 ```
+kubectl get pod -n kube-system
 ```
 ```
 ```
