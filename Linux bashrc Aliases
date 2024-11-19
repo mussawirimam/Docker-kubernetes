@@ -1,0 +1,10 @@
+put this in ~/.bashrc
+nano ~/.bashrc
+# put it under ls aliases and comment it seperately
+alias kkgp='kubectl get pod'
+alias kkgn='kubectl get node'
+alias kkdp='kubectl describe pod'
+alias kkdn='kubectl describe node'
+
+# type this in command prompt to load the aliases
+source ~/.bashrc
