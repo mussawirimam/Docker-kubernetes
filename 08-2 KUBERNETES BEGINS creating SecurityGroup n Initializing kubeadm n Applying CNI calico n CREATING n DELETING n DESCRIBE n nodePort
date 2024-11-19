@@ -237,7 +237,9 @@ root@manager:~#
 
 
 ===== APPLY POD NETWORK CNI =====
-## Q which pod network we will be installing? 
+## Q which pod network we will be installing? 4
+## Q what is Calico? A: Calico is an overlay network like flannel but comes with more features
+
 ## to install calico
 # curl https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/calico.yaml
 
