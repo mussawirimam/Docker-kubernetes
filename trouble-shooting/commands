@@ -1,0 +1,7 @@
+kubectl top 
+kubectl logs -n kube-system <kube-system pod name>
+kubectl logs -n kube-system kube-apiserver-master
+kubectl get clusterrolebinding calico-kube-controllers
+
+kubectl delete -f https://docs.projectcalico.org/manifests/calico.yaml
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
