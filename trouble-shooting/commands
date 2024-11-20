@@ -1,5 +1,6 @@
 kubectl top 
-kubectl logs -n kube-system <kube-system pod name>
+
+kubectl logs -n kube-system <kube-system pod name>:
 kubectl logs -n kube-system kube-apiserver-master
 kubectl get clusterrolebinding calico-kube-controllers
 
