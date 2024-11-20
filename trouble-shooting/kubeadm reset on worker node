@@ -1,4 +1,23 @@
 ### I am noticing that kubelet.service is sometime exiting 
+journalctl - u kubelet
+
+Error:
+Nov 20 16:33:39 node2 (kubelet)[6639]: kubelet.service: Referenced but unset environment variable evaluates to an empty string: KUBELET_KUBEADM_ARGS
+Nov 20 16:33:40 node2 kubelet[6639]: E1120 16:33:40.185581    6639 run.go:74] "command failed" err="failed to load kubelet config file, path: /var/lib/kube>
+Nov 20 16:33:40 node2 systemd[1]: kubelet.service: Main process exited, code=exited, status=1/FAILURE
+
+Nov 20 16:34:51 node2 (kubelet)[6697]: kubelet.service: Referenced but unset environment variable evaluates to an empty string: KUBELET_KUBEADM_ARGS
+
+root@node2:~# systemctl status kubelet
+● kubelet.service - kubelet: The Kubernetes Node Agent
+     Loaded: loaded (/usr/lib/systemd/system/kubelet.service; enabled; preset: enabled)
+    Drop-In: /usr/lib/systemd/system/kubelet.service.d
+             └─10-kubeadm.conf
+     Active: activating (auto-restart) (Result: exit-code) since Wed 2024-11-20 16:38:55 EST; 7s ago
+       Docs: https://kubernetes.io/docs/
+    Process: 6910 ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS (code=exited, status=1>
+   Main PID: 6910 (code=exited, status=1/FAILURE)
+        CPU: 147ms
 
 write  your steps here how you resolved it. 
 
