@@ -1,3 +1,7 @@
+#how to reset the k8s using kubeadm
+kubeadm reset
+
+# remove these files 
 kubectl get pod -n kube-system
 rm -rf /etc/kubernetes/
 rm -rf /var/lib/kubelet/
