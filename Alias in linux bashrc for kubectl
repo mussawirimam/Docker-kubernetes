@@ -2,6 +2,7 @@ put this in ~/.bashrc
 nano ~/.bashrc
 # put it under ls aliases and comment it seperately
 #kubectl aliases
+
 alias kk='kubectl'
 alias kkg='kubectl get'
 alias kkd='kubectl describe'
@@ -11,6 +12,9 @@ alias kkgs='kubectl get service'
 alias kkdp='kubectl describe pod'
 alias kkdn='kubectl describe node'
 alias kkds='kubectl describe service'
+alias kkd='kubectl delete -f'
+alias kka='kubectl apply -f'
+alias kkksystem'kubectl get pods -n kube-system'
 
 # type this in command prompt to load the aliases
 source ~/.bashrc
