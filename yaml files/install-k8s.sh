@@ -56,3 +56,5 @@ sudo systemctl enable crio.service
 
 
 sudo systemctl status crio.service
+
+# to make swapoff permanent, you will need to comment swap in /etc/fstab file
