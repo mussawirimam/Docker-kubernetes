@@ -1,0 +1,5 @@
+kubectl get pod -n kube-system
+rm -rf /etc/kubernetes/
+rm -rf /var/lib/kubelet/
+rm -rf /etc/systemd/system/kubelet.service.d/
+rm -rf /etc/systemd/system/kubelet.service
