@@ -1,3 +1,9 @@
+### I am noticing that kubelet.service is sometime exiting 
+
+write  your steps here how you resolved it. 
+
+###
+
 #how to reset the k8s using kubeadm
 kubeadm reset
 
