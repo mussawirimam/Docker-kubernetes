@@ -30,7 +30,7 @@ spec:
     - name: MYSQL_ROOT_PASSWORD
       value: test123      # MySQL root password
     - name: MYSQL_DATABASE
-      value: testdb       # MySQL database name
+      value: wordpress       # MySQL database name
     ports:
     - containerPort: 3306
 
