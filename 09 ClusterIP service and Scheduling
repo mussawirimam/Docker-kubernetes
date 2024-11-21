@@ -28,142 +28,44 @@ spec:
 | - wordpress 80  |
 | - db 3306       |
 -------------------
-based on the hostname which is nothing but a pod name and the port number, we can communicate within the pod with another container.
 
-root@master:~/app# vi wordpress.yaml
+Based on the hostname (which is essentially the pod name) and the port number, containers within the same pod can communicate with each other.
+This type of service is called a NodePort. When two services exist within the same pod, the NodePort service allows communication between them.
+
+############### FIXED YAML FOR WORDPRESS AND MYSQL WITH NODEPORT SERVICE ###############
+vi wordpressaneeshfixed.yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: wordpress
   labels:
-    app: mywp
+    app: wordpress
 spec:
   containers:
   - name: con1
     image: wordpress:latest
+    env:
+    - name: WORDPRESS_DB_HOST
+      value: wordpress
+    - name: WORDPRESS_DB_USER
+      value: root
+    - name: WORDPRESS_DB_PASSWORD
+      value: test123
+    - name: WORDPRESS_DB_NAME
+      value: wordpress
+    - name: WORDPRESS_TABLE_PREFIX
+      value: wp_
     ports:
     - containerPort: 80
-  - name: db
-    image: mysql:latest
-    ports:
-    - containerPort: 3306
+  - name: con2
+    image: mysql:5.7
     env:
     - name: MYSQL_ROOT_PASSWORD
-      value: test123
+      value: test123       # MySQL root password
     - name: MYSQL_DATABASE
-      value: wordpress
-
-root@master:~/app# kubectl create -f wordpress.yaml
-pod/wordpress created
-root@master:~/app# kubectl get pods
-NAME        READY   STATUS    RESTARTS   AGE
-wordpress   2/2     Running   0          24s
-root@master:~/app#
-
-root@master:~/app# kubectl get pods
-NAME        READY   STATUS    RESTARTS   AGE
-wordpress   2/2     Running   0          24s
-root@master:~/app#
-root@master:~/app#
-root@master:~/app# kubectl get pods
-NAME        READY   STATUS    RESTARTS   AGE
-wordpress   2/2     Running   0          48s
-root@master:~/app# kubectl describe pod wordpress
-Name:             wordpress
-Namespace:        default
-Priority:         0
-Service Account:  default
-Node:             node2/172.31.89.176
-Start Time:       Sat, 09 Nov 2024 19:16:18 +0000
-Labels:           app=mywp
-Annotations:      cni.projectcalico.org/containerID: d3569d9217bcd5654093f820aa6e9002a48f13e98f7c95e14d2b1d4d3957e32f
-                  cni.projectcalico.org/podIP: 192.168.104.5/32
-                  cni.projectcalico.org/podIPs: 192.168.104.5/32
-Status:           Running
-IP:               192.168.104.5
-IPs:
-  IP:  192.168.104.5
-Containers:
-  con1:
-    Container ID:   cri-o://901657660e6657e59bd6da785b87a0be07876fbcc4264641e362970a7e401152
-    Image:          wordpress:latest
-    Image ID:       docker.io/library/wordpress@sha256:59c479ba37a3ff49d665239fae7b71b890a52e7f55c643b6cde823beba5d598b
-    Port:           80/TCP
-    Host Port:      0/TCP
-    State:          Running
-      Started:      Sat, 09 Nov 2024 19:16:30 +0000
-    Ready:          True
-    Restart Count:  0
-    Environment:    <none>
-    Mounts:
-      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-zsk85 (ro)
-  db:
-    Container ID:   cri-o://e373df8792f88526552de8cc245ddd00fcb808514020720d9039d50d77d92a61
-    Image:          mysql:latest
-    Image ID:       docker.io/library/mysql@sha256:05de0996fde5a3a3b4a8246eb8da2e2b51ca5c2b1e41681a988f4f0a4a506a1d
-    Port:           3306/TCP
-    Host Port:      0/TCP
-    State:          Running
-      Started:      Sat, 09 Nov 2024 19:16:39 +0000
-    Ready:          True
-    Restart Count:  0
-    Environment:
-      MYSQL_ROOT_PASSWORD:  test123
-      MYSQL_DATABASE:       wordpress
-    Mounts:
-      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-zsk85 (ro)
-Conditions:
-  Type              Status
-  Initialized       True
-  Ready             True
-  ContainersReady   True
-  PodScheduled      True
-Volumes:
-  kube-api-access-zsk85:
-    Type:                    Projected (a volume that contains injected data from multiple sources)
-    TokenExpirationSeconds:  3607
-    ConfigMapName:           kube-root-ca.crt
-    ConfigMapOptional:       <nil>
-    DownwardAPI:             true
-QoS Class:                   BestEffort
-Node-Selectors:              <none>
-Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
-                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
-Events:
-  Type    Reason     Age   From               Message
-  ----    ------     ----  ----               -------
-  Normal  Scheduled  74s   default-scheduler  Successfully assigned default/wordpress to node2
-  Normal  Pulling    73s   kubelet            Pulling image "wordpress:latest"
-  Normal  Pulled     62s   kubelet            Successfully pulled image "wordpress:latest" in 10.999s (10.999s including waiting)
-  Normal  Created    62s   kubelet            Created container con1
-  Normal  Started    62s   kubelet            Started container con1
-  Normal  Pulling    62s   kubelet            Pulling image "mysql:latest"
-  Normal  Pulled     53s   kubelet            Successfully pulled image "mysql:latest" in 9.249s (9.249s including waiting)
-  Normal  Created    53s   kubelet            Created container db
-  Normal  Started    53s   kubelet            Started container db
-
-root@master:~/app# vi wordpress.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: wordpress
-  labels:
-    app: mywp
-spec:
-  containers:
-  - name: con1
-    image: wordpress:latest
-    ports:
-    - containerPort: 80
-  - name: db
-    image: mysql:latest
+      value: wordpress     # MySQL database name
     ports:
     - containerPort: 3306
-    env:
-    - name: MYSQL_ROOT_PASSWORD
-      value: test123
-    - name: MYSQL_DATABASE
-      value: wordpress
 ---
 apiVersion: v1
 kind: Service
@@ -172,36 +74,14 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: mywp
+    app: wordpress
   ports:
   - port: 80
-    nodePort: 30123
-wq!
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30124
 
-root@master:~/app# kubectl create -f wordpress.yaml
-service/wordpress-svc created
-Error from server (AlreadyExists): error when creating "wordpress.yaml": pods "wordpress" already exists
-root@master:~/app# kubectl get pods
-NAME        READY   STATUS    RESTARTS   AGE
-wordpress   2/2     Running   0          16m
-root@master:~/app# kubectl get service
-NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP        5d20h
-wordpress-svc   NodePort    10.111.28.242   <none>        80:30123/TCP   26s
-root@master:~/app# kubectl delete service wordpress-svc
-service "wordpress-svc" deleted
-root@master:~/app#
+:wq!
 
 
-root@master:~/app# kubectl create -f wordpress.yaml
-pod/wordpress created
-service/wordpress-svc created
-root@master:~/app# kubectl get pod,service
-NAME            READY   STATUS    RESTARTS   AGE
-pod/wordpress   2/2     Running   0          4s
-
-NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
-service/kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP        5d20h
-service/wordpress-svc   NodePort    10.107.234.193   <none>        80:30123/TCP   4s
-root@master:~/app#
 
