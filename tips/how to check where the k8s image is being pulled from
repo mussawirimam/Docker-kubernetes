@@ -1,0 +1,149 @@
+root@master:~/app# kubectl get pod wordpress -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cni.projectcalico.org/containerID: b1d2023b7d773efaa8a51a950b9a97377dedd4a9a858eca132537b00c34888ca
+    cni.projectcalico.org/podIP: 172.16.166.140/32
+    cni.projectcalico.org/podIPs: 172.16.166.140/32
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"labels":{"app":"wordpress"},"name":"wordpress","namespace":"default"},"spec":{"containers":[{"env":[{"name":"WORDPRESS_DB_HOST","value":"wordpress"},{"name":"WORDPRESS_DB_USER","value":"root"},{"name":"WORDPRESS_DB_PASSWORD","value":"test123"},{"name":"WORDPRESS_DB_NAME","value":"wordpress"},{"name":"WORDPRESS_TABLE_PREFIX","value":"wp_"}],"image":"wordpress:latest","name":"con1","ports":[{"containerPort":80}]},{"env":[{"name":"MYSQL_ROOT_PASSWORD","value":"test123"},{"name":"MYSQL_DATABASE","value":"wordpress"}],"image":"mysql:5.7","name":"con2","ports":[{"containerPort":3306}]}]}}
+  creationTimestamp: "2024-11-20T17:34:03Z"
+  labels:
+    app: wordpress
+  name: wordpress
+  namespace: default
+  resourceVersion: "69761"
+  uid: efa2862f-aee9-4466-a00e-b971f04c8d9b
+spec:
+  containers:
+  - env:
+    - name: WORDPRESS_DB_HOST
+      value: wordpress
+    - name: WORDPRESS_DB_USER
+      value: root
+    - name: WORDPRESS_DB_PASSWORD
+      value: test123
+    - name: WORDPRESS_DB_NAME
+      value: wordpress
+    - name: WORDPRESS_TABLE_PREFIX
+      value: wp_
+    image: wordpress:latest
+    imagePullPolicy: Always
+    name: con1
+    ports:
+    - containerPort: 80
+      protocol: TCP
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-nwk9h
+      readOnly: true
+  - env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: test123
+    - name: MYSQL_DATABASE
+      value: wordpress
+    image: mysql:5.7
+    imagePullPolicy: IfNotPresent
+    name: con2
+    ports:
+    - containerPort: 3306
+      protocol: TCP
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-nwk9h
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: node1
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-nwk9h
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2024-11-20T17:34:03Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2024-11-20T17:34:09Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2024-11-20T17:34:09Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2024-11-20T17:34:03Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: cri-o://55147be08dda08e2c13f6afec73255a8247c5453ad91bec470720f9aafef9dda
+    image: docker.io/library/wordpress:latest
+    imageID: docker.io/library/wordpress@sha256:0f89d041bdad11a01345850366403e0f268a1dabbca58beee786b3f3456348fd
+    lastState: {}
+    name: con1
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-11-20T17:34:08Z"
+  - containerID: cri-o://a6f495cb705c7806588afe3c424b2aed38aa87378bdfe1a95d318bc56e8fb8e6
+    image: docker.io/library/mysql:5.7
+    imageID: docker.io/library/mysql@sha256:4bc6bc963e6d8443453676cae56536f4b8156d78bae03c0145cbe47c2aad73bb
+    lastState: {}
+    name: con2
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-11-20T17:34:09Z"
+  hostIP: 192.168.29.135
+  phase: Running
+  podIP: 172.16.166.140
+  podIPs:
+  - ip: 172.16.166.140
+  qosClass: BestEffort
+  startTime: "2024-11-20T17:34:03Z"
+root@master:~/app#
