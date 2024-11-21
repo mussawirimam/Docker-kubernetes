@@ -1,5 +1,8 @@
 kubectl top 
 
+kubectl describe <resource e.g pod or node> <pod/node name>
+e.g kubectl describe pod wordpress
+
 kubectl logs -n kube-system <kube-system pod name>:
 kubectl logs -n kube-system kube-apiserver-master
 kubectl get clusterrolebinding calico-kube-controllers
