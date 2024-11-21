@@ -1,3 +1,9 @@
+###
+kubeadm # the command to bootstrap the cluster 
+kubectl # the command line util to talk to your cluster.
+kubelet # the component that runs on all of the machines in your cluster and does things like starting pods and containers.
+crictl  # client for CRI https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
+
 kubectl top 
 
 kubectl describe <resource e.g pod or node> <pod/node name>
@@ -164,4 +170,70 @@ Usage:
 
 Use "kubectl <command> --help" for more information about a given command.
 Use "kubectl options" for a list of global command-line options (applies to all commands).
+root@master:~/app#
+
+
+
+root@master:~/app# crictl --help
+NAME:
+   crictl - client for CRI
+
+USAGE:
+   crictl [global options] command [command options] [arguments...]
+
+VERSION:
+   v1.28.0
+
+COMMANDS:
+   attach              Attach to a running container
+   create              Create a new container
+   exec                Run a command in a running container
+   version             Display runtime version information
+   images, image, img  List images
+   inspect             Display the status of one or more containers
+   inspecti            Return the status of one or more images
+   imagefsinfo         Return image filesystem info
+   inspectp            Display the status of one or more pods
+   logs                Fetch the logs of a container
+   port-forward        Forward local port to a pod
+   ps                  List containers
+   pull                Pull an image from a registry
+   run                 Run a new container inside a sandbox
+   runp                Run a new pod
+   rm                  Remove one or more containers
+   rmi                 Remove one or more images
+   rmp                 Remove one or more pods
+   pods                List pods
+   start               Start one or more created containers
+   info                Display information of the container runtime
+   stop                Stop one or more running containers
+   stopp               Stop one or more running pods
+   update              Update one or more running containers
+   config              Get and set crictl client configuration options
+   stats               List container(s) resource usage statistics
+   statsp              List pod statistics. Stats represent a structured API that will fulfill the Kubelet's /stats/summary endpoint.
+   metricsp            List pod metrics. Metrics are unstructured key/value pairs gathered by CRI meant to replace cAdvisor's /metrics/cadvisor endpoint.
+   completion          Output shell completion code
+   checkpoint          Checkpoint one or more running containers
+   runtime-config      Retrieve the container runtime configuration
+   help, h             Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --config value, -c value            Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well (default: "/etc/crictl.yaml") [$CRI_CONFIG_FILE]
+   --debug, -D                         Enable debug mode (default: false)
+   --image-endpoint value, -i value    Endpoint of CRI image manager service (default: uses 'runtime-endpoint' setting) [$IMAGE_SERVICE_ENDPOINT]
+   --runtime-endpoint value, -r value  Endpoint of CRI container runtime service (default: uses in order the first successful one of [unix:///var/run/dockershim.sock unix:///run/containerd/containerd.sock unix:///run/crio/crio.sock unix:///var/run/cri-dockerd.sock]). Default is now deprecated and the endpoint should be set instead. [$CONTAINER_RUNTIME_ENDPOINT]
+   --timeout value, -t value           Timeout of connecting to the server in seconds (e.g. 2s, 20s.). 0 or less is set to default (default: 2s)
+   --help, -h                          show help
+   --version, -v                       print the version
+root@master:~/app# crictl pods
+POD ID              CREATED             STATE               NAME                             NAMESPACE           ATTEMPT             RUNTIME
+15ef5b245a0a5       3 hours ago         Ready               calico-node-mrm6j                kube-system         0                   (default)
+8cef384bdd171       12 hours ago        Ready               coredns-5dd5756b68-m64mp         kube-system         0                   (default)
+8d39c001dcd28       12 hours ago        Ready               coredns-5dd5756b68-84w4t         kube-system         0                   (default)
+7798359359ee1       12 hours ago        Ready               kube-proxy-k4pzl                 kube-system         0                   (default)
+63771d76e8ccb       12 hours ago        Ready               kube-scheduler-master            kube-system         0                   (default)
+58bab8619c463       12 hours ago        Ready               etcd-master                      kube-system         0                   (default)
+8302bf6218dc5       12 hours ago        Ready               kube-controller-manager-master   kube-system         0                   (default)
+aca153ebd3732       12 hours ago        Ready               kube-apiserver-master            kube-system         0                   (default)
 root@master:~/app#
