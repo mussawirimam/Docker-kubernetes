@@ -4,5 +4,7 @@ kubectl logs -n kube-system <kube-system pod name>:
 kubectl logs -n kube-system kube-apiserver-master
 kubectl get clusterrolebinding calico-kube-controllers
 
+root@master:~/app# kubectl get pod wordpress -o yaml # to check where the image is being pulled from and more
+
 kubectl delete -f https://docs.projectcalico.org/manifests/calico.yaml
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
