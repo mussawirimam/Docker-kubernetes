@@ -7,10 +7,40 @@ kubectl logs -n kube-system <kube-system pod name>:
 kubectl logs -n kube-system kube-apiserver-master
 kubectl get clusterrolebinding calico-kube-controllers
 
+### To print the token on master node so that the worker node can join ###
+root@master:~/app# kubeadm token create --print-join-command
+kubeadm join 192.168.29.134:6443 --token m5kXXX.xxxxxxxxxxxx --discovery-token-ca-cert-hash sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 ####  journalctl - Print log entries from the systemd journal ####
 journalctl -u 
 e.g journalctl -u kubelet
 e.g journalctl -u crio or containerd
+
+
+### to get all the namespace that exist on k8s cluster ###
+root@master:~/app# kubectl get namespace
+NAME              STATUS   AGE
+default           Active   3d1h
+kube-node-lease   Active   3d1h
+kube-public       Active   3d1h
+kube-system       Active   3d1h
+root@master:~/app#
+
+root@master:~/app# kubectl describe namespaces kube-system
+Name:         kube-system
+Labels:       kubernetes.io/metadata.name=kube-system
+Annotations:  <none>
+Status:       Active
+
+No resource quota.
+No LimitRange resource.
+
+root@master:~/app# kubectl cluster-info
+Kubernetes control plane is running at https://192.168.29.134:6443
+CoreDNS is running at https://192.168.29.134:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+root@master:~/app#
 
 #### Crio ####
 root@master:~/app# crio
