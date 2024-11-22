@@ -354,6 +354,12 @@ mydb-svc        ClusterIP   10.103.158.244   <none>        3306/TCP       20m   
 wordpress-svc   NodePort    10.111.157.0     <none>        80:30123/TCP   119s   app=mywp
 root@master:~/app#
 
+root@master:~/app# kkgn -o wide
+NAME     STATUS   ROLES           AGE     VERSION    INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+master   Ready    control-plane   4d2h    v1.28.15   192.168.29.134   <none>        Ubuntu 24.04.1 LTS   6.8.0-49-generic   cri-o://1.28.4
+node1    Ready    <none>          2d18h   v1.28.15   192.168.29.135   <none>        Ubuntu 24.04.1 LTS   6.8.0-49-generic   cri-o://1.28.4
+node2    Ready    <none>          27h     v1.28.15   192.168.29.136   <none>        Ubuntu 24.04.1 LTS   6.8.0-41-generic   cri-o://1.28.4
+
 
 ### ON BROWSER ### 
 http://192.168.29.135:30123/wp-admin/install.php
@@ -363,3 +369,29 @@ Welcome to the famous five-minute WordPress installation process! Just fill in t
 Information needed
 
 ### ON BROWSER END ### 
+
+####  TO DELETE ALL YAML FILE MANIFEST RESOURCED IN PRESENT DIRECTORY ####
+root@master:~/app# kubectl delete -f .
+pod "mydb" deleted
+service "mydb-svc" deleted
+pod "wp" deleted
+service "wordpress-svc" deleted
+root@master:~/app#
+
+
+############################# SCHEDULING BEGINS #############################
+node1 192.168.0.20
++----------+ 
+|          | 
++----------+ 
+
+node1 192.168.0.20
++----------+ 
+|          |
++----------+
+
+#if you dont specify to the scheduler to which node to add this pod to, the scheduler will assign it to the random node depending on the resource the host node has.
+So, in order for the pod to specifically assigned to a particular node, you will have to specify the direction to it. 
+ ------
+| pod  |
+ ------
