@@ -1,3 +1,13 @@
+internal Service:
+ClusterIP
+External services:
+NodePort 
+LoadBalancer
+
+Use ClusterIP if you don’t need external access.
+Use NodePort if you need basic external access to the service without a cloud provider.
+Use LoadBalancer if you want to expose your service externally with automatic load balancing and high availability.
+
 First 
 we will create two containers in one pod with different ports with NodePort service and we will access the our pod from outside the cluster on the targetPort 30124:
 - wordpress
