@@ -24,3 +24,32 @@ https://www.youtube.com/watch?v=xX52dc3u2HU&t=728s
 |          |            |               |             |
 |      kube-proxy    Container(s)    Network Plugins  |
 +-----------------------------------------------------+
+
+Kubernetes with CRI-O Architecture
+Master Node:
+
+API Server: Handles all API requests to the Kubernetes cluster.
+
+Scheduler: Allocates resources to the nodes based on specified requirements.
+
+Controller Manager: Ensures the desired state of the cluster, managing replication, endpoints, and more.
+
+etcd: A key-value store used for configuration data, state, and metadata storage.
+
+Worker Nodes:
+
+kubelet: Ensures containers are running in a pod, monitors pod status, and communicates with the API server.
+
+kube-proxy: Manages network rules on nodes and allows network communication to your pods.
+
+CRI-O: A container runtime specifically built for Kubernetes that manages the lifecycle of containers.
+
+Pods:
+
+Container(s): The smallest deployable units of computing in Kubernetes, which run on the nodes and are managed by the kubelet.
+
+Network Plugins (CNI):
+
+Manages network connectivity for the containers, ensuring they can communicate within the cluster and beyond.
+
+Here's a high-level textual representation of the architecture:
