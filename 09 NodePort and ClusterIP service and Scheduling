@@ -1,0 +1,222 @@
+First 
+we will create two containers in one pod with different ports with NodePort service and we will access the our pod from outside the cluster on the targetPort 30124:
+- wordpress
+- mysqldb 
+
+NODEPORT NETWORK OVERLAY PORT 80:30124 
+(wordpress-svc   NodePort    10.108.5.219   <none>        80:30124/TCP   26h)
+-------------------
+| mypod 10.1.2.50 |
+-------------------
+| - wordpress 80  |
+| - db 3306       |
+-------------------
+
+Based on the hostname (which is essentially the pod name) and the port number, containers within the same pod can communicate with each other.
+This type of service is called a NodePort. When two services exist within the same pod, the NodePort service allows communication between them.
+
+
+############### FIXED YAML FOR WORDPRESS AND MYSQL WITH NODEPORT SERVICE ###############
+vi wordpressaneeshfixed.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  containers:
+  - name: con1
+    image: wordpress:latest
+    env:
+    - name: WORDPRESS_DB_HOST
+      value: wordpress
+    - name: WORDPRESS_DB_USER
+      value: root
+    - name: WORDPRESS_DB_PASSWORD
+      value: test123
+    - name: WORDPRESS_DB_NAME
+      value: wordpress
+    - name: WORDPRESS_TABLE_PREFIX
+      value: wp_
+    ports:
+    - containerPort: 80
+  - name: con2
+    image: mysql:5.7
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: test123       # MySQL root password
+    - name: MYSQL_DATABASE
+      value: wordpress     # MySQL database name
+    ports:
+    - containerPort: 3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-svc
+spec:
+  type: NodePort
+  selector:
+    app: wordpress
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30124
+
+:wq!
+
+root@master:~/app# kkgn -o wide
+NAME     STATUS   ROLES           AGE     VERSION    INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+master   Ready    control-plane   3d21h   v1.28.15   192.168.29.134   <none>        Ubuntu 24.04.1 LTS   6.8.0-49-generic   cri-o://1.28.4
+node1    Ready    <none>          2d13h   v1.28.15   192.168.29.135   <none>        Ubuntu 24.04.1 LTS   6.8.0-49-generic   cri-o://1.28.4
+node2    Ready    <none>          22h     v1.28.15   192.168.29.136   <none>        Ubuntu 24.04.1 LTS   6.8.0-41-generic   cri-o://1.28.4
+root@master:~/app#
+
+
+root@master:~/app# kkgs
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP        3d21h
+wordpress-svc   NodePort    10.108.5.219   <none>        80:30124/TCP   26h
+root@master:~/app#
+
+root@master:~/app# kkgp -o wide
+NAME        READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+wordpress   2/2     Running   2          26h   172.17.166.129   node1   <none>           <none>
+root@master:~/app#
+
+
+root@master:~# kubectl exec -it wordpress -- bash
+Defaulted container "con1" out of: con1, con2
+root@wordpress:/var/www/html# hostname
+wordpress
+root@wordpress:/var/www/html# exit
+exit
+
+root@master:~/app# kkg po
+NAME        READY   STATUS    RESTARTS   AGE
+wordpress   2/2     Running   2          26h
+root@master:~/app# kubectl exec -it wordpress -c con2 -- bash
+bash-4.2# hostname
+bash: hostname: command not found
+bash-4.2# exit
+
+#the host name is wordpress so in the Database Host on the browser when connecting to this you will add in Database Host:wordpress. 
+root@master:~/app# kubectl exec -it wordpress -c con2 -- bash
+bash-4.2# cat /etc/hostname
+wordpress
+bash-4.2#
+
+---- ON BROWSER ----
+http://192.168.29.135:30124/wp-admin/install.php
+Welcome
+Welcome to the famous five-minute WordPress installation process! Just fill in the information below and you’ll be on your way to using the most extendable and powerful personal publishing platform in the world.
+
+Information needed
+Please provide the following information. Do not worry, you can always change these settings later.
+
+---- ON BROWSER ENDS ----
+
+
+
+
+#####################  CLUSTER-IP SERVICE #####################
+# we will be implementing this architecture, which is having front-end pod running on seperate pod and db pod running on different pod to communicate this time from wordpress to database pod we will create a type of service
+called Cluster-IP service and that service name (mydb in this case) will be used as the hostname
+EXAMPLE:
+apiVersion: v1
+metdata:
+  name:mydb
+spec:
+  type:ClusterIP
+  ports:
+  - port:3306
+  selector:
+    app:mydb
+
+node1 192.168.0.20
+-------------------
+| - wordpress 80  |
+|                 |
+-------------------
+
+node2 192.168.0.21
+-------------------
+| - db            | labels: 
+|                 |    app: mydb
+-------------------
+
+
+#############################
+nano wordpressClusterIP.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wp
+  labels:
+    app: mywp
+spec:
+  containers:
+  - name: con1
+    image: wordpress:latest
+    ports:
+    - containerPort:80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-svc
+spec:
+  type: NodePort
+  selector:
+    app: mywp
+  ports:
+  - port: 80
+    nodePort: 30123
+
+#############################
+### mysql yaml with clusterIp
+nano mysqlClusterIP.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mydb
+  labels:
+    app: mydb
+spec:
+  containers:
+  - name: db
+    image: mysql:latest
+    ports:
+    - containerPort: 3306
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: test123
+    - name: MYSQL_DATABASE
+      value: wordpress
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mydb-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: mydb
+  ports:
+  - port: 3306
+    nodePort: 30123
+##how do I know that mysql is using the port 3306?
+##A: it is defined in the dockerhub.com image of mysql container documentation
+# directions:
+1. go to https://hub.docker.com/_/mysql
+2. select a version of mysql
+3. click on the dockerfile
+4. and scroll down to the port it will be EXPOSE to 3306 33060
+
+
+
+
