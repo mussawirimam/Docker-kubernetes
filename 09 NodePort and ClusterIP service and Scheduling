@@ -67,6 +67,8 @@ spec:
 
 :wq!
 
+############### FIXED YAML FOR WORDPRESS AND MYSQL WITH NODEPORT SERVICE ###############
+
 root@master:~/app# kkgn -o wide
 NAME     STATUS   ROLES           AGE     VERSION    INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
 master   Ready    control-plane   3d21h   v1.28.15   192.168.29.134   <none>        Ubuntu 24.04.1 LTS   6.8.0-49-generic   cri-o://1.28.4
@@ -149,7 +151,8 @@ node2 192.168.0.21
 
 
 #############################
-nano wordpressClusterIP.yaml
+nano wordpressNodePort.yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -161,7 +164,7 @@ spec:
   - name: con1
     image: wordpress:latest
     ports:
-    - containerPort:80
+    - containerPort: 80
 
 ---
 apiVersion: v1
@@ -179,6 +182,7 @@ spec:
 #############################
 ### mysql yaml with clusterIp
 nano mysqlClusterIP.yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -208,7 +212,7 @@ spec:
     app: mydb
   ports:
   - port: 3306
-    nodePort: 30123
+#############################
 ##how do I know that mysql is using the port 3306?
 ##A: it is defined in the dockerhub.com image of mysql container documentation
 # directions:
@@ -217,6 +221,135 @@ spec:
 3. click on the dockerfile
 4. and scroll down to the port it will be EXPOSE to 3306 33060
 
+#Service is the only way to access your application within kubernetes cluster or outside of the kubernetes cluster.
+it depends on the service, what type of service you are creating
+e.g 
+  cluster ip is for internal communcation
+  loadbalancer and nodeport is for external communcation
+pod level port enablement is required.
+
+root@master:~/app# kk create -f mysqlClusterIP.yaml
+pod/mydb created
+service/mydb-svc created
+root@master:~/app# kkgp
+NAME   READY   STATUS    RESTARTS   AGE
+mydb   1/1     Running   0          6s
+
+root@master:~/app# kk create -f wordpressNodePort.yaml
+pod/wp created
+service/wordpress-svc created
+root@master:~/app#
+
+root@master:~/app# kkg po
+NAME   READY   STATUS    RESTARTS   AGE
+mydb   1/1     Running   0          3m53s
+wp     1/1     Running   0          57s
+root@master:~/app#
+
+### to see which nodes did the pods got deployed in 
+NAME   READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mydb   1/1     Running   0          4m13s   172.17.166.133   node1   <none>           <none>
+wp     1/1     Running   0          77s     172.17.104.5     node2   <none>           <none>
+root@master:~/app#
+
+### ON BROWSER ### 
+http://192.168.29.135:30123/
+Error establishing a database connection
+## The error happens rarely because directly trying to communicate or connect database basically.
+## so we have to put in the environmental variables in the wordpress to specify all the required environment variables. 
+## how will you know the environmental variables? 
+##A: it is defined in the dockerhub.com image of mysql container documentation
+# directions:
+1. go to https://hub.docker.com/
+  a. search wordpress
+2. select the official image
+  a. scroll down 
+4. follow the list of environmental variables requirement needed 
+
+The following environment variables are also honored for configuring your WordPress instance (by a custom wp-config.php implementation⁠):
+
+-e WORDPRESS_DB_HOST=...
+-e WORDPRESS_DB_USER=...
+-e WORDPRESS_DB_PASSWORD=...
+-e WORDPRESS_DB_NAME=...
+-e WORDPRESS_TABLE_PREFIX=...
+-e WORDPRESS_AUTH_KEY=..., -e WORDPRESS_SECURE_AUTH_KEY=..., -e WORDPRESS_LOGGED_IN_KEY=..., -e WORDPRESS_NONCE_KEY=..., -e WORDPRESS_AUTH_SALT=..., -e WORDPRESS_SECURE_AUTH_SALT=..., -e WORDPRESS_LOGGED_IN_SALT=..., -e WORDPRESS_NONCE_SALT=... (default to unique random SHA1s, but only if other environment variable configuration is provided)
+-e WORDPRESS_DEBUG=1 (defaults to disabled, non-empty value will enable WP_DEBUG in wp-config.php)
+-e WORDPRESS_CONFIG_EXTRA=... (defaults to nothing, the value will be evaluated by the eval() function in wp-config.php. This variable is especially useful for applying extra configuration values this image does not provide by default such as WP_ALLOW_MULTISITE; see docker-library/wordpress#142⁠ for more details)
+The WORDPRESS_DB_NAME needs to already exist on the given MySQL server; it will not be created by the wordpress container.
 
 
 
+#################### FIXED YAML FOR wordpressNodePort.yaml ####################
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wp
+  labels:
+    app: mywp
+spec:
+  containers:
+  - name: con1
+    image: wordpress:latest
+    ports:
+    - containerPort: 80
+    env:  #################################### values/arguments in evironmental variables are coming from what you have put inside the mysqlClusterIP.yaml environmental variables values/arguments and that is also coming from the dockerhub mysql image 
+    - name: WORDPRESS_DB_HOST
+      value: mydb-svc
+    - name: WORDPRESS_DB_USER
+      value: root
+    - name: WORDPRESS_DB_PASSWORD
+      value: test123
+    - name: WORDPRESS_DB_NAME
+      value: wordpress
+    - name: WORDPRESS_TABLE_PREFIX
+      value: wp_
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-svc
+spec:
+  type: NodePort
+  selector:
+    app: mywp
+  ports:
+  - port: 80
+    nodePort: 30123
+
+#################### FIXED YAML FOR wordpressNodePort.yaml ENDS ####################
+
+root@master:~/app# kubectl delete -f wordpressNodePort.yaml
+pod "wp" deleted
+service "wordpress-svc" deleted
+root@master:~/app# nano wordpressNodePort.yaml
+root@master:~/app# kk create -f wordpressNodePort.yaml
+pod/wp created
+service/wordpress-svc created
+
+root@master:~/app# kkgp -o wide
+NAME   READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mydb   1/1     Running   0          21m   172.17.166.133   node1   <none>           <none>
+wp     1/1     Running   0          3m    172.17.104.6     node2   <none>           <none>
+root@master:~/app#
+
+### node one is a clusterIp and another is Nodport 
+### mydb is has internal service on it (clusterIP)
+### wordpress has the external service on it (NodePort)
+### this is the reason we can access the wordpress from outside and mydb is connected to the wordpress internally
+root@master:~/app# kkg svc -o wide
+NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE    SELECTOR
+kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP        4d2h   <none>
+mydb-svc        ClusterIP   10.103.158.244   <none>        3306/TCP       20m    app=mydb
+wordpress-svc   NodePort    10.111.157.0     <none>        80:30123/TCP   119s   app=mywp
+root@master:~/app#
+
+
+### ON BROWSER ### 
+http://192.168.29.135:30123/wp-admin/install.php
+Welcome
+Welcome to the famous five-minute WordPress installation process! Just fill in the information below and you’ll be on your way to using the most extendable and powerful personal publishing platform in the world.
+
+Information needed
+
+### ON BROWSER END ### 
