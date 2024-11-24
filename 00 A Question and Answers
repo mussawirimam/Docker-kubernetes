@@ -8,6 +8,7 @@ In this post, we will see a close look at etcd, why it is needed, and how to acc
 yes
 3. does etcd have TLS?
 yes
+https://etcd.io/docs/v3.5/op-guide/security/
 4. does etcd have socket and port?
 yes
 5. does etcd have binding
