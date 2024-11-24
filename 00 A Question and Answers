@@ -2,13 +2,13 @@
 1. What is etcd in kubernetes?
 Etcd is a key-value data store used to store and manage the critical information that distributed systems need. It provides a reliable way of storing the configuration data.
 In this post, we will see a close look at etcd, why it is needed, and how to access its contents in Kubernetes.
-  detailed: https://blog.kubesimplify.com/understanding-etcd-in-kubernetes-a-beginners-guide
+##  link: https://blog.kubesimplify.com/understanding-etcd-in-kubernetes-a-beginners-guide
             https://etcd.io/
 2. is etcd like a database for k8s? 
 yes
 3. does etcd have TLS?
 yes
-https://etcd.io/docs/v3.5/op-guide/security/
+##   link: https://etcd.io/docs/v3.5/op-guide/security/
 4. does etcd have socket and port?
 yes
 5. does etcd have binding
