@@ -15,6 +15,16 @@ yes
 Yes, etcd does involve binding, particularly when it comes to networking and securing connections.
 Binding in this context refers to etcd associating itself with specific network addresses and ports for both client-server and peer-to-peer communications.
 
+Summary: 
+TLS: etcd supports TLS encryption for securing communication.
+Socket: etcd uses TCP/IP sockets for communication, with the option to use Unix domain sockets.
+Port: etcd typically uses ports 2379 for clients and 2380 for peer communication, which can be configured during startup.
+Binding in etcd refers to which network interfaces and ports the etcd process listens on.
+duplicate summary:
+TLS: Yes, etcd supports TLS for secure communication.
+Binding: Yes, you can bind etcd to specific IP addresses or interfaces using --listen-client-urls and --listen-peer-urls.
+Socket: Yes, etcd uses TCP/IP sockets for network communication and supports Unix domain sockets for local communication.
+Port: Yes, etcd uses ports (2379 for clients, 2380 for peers), and these can be configured.
 
 Q: what is binding?
 In computing and networking, "binding" refers to the process of associating one thing with another, typically an address or resource with a program or service.
