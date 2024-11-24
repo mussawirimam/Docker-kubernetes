@@ -10,5 +10,6 @@ yes
 yes
 4. does etcd have socket and port?
 yes
-  a. does etcd have binding
-     yes 
+5. does etcd have binding
+Yes, etcd does involve binding, particularly when it comes to networking and securing connections.
+Binding in this context refers to etcd associating itself with specific network addresses and ports for both client-server and peer-to-peer communications.
