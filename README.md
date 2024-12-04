@@ -150,9 +150,13 @@ docker push <username>/myapp01:v1
 ```
 kubectl get pod -n kube-system
 ```
+** Lists all the api-resources for the k8s
 ```
+kubectl api-resources
 ```
+** help command for options
 ```
+kubectl options
 ```
 ```
 ```
