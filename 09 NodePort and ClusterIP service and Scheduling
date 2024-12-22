@@ -134,7 +134,7 @@ Please provide the following information. Do not worry, you can always change th
 
 
 #####################  CLUSTER-IP SERVICE #####################
-# we will be implementing this architecture, which is having front-end pod running on seperate pod and db pod running on different pod to communicate this time from wordpress to database pod we will create a type of service
+# we will be implementing this architecture, which is having front-end pod running on seperate pod running on a different node and db pod, which is another seperate pod running on different/or same node. To communicate this time, from wordpress to database pod we will create a type of service
 called Cluster-IP service and that service name (mydb in this case) will be used as the hostname
 EXAMPLE:
 apiVersion: v1
