@@ -13,6 +13,8 @@ we will create two containers in one pod with different ports with NodePort serv
 - wordpress
 - mysqldb 
 
+############################# NODEPORT SERVICE BEGINS #############################
+
 NODEPORT NETWORK OVERLAY PORT 80:30124 
 (wordpress-svc   NodePort    10.108.5.219   <none>        80:30124/TCP   26h)
 -------------------
@@ -129,9 +131,9 @@ Information needed
 Please provide the following information. Do not worry, you can always change these settings later.
 
 ---- ON BROWSER ENDS ----
+############################# NODEPORT SERVICE ENDS #############################
 
-
-#####################  CLUSTER-IP SERVICE #####################
+#####################  CLUSTER IP SERVICE BEGINS #####################
 
 # we will be implementing this architecture, which is having front-end pod running on seperate pod running on a different node and db pod, which is another seperate pod running on different/or same node. To communicate this time, from wordpress to database pod we will create a type of service
 called Cluster-IP service and that service name (mydb in this case) will be used as the hostname
@@ -158,7 +160,6 @@ node2 192.168.0.21
 | - db            | labels: 
 |                 |    app: mydb
 -------------------
-
 
 #############################
 we are using wordpressNode.yaml service for external front-end communication
@@ -193,7 +194,7 @@ spec:
     nodePort: 30123
 
 #############################
-### mysql yaml with clusterIp
+### mysql yaml with clusterIp and pod level port enablement
 nano mysqlClusterIP.yaml
 
 apiVersion: v1
@@ -385,6 +386,7 @@ pod "wp" deleted
 service "wordpress-svc" deleted
 root@master:~/app#
 
+############################# CLUSTER IP SERVICE ENDS #############################
 
 ############################# SCHEDULING BEGINS #############################
 node1 192.168.0.20
