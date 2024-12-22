@@ -297,8 +297,8 @@ The following environment variables are also honored for configuring your WordPr
 The WORDPRESS_DB_NAME needs to already exist on the given MySQL server; it will not be created by the wordpress container.
 
 
-
-#################### FIXED YAML FOR wordpressNodePort.yaml ####################
+### you will get ERROR establishing a database connection for that you will have to put in the environment variables
+#################### FIXED ENVIRONMENT VARIABLE FOR wordpressNodePort.yaml ####################
 apiVersion: v1
 kind: Pod
 metadata:
@@ -335,7 +335,7 @@ spec:
   - port: 80
     nodePort: 30123
 
-#################### FIXED YAML FOR wordpressNodePort.yaml ENDS ####################
+#################### FIXED ENVIRONMENT VARIABLE FOR wordpressNodePort.yaml ENDS ####################
 
 root@master:~/app# kubectl delete -f wordpressNodePort.yaml
 pod "wp" deleted
