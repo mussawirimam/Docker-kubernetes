@@ -131,11 +131,11 @@ Please provide the following information. Do not worry, you can always change th
 ---- ON BROWSER ENDS ----
 
 
-
-
 #####################  CLUSTER-IP SERVICE #####################
+
 # we will be implementing this architecture, which is having front-end pod running on seperate pod running on a different node and db pod, which is another seperate pod running on different/or same node. To communicate this time, from wordpress to database pod we will create a type of service
 called Cluster-IP service and that service name (mydb in this case) will be used as the hostname
+
 EXAMPLE:
 apiVersion: v1
 metdata:
@@ -160,6 +160,9 @@ node2 192.168.0.21
 -------------------
 
 
+#############################
+we are using wordpressNode.yaml service for external front-end communication
+we are using mysqlClusterIP.yaml service for internal back-end communication (so that it is not accessible from outside)
 #############################
 nano wordpressNodePort.yaml
 
@@ -238,6 +241,9 @@ e.g
   loadbalancer and nodeport is for external communcation
 pod level port enablement is required.
 
+###############################################
+
+### 1.  APPLYING THE MYSQL WITH CLUSTERIPSERVICE POD
 root@master:~/app# kk create -f mysqlClusterIP.yaml
 pod/mydb created
 service/mydb-svc created
@@ -245,6 +251,7 @@ root@master:~/app# kkgp
 NAME   READY   STATUS    RESTARTS   AGE
 mydb   1/1     Running   0          6s
 
+### 2.  APPLYING THE WORDPRESS POD
 root@master:~/app# kk create -f wordpressNodePort.yaml
 pod/wp created
 service/wordpress-svc created
