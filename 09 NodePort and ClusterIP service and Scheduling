@@ -297,7 +297,12 @@ The following environment variables are also honored for configuring your WordPr
 The WORDPRESS_DB_NAME needs to already exist on the given MySQL server; it will not be created by the wordpress container.
 
 
-### you will get ERROR establishing a database connection for that you will have to put in the environment variables
+root@master:~/app# kubectl delete -f wordpressNodePort.yaml
+pod "wp" deleted
+service "wordpress-svc" deleted
+
+root@master:~/app# nano wordpressNodePort.yaml
+### if you get (ERROR establishing a database connection) for that you will have to put in the environment variables
 #################### FIXED ENVIRONMENT VARIABLE FOR wordpressNodePort.yaml ####################
 apiVersion: v1
 kind: Pod
@@ -337,13 +342,20 @@ spec:
 
 #################### FIXED ENVIRONMENT VARIABLE FOR wordpressNodePort.yaml ENDS ####################
 
-root@master:~/app# kubectl delete -f wordpressNodePort.yaml
-pod "wp" deleted
-service "wordpress-svc" deleted
-root@master:~/app# nano wordpressNodePort.yaml
 root@master:~/app# kk create -f wordpressNodePort.yaml
 pod/wp created
 service/wordpress-svc created
+
+root@master:~/app# kubectl get pod,svc
+NAME       READY   STATUS    RESTARTS   AGE
+pod/mydb   1/1     Running   0          6m10s
+pod/wp     1/1     Running   0          6m2s
+
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP        35d
+service/mydb-svc        ClusterIP   10.102.57.247   <none>        3306/TCP       6m10s
+service/wordpress-svc   NodePort    10.106.75.235   <none>        80:30123/TCP   6m2s
+root@master:~/app#
 
 root@master:~/app# kkgp -o wide
 NAME   READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
@@ -351,7 +363,7 @@ mydb   1/1     Running   0          21m   172.17.166.133   node1   <none>       
 wp     1/1     Running   0          3m    172.17.104.6     node2   <none>           <none>
 root@master:~/app#
 
-### node one is a clusterIp and another is Nodport 
+### pod on node1 is having clusterIp service and pod on node2 is having Nodeport service 
 ### mydb is has internal service on it (clusterIP)
 ### wordpress has the external service on it (NodePort)
 ### this is the reason we can access the wordpress from outside and mydb is connected to the wordpress internally
@@ -386,6 +398,7 @@ pod "wp" deleted
 service "wordpress-svc" deleted
 root@master:~/app#
 
+steps above is how the pod to pod communication happens using cluster ip service
 ############################# CLUSTER IP SERVICE ENDS #############################
 
 ############################# SCHEDULING BEGINS #############################
