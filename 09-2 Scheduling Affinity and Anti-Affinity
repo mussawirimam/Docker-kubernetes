@@ -7,9 +7,88 @@
 two types of Affinities:
   a. RequiredDuringScheduling - means if no node label assigned on anynode, it will go in pending status
   b. PreferredDuringScheduling - prefer a node that is having a label. If there is no node with any label, then go deploy in any node. It will not go into the pending status.
+  c. requiredDuringSchedulingIgnoredDuringExecution - even it is prefered during scheduling, which is having our required label get deployed to the node. If the label is deleted/changed, just ignore and continue your execution wherever the pod was deployed
 4. Anti-Affinity
 Anti-affinity have similar two sub-rules of it:
-  a. RequiredDuringScheduling - strict rule forcefully applying the rule, dont go and deploy in a node which is having defined label. If all the nodes are having labels, then go in pending status.
+  a. RequiredDuringScheduling - strict rule forcefully applying the rule: dont go and deploy in a node which is having defined label. If all the nodes are having labels, then go in pending status.
   b. PreferredDuringScheduling - ok prefer not to go in a node which is having label.
 
+# copy the Syntax from the documentation
+# use the below
+https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+# ignore below (only for reading purpose)
+https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
 
+### we are looking at the node affinity, we can look at the pod affinity as well
+nano aff-req.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: cpu
+            operator: In  #if you change this to NotIn that will not deploy the pod in the node which will have label as cpu=ryzen
+            values:
+            - ryzen
+
+################# AFFINITY BEGINS #################
+root@master:~/app/scheduling# nano aff-req.yaml
+root@master:~/app/scheduling# kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+nodesel   1/1     Running   0          138m
+root@master:~/app/scheduling# kubectl delete po nodesel
+pod "nodesel" deleted
+root@master:~/app/scheduling# kubectl create -f aff-req.yaml
+pod/newpod created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          9s    172.17.166.138   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+# why it got deployed to the node1? because node1 has the label cpu=ryzen
+root@master:~/app/scheduling# kubectl get node --show-labels|grep "cpu=ryzen"
+node1    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,cpu=ryzen,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
+root@master:~/app/scheduling#
+
+### let's remove the label
+root@master:~/app/scheduling# kubectl label node node1 cpu-
+node/node1 unlabeled
+root@master:~/app/scheduling#
+### it is still running, because of the (requiredDuringSchedulingIgnoredDuringExecution:)
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          2m21s   172.17.166.138   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+### now if you delete the pod and re-deploy it will go into pending state, because our node is forcefully requiredDuringScheduling to required label and node1 hasnt been labeled as cpu=ryzen
+root@master:~/app/scheduling# kubectl create -f aff-req.yaml
+pod/newpod created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+newpod   0/1     Pending   0          4s    <none>   <none>   <none>           <none>
+root@master:~/app/scheduling#
+
+### as soon as the label cpu=ryzen gets assinged on the node1, pending status will go-away and the node1 will be assigned
+root@master:~/app/scheduling# kubectl label node node1 cpu=ryzen
+node/node1 labeled
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          2m53s   172.17.166.139   node1   <none>           <none>
+root@master:~/app/scheduling#
+################# AFFINITY ENDS #################
+
+################# ANTI-AFFINITY BEGINS #################
+
+################# ANTI-AFFINITY ENDS #################
