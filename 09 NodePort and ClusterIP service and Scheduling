@@ -407,13 +407,108 @@ node1 192.168.0.20
 |          | 
 +----------+ 
 
-node1 192.168.0.20
+node2 192.168.0.21
 +----------+ 
 |          |
 +----------+
 
-#if you dont specify to the scheduler to which node to add this pod to, the scheduler will assign it to the random node depending on the resource the host node has.
-So, in order for the pod to specifically assigned to a particular node, you will have to specify the direction to it. 
+# if you create a pod, the Scheduler will assign that particular pod to a random node (depending on the resource the host node has)
+# but if you want the scheduler to assign the pod to specific node, you will have to define it/specify the directions. 
+
+# lets say, we have to assign the pod to node2, how to do that?
  ------
 | pod  |
  ------
+
+to do that, we will have to create a file
+root@master:~/app# mkdir scheduling
+root@master:~/app# cd scheduling
+root@master:~/app/scheduling# 
+root@master:~/app/scheduling# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   35d   v1.28.15
+node1    Ready    <none>          33d   v1.28.15
+node2    Ready    <none>          32d   v1.28.15
+root@master:~/app/scheduling#
+
+nano nodename.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  nodeName: node2
+
+root@master:~/app/scheduling# kubectl create -f nodename.yaml
+pod/newpod created
+root@master:~/app/scheduling#
+
+# the pod got deployed in the node2 this time, because we specified it in the manifest file
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP              NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          98s   172.17.104.11   node2   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kk delete -f nodename.yaml
+pod "newpod" deleted
+root@master:~/app/scheduling#
+
+# lets say if the node is unavailable the creation status will go in pending
+nano nodename.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  nodeName: node10
+
+root@master:~/app/scheduling# kubectl create -f nodename.yaml
+pod/newpod created
+
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+newpod   0/1     Pending   0          10s   <none>   node10   <none>           <none>
+root@master:~/app/scheduling#
+
+# why is it in pending state, to check that we should use describe command 
+kubectl get pod newpod
+...
+Events:                      <none>
+root@master:~/app/scheduling#
+
+### there is no node10 available
+root@master:~/app/scheduling# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   35d   v1.28.15
+node1    Ready    <none>          33d   v1.28.15
+node2    Ready    <none>          32d   v1.28.15
+root@master:~/app/scheduling#
+# no events is happening, because such node10 itself is not available in the cluster
+
+### in which situations we will deploy the pod to a specific node
+1. a healthy node having enough resources such as cpu, memory, disk space
+  cpu: 10
+  ram: 128GB
+  diskspace: 2TB
+2. to avoid deploying pod in an unhealthy maybe in case of a node is having less cpu, memory, or disk space
+  cpu: 1
+  ram: 1GB
+  diskspace: 5GB
+
+
