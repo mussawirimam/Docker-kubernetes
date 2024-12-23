@@ -501,7 +501,7 @@ node2    Ready    <none>          32d   v1.28.15
 root@master:~/app/scheduling#
 # no events is happening, because such node10 itself is not available in the cluster
 
-### in which situations we will deploy the pod to a specific node
+### in which situations we will deploy the pod to a specific node (node label)
 1. a healthy node having enough resources such as cpu, memory, disk space
   cpu: 10
   ram: 128GB
@@ -510,5 +510,9 @@ root@master:~/app/scheduling#
   cpu: 1
   ram: 1GB
   diskspace: 5GB
+
+# how to check similarity for similar configuration in case of specified node isnt available? 
+# using key=value
+# cpu=ryzen
 
 
