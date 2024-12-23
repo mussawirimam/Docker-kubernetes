@@ -1,0 +1,15 @@
+# previously we learned
+1. NodeName: Scheduling based on nodename in our yaml file to deploy pod in particular node
+2. NodeSelector: this was based on node labels 
+
+# today we will learn about 
+3. Affinity - based on node labels
+two types of Affinities:
+  a. RequiredDuringScheduling - means if no node label assigned on anynode, it will go in pending status
+  b. PreferredDuringScheduling - prefer a node that is having a label. If there is no node with any label, then go deploy in any node. It will not go into the pending status.
+4. Anti-Affinity
+Anti-affinity have similar two sub-rules of it:
+  a. RequiredDuringScheduling - strict rule forcefully applying the rule, dont go and deploy in a node which is having defined label. If all the nodes are having labels, then go in pending status.
+  b. PreferredDuringScheduling - ok prefer not to go in a node which is having label.
+
+
