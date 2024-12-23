@@ -419,7 +419,7 @@ node2 192.168.0.21
  ------
 | pod  |
  ------
-
+###### SCHEDULING BASED ON THE NODENAME ######
 to do that, we will have to create a file
 root@master:~/app# mkdir scheduling
 root@master:~/app# cd scheduling
@@ -501,6 +501,8 @@ node2    Ready    <none>          32d   v1.28.15
 root@master:~/app/scheduling#
 # no events is happening, because such node10 itself is not available in the cluster
 
+###### SCHEDULING BASED ON THE NODESELECTOR ######
+
 ### in which situations we will deploy the pod to a specific node (node label)
 1. a healthy node having enough resources such as cpu, memory, disk space
   cpu: 10
@@ -514,5 +516,91 @@ root@master:~/app/scheduling#
 # how to check similarity for similar configuration in case of specified node isnt available? 
 # using key=value
 # cpu=ryzen
+
+Q: how will we check the node label? 
+root@master:~/app/scheduling# nano nodeSelector.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodesel
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  nodeSelector:
+    cpu: ryzen
+
+root@master:~/app/scheduling# kubectl get nodes --show-labels
+NAME     STATUS   ROLES           AGE   VERSION    LABELS
+master   Ready    control-plane   35d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=master,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
+node1    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
+node2    Ready    <none>          32d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node2,kubernetes.io/os=linux
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl get nodes --show-labels | grep "cpu=ryzen"
+root@master:~/app/scheduling# ## we dont have such label called cpu=ryzen
+
+### for that we will have to define/assign a label on node
+
+root@master:~/app/scheduling# kubectl label nodes node1 cpu=ryzen
+node/node1 labeled
+root@master:~/app/scheduling#
+### now it is showing the label, because we assigned the label to the node1
+
+root@master:~/app/scheduling# kubectl get nodes --show-labels | grep "cpu=ryzen"
+node1    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,cpu=ryzen,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
+root@master:~/app/scheduling#
+
+### whenever now, you will be creating or deploying the pod (nodeSelector.yaml) this pod (nodesel) should be deployed in the node1
+
+root@master:~/app/scheduling# kubectl create -f nodeSelector.yaml
+pod/nodesel created
+root@master:~/app/scheduling#
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME      READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+nodesel   1/1     Running   0          18s   172.17.166.136   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+### if in case the nodes are not available with the labels in our cluster, what will happen? 
+### how to remove the lable? 
+
+root@master:~/app/scheduling# kubectl label nodes node1 cpu-
+node/node1 unlabeled
+root@master:~/app/scheduling#
+
+### in if there is no label, then it will go into pending state
+
+root@master:~/app/scheduling# kubectl delete -f nodeSelector.yaml
+pod "nodesel" deleted
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl create -f nodeSelector.yaml
+pod/nodesel created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME      READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+nodesel   0/1     Pending   0          5s    <none>   <none>   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl describe pod nodesel
+...
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  45s   default-scheduler  0/3 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }, 2 node(s) didn't match Pod's node affinity/selector. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling..
+root@master:~/app/scheduling#
+
+### as soon as I label the node, pod will be scheduled to the node with label cpu=ryzen. Because, that node is having our required label in itself. 
+root@master:~/app/scheduling# kubectl label nodes node1 cpu=ryzen
+node/node1 labeled
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME      READY   STATUS    RESTARTS   AGE    IP               NODE    NOMINATED NODE   READINESS GATES
+nodesel   1/1     Running   0          5m1s   172.17.166.137   node1   <none>           <none>
+root@master:~/app/scheduling#
 
 
