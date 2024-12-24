@@ -17,6 +17,6 @@ spec:
         preference:
           matchExpressions:
           - key: cpu
-            operator: In #to change it into Anti-affinity just add NotIn e.g operator: NotIn
+            operator: In # to achive anti-affinity use operator NotIn
             values:
             - ryzen
