@@ -87,8 +87,81 @@ root@master:~/app/scheduling# kubectl get pods -o wide
 NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
 newpod   1/1     Running   0          2m53s   172.17.166.139   node1   <none>           <none>
 root@master:~/app/scheduling#
+
+###### PREFERRED DURING SCHEDULING ######
+root@master:~/app/scheduling# nano preferredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: cpu
+            operator: In
+            values:
+            - ryzen
+
+root@master:~/app/scheduling# kubectl create -f preferredduringscheduling.yaml
+pod/newpod created
+root@master:~/app/scheduling#
+
 ################# AFFINITY ENDS #################
+# imagine all the nodes are having the label of cpu=ryzen, then your pod will be deployed any node. It will not keep the pod into the pending status. 
+
 
 ################# ANTI-AFFINITY BEGINS #################
+Q: what is Anti-Affinity? 
+Dont go and get deployed that has a label of cpu=ryzen
+
+root@master:~/app/scheduling# nano anti-aff-req.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: cpu
+            operator: NotIn
+            values:
+            - ryzen
+
+root@master:~/app/scheduling# 
+
+### notice that the pod has been deployed into the node2, because in operator section we have specified (operator: NotIn) not to be deployed in a node with the key=pair value of cpu=ryzen
+### so kubernetes scheduler will look for the node that doesnt have the label with cpu=ryzen and gets deployed in node2 because we havent tagged that label on node2
+root@master:~/app/scheduling# kubectl create -f anti-aff-req.yaml
+pod/newpod created
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP              NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          16s   172.17.104.12   node2   <none>           <none>
+root@master:~/app/scheduling#
+
+
+
+
+
 
 ################# ANTI-AFFINITY ENDS #################
