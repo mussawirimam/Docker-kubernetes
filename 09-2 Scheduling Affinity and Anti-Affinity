@@ -2,6 +2,9 @@
 1. NodeName: Scheduling based on nodename in our yaml file to deploy pod in particular node
 2. NodeSelector: this was based on node labels 
 
+NODE AFFINITY --- based on the node label
+POD AFFINITY --- based on the pod label
+
 # today we will learn about 
 3. Affinity - based on node labels
 two types of Affinities:
@@ -43,7 +46,7 @@ spec:
             values:
             - ryzen
 
-################# AFFINITY BEGINS #################
+################# NODE AFFINITY BEGINS #################
 root@master:~/app/scheduling# nano aff-req.yaml
 root@master:~/app/scheduling# kubectl get pods
 NAME      READY   STATUS    RESTARTS   AGE
@@ -126,15 +129,22 @@ root@master:~/app/scheduling# kubectl delete -f preferredduringscheduling.yaml
 pod "newpod" deleted
 root@master:~/app/scheduling#
 
+root@master:~/app/scheduling# kubectl create -f preferredduringscheduling.yaml
+pod/newpod created
+
+### adding anti-affinity in preferredduringscheduling.yaml with (operator: NotIn) the pod will be deployed in the node2, because the node2 doesnt have the label cpu=ryzen tagged to it
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME     READY   STATUS              RESTARTS   AGE   IP       NODE    NOMINATED NODE   READINESS GATES
+newpod   0/1     ContainerCreating   0          8s    <none>   node2   <none>           <none>
+root@master:~/app/scheduling#
 
 
 
-
-################# AFFINITY ENDS #################
+################# NODE AFFINITY ENDS #################
 # imagine all the nodes are having the label of cpu=ryzen, then your pod will be deployed any node. It will not keep the pod into the pending status. 
 
 
-################# ANTI-AFFINITY BEGINS #################
+################# NODE ANTI-AFFINITY BEGINS #################
 Q: what is Anti-Affinity? 
 Dont go and get deployed that has a label of cpu=ryzen
 
@@ -173,8 +183,9 @@ newpod   1/1     Running   0          16s   172.17.104.12   node2   <none>      
 root@master:~/app/scheduling#
 
 
+################# NODE ANTI-AFFINITY ENDS #################
 
+################# POD AFFINITY BEGINS #################
+### pod affinity is similar to the node affinity, the only thing that you will find different is the affinity is getting applied on the pod, based on the pod label.
 
-
-
-################# ANTI-AFFINITY ENDS #################
+################# POD AFFINITY ENDS #################
