@@ -1,3 +1,14 @@
+
+##### HELP COMMANDS USAGES
+kubectl options label # The following options can be passed to any command: ...
+kubectl --help
+kubectl [flags] [options]
+kubectl run --help
+      Usage:
+  kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run=server|client] [--overrides=inline-json]
+[--command] -- [COMMAND] [args...] [options]
+#####
+
 ## we were able to achieve the high availabilty through Docker Swarm using 3 nodes
 ## Master node (manager/leader) and 2 worker nodes
 
