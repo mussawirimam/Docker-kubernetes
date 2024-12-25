@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-pref-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAntiAffinity: # for affinity use PodAffinity here...
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100 # greater or lower level significance
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - mango
+          topologyKey: kubernetes.io/hostname
