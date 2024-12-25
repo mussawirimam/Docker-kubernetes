@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-app
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - mango
+        topologyKey: kubernetes.io/hostname # based on the hostname, you want to search the node based on the availability zones (you can define it in here) (original statement: topology.kubernetes.io/zone)
