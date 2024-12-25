@@ -213,6 +213,7 @@ NAME    READY   STATUS    RESTARTS   AGE
 mango-pod   1/1     Running   0          13s
 root@master:~/app/scheduling#
 
+############# POD AFFINITY REQUIRED DURING SCHEDULING ############# 
 nano pod-aff-requiredduringscheduling.yaml
 apiVersion: v1
 kind: Pod
@@ -311,4 +312,88 @@ root@master:~/app/scheduling# kkgp --show-labels
 NAME         READY   STATUS    RESTARTS   AGE     LABELS
 mango-pod    1/1     Running   0          17m     app=mango
 podaff-app   1/1     Running   0          2m44s   app=mango
+
+root@master:~/app/scheduling# kk delete -f pod-anti-aff-requiredduringscheduling.yaml
+pod "podaff-app" deleted
+root@master:~/app/scheduling#
+
+######### POD AFFINITY PREFERRED DURINGS SHEDULING #########
+root@master:~/app/scheduling# nano pod-aff-preferredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-pref-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100 # greater or lower level significance
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - mango
+          topologyKey: kubernetes.io/hostname
+
+### this pod will be preferring a node which is having defined label as app=mango, if there is no pod running with the label app=mango, it will go to any node.
+root@master:~/app/scheduling# kubectl create -f pod-aff-preferredduringscheduling.yaml
+pod/podaff-pref-pod created
+
+### the pod was deployed on the node1, because directions in yaml were to prefer the pod with label app=mango, which is deployed in node1. So, the podaff-pref-pod will be deployed in the node1 as well
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME              READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod         1/1     Running   0          38m   172.17.166.142   node1   <none>           <none>
+podaff-pref-pod   1/1     Running   0          9s    172.17.166.144   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl delete -f pod-aff-preferredduringscheduling.yaml
+pod "podaff-pref-pod" deleted
+root@master:~/app/scheduling#
+
+### POD ANTI PREFERRED DURING SCHEDULING AFFINITY ###
+root@master:~/app/scheduling# nano pod-anti-aff-preferedduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-pref-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAntiAffinity: # for affinity use PodAffinity here...
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100 # greater or lower level significance
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - mango
+          topologyKey: kubernetes.io/hostname
+
+### now the preference is to not add the podaff-pref-pod to node1, because yaml direction states in podAntiAffinity to not to deploy the pod in a node with which the pod with label app=mango is already present.
+### that is why it is deployed in the node2
+root@master:~/app/scheduling# kubectl create -f pod-anti-aff-preferedduringscheduling.yaml
+pod/podaff-pref-pod created
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME              READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod         1/1     Running   0          47m   172.17.166.142   node1   <none>           <none>
+podaff-pref-pod   1/1     Running   0          6s    172.17.104.16    node2   <none>           <none>
+root@master:~/app/scheduling#
+
 ################# POD AFFINITY ENDS #################
