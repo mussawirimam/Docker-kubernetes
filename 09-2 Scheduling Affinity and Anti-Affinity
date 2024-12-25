@@ -195,7 +195,7 @@ nano pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: mango
+  name: mango-pod
   labels:
     app: mango
 spec:
@@ -206,14 +206,14 @@ spec:
     - containerPort: 80
 
 root@master:~/app/scheduling# kubectl create -f pod.yaml
-pod/mango created
+pod/mango-pod created
 
 root@master:~/app/scheduling# kubectl get pods
 NAME    READY   STATUS    RESTARTS   AGE
-mango   1/1     Running   0          13s
+mango-pod   1/1     Running   0          13s
 root@master:~/app/scheduling#
 
-nano pod.yaml
+nano pod-aff-requiredduringscheduling.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -227,6 +227,7 @@ spec:
     ports:
     - containerPort: 80
   affinity:
+    podAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
@@ -234,12 +235,80 @@ spec:
             operator: In
             values:
             - mango
-        topologyKey: topology.kubernetes.io/hostname # based on the hostname, you want to search the node based on the availability zones (you can define it in here)
-### you can see the topology.kuberenetes.io/hostname 
+        topologyKey: kubernetes.io/hostname # based on the hostname, you want to search the node based on the availability zones (you can define it in here) (original statement: topology.kubernetes.io/zone)
+### you can see the kuberenetes.io/hostname will be added inside the topologyKey 
 root@master:~/app/scheduling# kubectl get nodes --show-labels
 NAME     STATUS   ROLES           AGE   VERSION    LABELS
 master   Ready    control-plane   37d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=master,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
 node1    Ready    <none>          36d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,cpu=ryzen,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
 node2    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node2,kubernetes.io/os=linux
 root@master:~/app/scheduling#
+
+### where this pod will get deployed? in a node which is already having a pod with the label of app=mango
+
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME    READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango   1/1     Running   0          37m   172.17.166.141   node1   <none>           <none>
+
+root@master:~/app/scheduling# kubectl get pod --show-labels
+NAME    READY   STATUS    RESTARTS   AGE   LABELS
+mango   1/1     Running   0          38m   app=mango
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# nano pod-aff-requiredduringscheduling.yaml
+root@master:~/app/scheduling# kubectl create -f pod-aff-requiredduringscheduling.yaml
+pod/podaff-app created
+root@master:~/app/scheduling#
+
+### as you see the podaff-app is deployed to the node1, because mango-pod had the label app=mango and it was deployed in node1
+### and that is why podaff-app has the affinity rule applied to it so it finds the label with app=mango in which node it is deployed in,
+### it will associate that node for the podaff-app
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME         READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod    1/1     Running   0          6m43s   172.17.166.142   node1   <none>           <none>
+podaff-app   1/1     Running   0          3s      172.17.166.143   node1   <none>           <none>
+
+### affinity required during scheduling
+root@master:~/app/scheduling# kubectl get pod --show-labels
+NAME         READY   STATUS    RESTARTS   AGE    LABELS
+mango-pod    1/1     Running   0          10m    app=mango
+podaff-app   1/1     Running   0          4m8s   app=mango
+
+### to make the Anti-Affinity at pod level, dont change the operator
+root@master:~/app/scheduling# nano pod-anti-aff-requiredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-app
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAntiAffinity: #Affnity and Anti-Affinity applies here
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - mango
+        topologyKey: kubernetes.io/hostname
+
+root@master:~/app/scheduling# kubectl create -f pod-anti-aff-requiredduringscheduling.yaml
+pod/podaff-app created
+
+### now the pod is deployed in the node, because anti-affinity has been applied which states that find the pod with label app=mango and dont deploy in the same node; hence, the pod was deployed in node2
+root@master:~/app/scheduling# kkgp -o wide
+NAME         READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod    1/1     Running   0          17m     172.17.166.142   node1   <none>           <none>
+podaff-app   1/1     Running   0          2m34s   172.17.104.14    node2   <none>           <none>
+root@master:~/app/scheduling# kkgp --show-labels
+NAME         READY   STATUS    RESTARTS   AGE     LABELS
+mango-pod    1/1     Running   0          17m     app=mango
+podaff-app   1/1     Running   0          2m44s   app=mango
 ################# POD AFFINITY ENDS #################
