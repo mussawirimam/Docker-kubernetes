@@ -1,3 +1,6 @@
+NODE AFFINITY AND ANTI AFFINITY DOC: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+POD AFFINITY AND ANTI AFFINITY DOC (ctrl + f: pod affinity) :   https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+
 # previously we learned
 1. NodeName: Scheduling based on nodename in our yaml file to deploy pod in particular node
 2. NodeSelector: this was based on node labels 
@@ -187,5 +190,56 @@ root@master:~/app/scheduling#
 
 ################# POD AFFINITY BEGINS #################
 ### pod affinity is similar to the node affinity, the only thing that you will find different is the affinity is getting applied on the pod, based on the pod label.
+# create a pod first
+nano pod.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mango
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
 
+root@master:~/app/scheduling# kubectl create -f pod.yaml
+pod/mango created
+
+root@master:~/app/scheduling# kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+mango   1/1     Running   0          13s
+root@master:~/app/scheduling#
+
+nano pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-app
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - mango
+        topologyKey: topology.kubernetes.io/hostname # based on the hostname, you want to search the node based on the availability zones (you can define it in here)
+### you can see the topology.kuberenetes.io/hostname 
+root@master:~/app/scheduling# kubectl get nodes --show-labels
+NAME     STATUS   ROLES           AGE   VERSION    LABELS
+master   Ready    control-plane   37d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=master,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
+node1    Ready    <none>          36d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,cpu=ryzen,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
+node2    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node2,kubernetes.io/os=linux
+root@master:~/app/scheduling#
 ################# POD AFFINITY ENDS #################
