@@ -88,7 +88,7 @@ NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED
 newpod   1/1     Running   0          2m53s   172.17.166.139   node1   <none>           <none>
 root@master:~/app/scheduling#
 
-###### PREFERRED DURING SCHEDULING ######
+======  PREFERRED DURING SCHEDULING ======
 root@master:~/app/scheduling# nano preferredduringscheduling.yaml
 apiVersion: v1
 kind: Pod
@@ -109,13 +109,26 @@ spec:
         preference:
           matchExpressions:
           - key: cpu
-            operator: In
+            operator: In #to change it into Anti-affinity just add NotIn e.g operator: NotIn
             values:
             - ryzen
 
 root@master:~/app/scheduling# kubectl create -f preferredduringscheduling.yaml
 pod/newpod created
 root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          9m33s   172.17.166.140   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl delete -f preferredduringscheduling.yaml
+pod "newpod" deleted
+root@master:~/app/scheduling#
+
+
+
+
 
 ################# AFFINITY ENDS #################
 # imagine all the nodes are having the label of cpu=ryzen, then your pod will be deployed any node. It will not keep the pod into the pending status. 
