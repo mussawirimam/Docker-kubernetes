@@ -1,0 +1,18 @@
+# first you will have to taint a node and then this file will take effect
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleration-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  tolerations:
+  - key: color
+    operator: Equal
+    value: green
+    effect: NoSchedule
