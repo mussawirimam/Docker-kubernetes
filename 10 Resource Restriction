@@ -1,0 +1,114 @@
+# Whenever we are creating a pod with one container or multiple container as well. The containers are getting deployed on the node. The container will not having any restrictions
+# there are two types of restrictions/limit resource usage on our container based on the container.
+# based on namespace also we can have limitation for resource accessibilities cpu or memory that will be covered under RBAC
+root@master:~/app/scheduling# kubectl get namespaces
+NAME              STATUS   AGE
+default           Active   38d
+kube-node-lease   Active   38d
+kube-public       Active   38d
+kube-system       Active   38d
+root@master:~/app/scheduling#
+
+### How to define the resource limit on our container
+
+# untain the node1 so that it is allowed to accept the pod deployment without the taint effect
+root@master:~/app/scheduling# kkdn node1|grep "Taint"
+root@master:~/app/scheduling# kkdn node1|grep "Taint"
+Taints:             color=green:NoExecute
+root@master:~/app/scheduling# kk taint node node1 color-
+node/node1 untainted
+root@master:~/app/scheduling# kkdn node1|grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling#
+
+# if the pods/deployments are stucked you can also delete them by force "becareful whenever you delete"
+root@master:~/app/scheduling# kkgp
+NAME                      READY   STATUS        RESTARTS   AGE
+mydep-2-54f8467d9-5zvv2   0/1     Terminating   0          4h15m
+mydep-2-54f8467d9-z4gwn   0/1     Terminating   0          4h15m
+mydep-66c55fb688-8psfk    0/1     Terminating   0          4h4m
+mydep-66c55fb688-9x2h9    0/1     Terminating   0          4h21m
+mydep-66c55fb688-hwwwt    0/1     Terminating   0          4h21m
+mydep-66c55fb688-jztjn    0/1     Terminating   0          4h4m
+newpod                    2/2     Running       0          6m25s
+
+root@master:~/app/scheduling# kk delete pod --force mydep-2-54f8467d9-z4gwn mydep-66c55fb688-8psfk mydep-66c55fb688-9x2h9 mydep-66c55fb688-hwwwt mydep-66c55fb688-jztjn
+Warning: Immediate deletion does not wait for confirmation that the running resource has been terminated. The resource may continue to run on the cluster indefinitely.
+pod "mydep-2-54f8467d9-z4gwn" force deleted
+pod "mydep-66c55fb688-8psfk" force deleted
+pod "mydep-66c55fb688-9x2h9" force deleted
+pod "mydep-66c55fb688-hwwwt" force deleted
+pod "mydep-66c55fb688-jztjn" force deleted
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          15m
+root@master:~/app/scheduling#
+
+
+root@master:~/app/scheduling# cat pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kk create -f pod.yaml
+pod/newpod created
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          4s
+root@master:~/app/scheduling#
+
+### if you see there is no resource limit (minimum or maximum) are configured.  
+### This is not a good practice to create a pod/deployment in a kubernetes cluster
+# assume that your container is resource hungry, it will consume all the resources from the particular node wherever it gets deployed. Which will cause issues with other pod; where other pods will also need resroucs.
+  con2:
+    Container ID:   cri-o://7856d6a6ebcf9c4d0565ece7f60e0d5acd1479cc8a85c973ff050f9b18c35927
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 26 Dec 2024 14:42:04 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5rfl8 (ro)
+Conditions:
+
+### DEFINE THE RESROUCE ###
+root@master:~/app/scheduling# nano resroucerestriction.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resrouces:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node
+      limit:    #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
