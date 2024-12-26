@@ -1,4 +1,4 @@
-NODE AFFINITY AND ANTI AFFINITY DOC: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+`NODE AFFINITY AND ANTI AFFINITY DOC: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
 POD AFFINITY AND ANTI AFFINITY DOC (ctrl + f: pod affinity) :   https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
 
 # previously we learned
@@ -397,3 +397,39 @@ podaff-pref-pod   1/1     Running   0          6s    172.17.104.16    node2   <n
 root@master:~/app/scheduling#
 
 ################# POD AFFINITY ENDS #################
+
+
+################# TAINT BEGINS #################
+### your master node will not be running any application or pod running in it. Why it is happening? because of Taint
+# imagine you have two nodes and I want to reserve node1 so that no new pod is deployed in node1
+# reservation happening because of Taint and taint will be applied on the node 
+# till we were using the labels on the node key=value
+# for Taint we use key=value:effect e.g color=green:Noschedule
+
+# there are 2 pods are already running and meanwhile I decided that I dont want any new pods to be accepted on the node1
+# we will Taint the node
+# color=green:NoSchedule
+# after (Taint) NoSchedule no new pods will be deployed 
+# only on one situation your pod will be deployed. That situations is that your pod should have (Toleration) added in it.
+
+node1 192.168.29.30
+pod1
+pod2
+
+node2 192.168.29.31
+pod
+
+TAINT EFFECTS: 
+NoSchedule
+
+TOLERATION:
+pod3 tolerations (yaml file):
+-key: color
+operator: In
+value: green
+effect: Noschedule # this taint needs to be defined under the toleration section
+
+################# TAINT BEGINS #################
+
+################# TOLERATION BEGINS #################
+################# TOLERATION BEGINS #################
