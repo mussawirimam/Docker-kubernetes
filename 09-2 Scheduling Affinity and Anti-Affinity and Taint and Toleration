@@ -1,0 +1,765 @@
+`NODE AFFINITY AND ANTI AFFINITY DOC: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+POD AFFINITY AND ANTI AFFINITY DOC (ctrl + f: pod affinity) :   https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+
+# previously we learned
+1. NodeName: Scheduling based on nodename in our yaml file to deploy pod in particular node
+2. NodeSelector: this was based on node labels 
+
+NODE AFFINITY --- based on the node label
+POD AFFINITY --- based on the pod label
+
+# today we will learn about 
+3. Affinity - based on node labels
+two types of Affinities:
+  a. RequiredDuringScheduling - means if no node label assigned on anynode, it will go in pending status
+  b. PreferredDuringScheduling - prefer a node that is having a label. If there is no node with any label, then go deploy in any node. It will not go into the pending status.
+  c. requiredDuringSchedulingIgnoredDuringExecution - even it is prefered during scheduling, which is having our required label get deployed to the node. If the label is deleted/changed, just ignore and continue your execution wherever the pod was deployed
+4. Anti-Affinity
+Anti-affinity have similar two sub-rules of it:
+  a. RequiredDuringScheduling - strict rule forcefully applying the rule: dont go and deploy in a node which is having defined label. If all the nodes are having labels, then go in pending status.
+  b. PreferredDuringScheduling - ok prefer not to go in a node which is having label.
+
+# copy the Syntax from the documentation
+# use the below
+https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+# ignore below (only for reading purpose)
+https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+
+### we are looking at the node affinity, we can look at the pod affinity as well
+nano aff-req.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: cpu
+            operator: In  #if you change this to NotIn that will not deploy the pod in the node which will have label as cpu=ryzen
+            values:
+            - ryzen
+
+################# NODE AFFINITY BEGINS #################
+root@master:~/app/scheduling# nano aff-req.yaml
+root@master:~/app/scheduling# kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+nodesel   1/1     Running   0          138m
+root@master:~/app/scheduling# kubectl delete po nodesel
+pod "nodesel" deleted
+root@master:~/app/scheduling# kubectl create -f aff-req.yaml
+pod/newpod created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          9s    172.17.166.138   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+# why it got deployed to the node1? because node1 has the label cpu=ryzen
+root@master:~/app/scheduling# kubectl get node --show-labels|grep "cpu=ryzen"
+node1    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,cpu=ryzen,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
+root@master:~/app/scheduling#
+
+### let's remove the label
+root@master:~/app/scheduling# kubectl label node node1 cpu-
+node/node1 unlabeled
+root@master:~/app/scheduling#
+### it is still running, because of the (requiredDuringSchedulingIgnoredDuringExecution:)
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          2m21s   172.17.166.138   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+### now if you delete the pod and re-deploy it will go into pending state, because our node is forcefully requiredDuringScheduling to required label and node1 hasnt been labeled as cpu=ryzen
+root@master:~/app/scheduling# kubectl create -f aff-req.yaml
+pod/newpod created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+newpod   0/1     Pending   0          4s    <none>   <none>   <none>           <none>
+root@master:~/app/scheduling#
+
+### as soon as the label cpu=ryzen gets assinged on the node1, pending status will go-away and the node1 will be assigned
+root@master:~/app/scheduling# kubectl label node node1 cpu=ryzen
+node/node1 labeled
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          2m53s   172.17.166.139   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+======  PREFERRED DURING SCHEDULING ======
+root@master:~/app/scheduling# nano preferredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: cpu
+            operator: In #to change it into Anti-affinity just add NotIn e.g operator: NotIn
+            values:
+            - ryzen
+
+root@master:~/app/scheduling# kubectl create -f preferredduringscheduling.yaml
+pod/newpod created
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          9m33s   172.17.166.140   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl delete -f preferredduringscheduling.yaml
+pod "newpod" deleted
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl create -f preferredduringscheduling.yaml
+pod/newpod created
+
+### adding anti-affinity in preferredduringscheduling.yaml with (operator: NotIn) the pod will be deployed in the node2, because the node2 doesnt have the label cpu=ryzen tagged to it
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME     READY   STATUS              RESTARTS   AGE   IP       NODE    NOMINATED NODE   READINESS GATES
+newpod   0/1     ContainerCreating   0          8s    <none>   node2   <none>           <none>
+root@master:~/app/scheduling#
+
+
+
+################# NODE AFFINITY ENDS #################
+# imagine all the nodes are having the label of cpu=ryzen, then your pod will be deployed any node. It will not keep the pod into the pending status. 
+
+
+################# NODE ANTI-AFFINITY BEGINS #################
+Q: what is Anti-Affinity? 
+Dont go and get deployed that has a label of cpu=ryzen
+
+root@master:~/app/scheduling# nano anti-aff-req.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: cpu
+            operator: NotIn
+            values:
+            - ryzen
+
+root@master:~/app/scheduling# 
+
+### notice that the pod has been deployed into the node2, because in operator section we have specified (operator: NotIn) not to be deployed in a node with the key=pair value of cpu=ryzen
+### so kubernetes scheduler will look for the node that doesnt have the label with cpu=ryzen and gets deployed in node2 because we havent tagged that label on node2
+root@master:~/app/scheduling# kubectl create -f anti-aff-req.yaml
+pod/newpod created
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP              NODE    NOMINATED NODE   READINESS GATES
+newpod   1/1     Running   0          16s   172.17.104.12   node2   <none>           <none>
+root@master:~/app/scheduling#
+
+
+################# NODE ANTI-AFFINITY ENDS #################
+
+################# POD AFFINITY BEGINS #################
+### pod affinity is similar to the node affinity, the only thing that you will find different is the affinity is getting applied on the pod, based on the pod label.
+# create a pod first
+nano pod.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mango-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+
+root@master:~/app/scheduling# kubectl create -f pod.yaml
+pod/mango-pod created
+
+root@master:~/app/scheduling# kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+mango-pod   1/1     Running   0          13s
+root@master:~/app/scheduling#
+
+############# POD AFFINITY REQUIRED DURING SCHEDULING ############# 
+nano pod-aff-requiredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-app
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - mango
+        topologyKey: kubernetes.io/hostname # based on the hostname, you want to search the node based on the availability zones (you can define it in here) (original statement: topology.kubernetes.io/zone)
+### you can see the kuberenetes.io/hostname will be added inside the topologyKey 
+root@master:~/app/scheduling# kubectl get nodes --show-labels
+NAME     STATUS   ROLES           AGE   VERSION    LABELS
+master   Ready    control-plane   37d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=master,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
+node1    Ready    <none>          36d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,cpu=ryzen,kubernetes.io/arch=amd64,kubernetes.io/hostname=node1,kubernetes.io/os=linux
+node2    Ready    <none>          34d   v1.28.15   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node2,kubernetes.io/os=linux
+root@master:~/app/scheduling#
+
+### where this pod will get deployed? in a node which is already having a pod with the label of app=mango
+
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME    READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango   1/1     Running   0          37m   172.17.166.141   node1   <none>           <none>
+
+root@master:~/app/scheduling# kubectl get pod --show-labels
+NAME    READY   STATUS    RESTARTS   AGE   LABELS
+mango   1/1     Running   0          38m   app=mango
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# nano pod-aff-requiredduringscheduling.yaml
+root@master:~/app/scheduling# kubectl create -f pod-aff-requiredduringscheduling.yaml
+pod/podaff-app created
+root@master:~/app/scheduling#
+
+### as you see the podaff-app is deployed to the node1, because mango-pod had the label app=mango and it was deployed in node1
+### and that is why podaff-app has the affinity rule applied to it so it finds the label with app=mango in which node it is deployed in,
+### it will associate that node for the podaff-app
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME         READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod    1/1     Running   0          6m43s   172.17.166.142   node1   <none>           <none>
+podaff-app   1/1     Running   0          3s      172.17.166.143   node1   <none>           <none>
+
+### affinity required during scheduling
+root@master:~/app/scheduling# kubectl get pod --show-labels
+NAME         READY   STATUS    RESTARTS   AGE    LABELS
+mango-pod    1/1     Running   0          10m    app=mango
+podaff-app   1/1     Running   0          4m8s   app=mango
+
+### to make the Anti-Affinity at pod level, dont change the operator
+root@master:~/app/scheduling# nano pod-anti-aff-requiredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-app
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAntiAffinity: #Affnity and Anti-Affinity applies here
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - mango
+        topologyKey: kubernetes.io/hostname
+
+root@master:~/app/scheduling# kubectl create -f pod-anti-aff-requiredduringscheduling.yaml
+pod/podaff-app created
+
+### now the pod is deployed in the node, because anti-affinity has been applied which states that find the pod with label app=mango and dont deploy in the same node; hence, the pod was deployed in node2
+root@master:~/app/scheduling# kkgp -o wide
+NAME         READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod    1/1     Running   0          17m     172.17.166.142   node1   <none>           <none>
+podaff-app   1/1     Running   0          2m34s   172.17.104.14    node2   <none>           <none>
+root@master:~/app/scheduling# kkgp --show-labels
+NAME         READY   STATUS    RESTARTS   AGE     LABELS
+mango-pod    1/1     Running   0          17m     app=mango
+podaff-app   1/1     Running   0          2m44s   app=mango
+
+root@master:~/app/scheduling# kk delete -f pod-anti-aff-requiredduringscheduling.yaml
+pod "podaff-app" deleted
+root@master:~/app/scheduling#
+
+######### POD AFFINITY PREFERRED DURINGS SHEDULING #########
+root@master:~/app/scheduling# nano pod-aff-preferredduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-pref-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100 # greater or lower level significance
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - mango
+          topologyKey: kubernetes.io/hostname
+
+### this pod will be preferring a node which is having defined label as app=mango, if there is no pod running with the label app=mango, it will go to any node.
+root@master:~/app/scheduling# kubectl create -f pod-aff-preferredduringscheduling.yaml
+pod/podaff-pref-pod created
+
+### the pod was deployed on the node1, because directions in yaml were to prefer the pod with label app=mango, which is deployed in node1. So, the podaff-pref-pod will be deployed in the node1 as well
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME              READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod         1/1     Running   0          38m   172.17.166.142   node1   <none>           <none>
+podaff-pref-pod   1/1     Running   0          9s    172.17.166.144   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl delete -f pod-aff-preferredduringscheduling.yaml
+pod "podaff-pref-pod" deleted
+root@master:~/app/scheduling#
+
+### POD ANTI PREFERRED DURING SCHEDULING AFFINITY ###
+root@master:~/app/scheduling# nano pod-anti-aff-preferedduringscheduling.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podaff-pref-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  affinity:
+    podAntiAffinity: # for affinity use PodAffinity here...
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100 # greater or lower level significance
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - mango
+          topologyKey: kubernetes.io/hostname
+
+### now the preference is to not add the podaff-pref-pod to node1, because yaml direction states in podAntiAffinity to not to deploy the pod in a node with which the pod with label app=mango is already present.
+### that is why it is deployed in the node2
+root@master:~/app/scheduling# kubectl create -f pod-anti-aff-preferedduringscheduling.yaml
+pod/podaff-pref-pod created
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME              READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod         1/1     Running   0          47m   172.17.166.142   node1   <none>           <none>
+podaff-pref-pod   1/1     Running   0          6s    172.17.104.16    node2   <none>           <none>
+root@master:~/app/scheduling#
+
+################# POD AFFINITY ENDS #################
+
+
+################# TAINT BEGINS #################
+### your master node will not be running any application or pod running in it. Why it is happening? because of Taint
+# imagine you have two nodes and I want to reserve node1 so that no new pod is deployed in node1
+# reservation happening because of Taint and taint will be applied on the node 
+# till we were using the labels on the node key=value
+# for Taint we use key=value:effect e.g color=green:Noschedule
+
+# there are 2 pods are already running and meanwhile I decided that I dont want any new pods to be accepted on the node1
+# we will Taint the node
+# color=green:NoSchedule
+# after (Taint) NoSchedule no new pods will be deployed 
+# only on one situation your pod will be deployed. That situations is that your pod should have (Toleration) added in it.
+
+node1 192.168.29.30
+pod1
+pod2
+
+node2 192.168.29.31
+pod
+
+TAINT EFFECTS types: 
+# meaning the node will not accept any other pods
+NoSchedule - will not allow the pods to be deployed on a tainted node, unless there is a toleration added to it
+PreferNoSchedule - with this it doesnt matter if your pod is having toleration added on it or even normal pod will be allowed to be deployed on the tainted node. When it will be preferred? when there is node left or all the worker nodes are filled up or no resources available, then it will be allowing it. 
+NoExecute - this is the strict one. If you are created the pod with the this effect, whatever pod was already running on the node before the tainting all pods will be removed. Only pods with toleration added to pods will be added to the tainted node. 
+
+TOLERATION:
+# toleration is added on pod
+# whenever you want to deploy a pod on a tainted node, then your pod should have toleration only then it will be accepted on a tainted node or else it will be kicked to some other node. 
+pod3 tolerations (yaml file):
+-key: color
+operator: In
+value: green
+effect: Noschedule # this taint needs to be defined under the toleration section. If you defined everything in a toleration correctly but the effect is wrong then it will go in the pending state.
+
+### how to check a if the Taint has been applied to the node
+root@master:~# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   38d   v1.28.15
+node1    Ready    <none>          37d   v1.28.15
+node2    Ready    <none>          35d   v1.28.15
+
+root@master:~# kubectl describe node master | grep -A 3 "Taint"
+Taints:             node-role.kubernetes.io/control-plane:NoSchedule
+Unschedulable:      false
+Lease:
+  HolderIdentity:  master
+root@master:~#
+
+### if you want to deploy a pod in a master node. How to do that? ### check in TOLERATION BEGINS SECTION
+
+### to check if there is TAINT added to node1 and node2
+root@master:~/app/scheduling# kubectl describe node node1 | grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling# kubectl describe node node2 | grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling#
+
+### we will be implementing if some of the normal pod running already on some node, then what will happen if you apply taint to a particular node/pod after tainting the node
+root@master:~/app/scheduling# kubectl create deployment mydep --image nginx --replicas 4
+deployment.apps/mydep created
+
+# two pods are running on node1 and two are running on node2 
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-66c55fb688-9x2h9   1/1     Running   0          9s    172.17.104.18    node2   <none>           <none>
+mydep-66c55fb688-hwwwt   1/1     Running   0          9s    172.17.104.17    node2   <none>           <none>
+mydep-66c55fb688-qkr8b   1/1     Running   0          9s    172.17.166.145   node1   <none>           <none>
+mydep-66c55fb688-rkj7d   1/1     Running   0          9s    172.17.166.146   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+### now im TAINTING node1
+
+root@master:~/app/scheduling# kubectl taint node node1 color=green:NoSchedule
+node/node1 tainted
+root@master:~/app/scheduling# kubectl describe nodes node1 | grep "Taint"
+Taints:             color=green:NoSchedule
+root@master:~/app/scheduling# kubectl describe nodes node2 | grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling#
+
+### now if you want to deploy a pod in node1, normal pod cant be deployed in the node1, then you will have to add the toleration in your yaml file
+root@master:~/app/scheduling# cp toleration-pod.yaml taint-toleration.yaml
+root@master:~/app/scheduling# nano taint-toleration.yaml
+root@master:~/app/scheduling#
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleration-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  tolerations:
+  - key: color
+    operator: Equal
+    value: green
+    effect: NoSchedule
+
+### since we are using the yaml with taint-toleration the pod should be deployed in the node1 
+root@master:~/app/scheduling# kubectl create -f taint-toleration.yaml
+pod/toleration-pod created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-66c55fb688-9x2h9   1/1     Running   0          5m12s   172.17.104.18    node2   <none>           <none>
+mydep-66c55fb688-hwwwt   1/1     Running   0          5m12s   172.17.104.17    node2   <none>           <none>
+mydep-66c55fb688-qkr8b   1/1     Running   0          5m12s   172.17.166.145   node1   <none>           <none>
+mydep-66c55fb688-rkj7d   1/1     Running   0          5m12s   172.17.166.146   node1   <none>           <none>
+toleration-pod           1/1     Running   0          5s      172.17.166.147   node1   <none>           <none>           <------------------ TAINTED WITH TOLERATION FOR NODE1
+root@master:~/app/scheduling#
+
+### if you try to create a deployment pod, all the pods will go into the node with non-tolerated node which is node2
+root@master:~/app/scheduling# kubectl create deployment mydep-2 --image nginx --replicas 2
+deployment.apps/mydep-2 created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE    IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-2-54f8467d9-5zvv2   1/1     Running   0          2s     172.17.104.20    node2   <none>           <none>
+mydep-2-54f8467d9-z4gwn   1/1     Running   0          2s     172.17.104.19    node2   <none>           <none>
+mydep-66c55fb688-9x2h9    1/1     Running   0          6m9s   172.17.104.18    node2   <none>           <none>
+mydep-66c55fb688-hwwwt    1/1     Running   0          6m9s   172.17.104.17    node2   <none>           <none>
+mydep-66c55fb688-qkr8b    1/1     Running   0          6m9s   172.17.166.145   node1   <none>           <none>
+mydep-66c55fb688-rkj7d    1/1     Running   0          6m9s   172.17.166.146   node1   <none>           <none>
+toleration-pod            1/1     Running   0          62s    172.17.166.147   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+### UNTAIN the node
+root@master:~/app/scheduling# kubectl taint node node1 color-
+node/node1 untainted
+root@master:~/app/scheduling#
+
+### lets say the node has been untainted but you still see the pod being run on the previously tainted node, in our case node1. There are still pods running on it.
+
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-2-54f8467d9-5zvv2   1/1     Running   0          7m22s   172.17.104.20    node2   <none>           <none>
+mydep-2-54f8467d9-z4gwn   1/1     Running   0          7m22s   172.17.104.19    node2   <none>           <none>
+mydep-66c55fb688-9x2h9    1/1     Running   0          13m     172.17.104.18    node2   <none>           <none>
+mydep-66c55fb688-hwwwt    1/1     Running   0          13m     172.17.104.17    node2   <none>           <none>
+mydep-66c55fb688-qkr8b    1/1     Running   0          13m     172.17.166.145   node1   <none>           <none>
+mydep-66c55fb688-rkj7d    1/1     Running   0          13m     172.17.166.146   node1   <none>           <none>
+toleration-pod            1/1     Running   0          8m22s   172.17.166.147   node1   <none>           <none>
+
+### if you taint the node1 with the effect (NoExecute), you will observe that all pods will be removed at immediate effect
+### removed in the sense, the pods will be moved to the node which is non tainted, in our case node2
+
+root@master:~/app/scheduling# kubectl taint node node1 color=green:NoExecute
+node/node1 tainted
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP              NODE    NOMINATED NODE   READINESS GATES
+mydep-2-54f8467d9-5zvv2   1/1     Running   0          11m   172.17.104.20   node2   <none>           <none>
+mydep-2-54f8467d9-z4gwn   1/1     Running   0          11m   172.17.104.19   node2   <none>           <none>
+mydep-66c55fb688-8psfk    1/1     Running   0          3s    172.17.104.22   node2   <none>           <none>
+mydep-66c55fb688-9x2h9    1/1     Running   0          17m   172.17.104.18   node2   <none>           <none>
+mydep-66c55fb688-hwwwt    1/1     Running   0          17m   172.17.104.17   node2   <none>           <none>
+mydep-66c55fb688-jztjn    1/1     Running   0          3s    172.17.104.21   node2   <none>           <none>
+root@master:~/app/scheduling#
+
+### node1 will not be having non-tolerated pods
+### to deploy the pods in it, you will have to define the toleration on the pod to be deployed in node1
+root@master:~/app/scheduling# nano taint-toleration-noexecute.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleration-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  tolerations:
+  - key: color
+    operator: Equal
+    value: green
+    effect: NoExecute
+
+### this time the if you create the pod from the file above, it will be deployed in the node1. Because, its been tainted to the effect of (NoExecute)
+root@master:~/app/scheduling# kubectl create -f taint-toleration-noexecute.yaml
+pod/toleration-pod created
+root@master:~/app/scheduling# kubectl get pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-2-54f8467d9-5zvv2   1/1     Running   0          20m     172.17.104.20    node2   <none>           <none>
+mydep-2-54f8467d9-z4gwn   1/1     Running   0          20m     172.17.104.19    node2   <none>           <none>
+mydep-66c55fb688-8psfk    1/1     Running   0          9m33s   172.17.104.22    node2   <none>           <none>
+mydep-66c55fb688-9x2h9    1/1     Running   0          26m     172.17.104.18    node2   <none>           <none>
+mydep-66c55fb688-hwwwt    1/1     Running   0          26m     172.17.104.17    node2   <none>           <none>
+mydep-66c55fb688-jztjn    1/1     Running   0          9m33s   172.17.104.21    node2   <none>           <none>
+toleration-pod            1/1     Running   0          4s      172.17.166.148   node1   <none>           <none>    <---------------------
+
+################# TAINT ENDS #################
+
+################# TOLERATION BEGINS #################
+
+TOLERATION:
+# toleration is added on pod
+# whenever you want to deploy a pod on a tainted node, then your pod should have toleration only then it will be accepted on a tainted node or else it will be kicked to some other node. 
+pod3 tolerations (yaml file):
+-key: color
+operator: In
+value: green
+effect: Noschedule # this taint needs to be defined under the toleration section. If you defined everything in a toleration correctly but the effect is wrong then it will go in the pending state.
+
+### how to check a if the Taint has been applied to the node
+root@master:~# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   38d   v1.28.15
+node1    Ready    <none>          37d   v1.28.15
+node2    Ready    <none>          35d   v1.28.15
+
+root@master:~# kubectl describe node master | grep -A 3 "Taint"
+Taints:             node-role.kubernetes.io/control-plane:NoSchedule
+Unschedulable:      false
+Lease:
+  HolderIdentity:  master
+root@master:~#
+
+### if you want to deploy a pod in a master node. How to do that? 
+
+# this is the key: node-role.kubernetes.io/control-plane
+# this is the effect: NoSchedule
+# we dont have any value
+
+root@master:~/app/scheduling# cp pod.yaml toleration-pod.yaml
+root@master:~/app/scheduling# nano toleration-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleration-pod
+  labels:
+    app: mango
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Equal
+    effect: NoSchedule
+
+# e.g node-role.kubernetes.io/control-plane:NoSchedule
+
+# it didnt go on the master node //my guess is because there is no affinity associated with the node in the yaml file
+root@master:~/app/scheduling# kubectl create -f toleration-pod.yaml
+pod/toleration-pod created
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME              READY   STATUS              RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango-pod         1/1     Running             0          22h   172.17.166.142   node1   <none>           <none>
+podaff-pref-pod   1/1     Running             0          22h   172.17.104.16    node2   <none>           <none>
+toleration-pod    0/1     ContainerCreating   0          6s    <none>           node1   <none>           <none>
+root@master:~/app/scheduling#
+
+### disable the node1 and node2. Cordon means temprory scheduling will be disabled on the node1 and node2
+kubectl cordon node1
+kubectl cordon node2
+
+root@master:~/app/scheduling# kubectl cordon node1
+node/node1 cordoned
+root@master:~/app/scheduling# kubectl cordon node2
+node/node2 cordoned
+
+root@master:~/app/scheduling# kubectl get nodes
+NAME     STATUS                     ROLES           AGE   VERSION
+master   Ready                      control-plane   38d   v1.28.15
+node1    Ready,SchedulingDisabled   <none>          37d   v1.28.15
+node2    Ready,SchedulingDisabled   <none>          35d   v1.28.15
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl delete -f toleration-pod.yaml
+pod "toleration-pod" deleted
+root@master:~/app/scheduling# kubectl create -f toleration-pod.yaml
+pod/toleration-pod created
+root@master:~/app/scheduling# kubectl get pod -o wide
+NAME              READY   STATUS              RESTARTS   AGE   IP               NODE     NOMINATED NODE   READINESS GATES
+mango-pod         1/1     Running             0          22h   172.17.166.142   node1    <none>           <none>
+podaff-pref-pod   1/1     Running             0          22h   172.17.104.16    node2    <none>           <none>
+toleration-pod    0/1     ContainerCreating   0          4s    <none>           master   <none>           <none>
+root@master:~/app/scheduling#
+
+
+root@master:~/app/scheduling# crictl ps -a
+CONTAINER           IMAGE                                                                                             CREATED             STATE               NAME                      ATTEMPT             POD ID              POD
+cb823a20cd558       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15   2 hours ago         Running             con1                      0                   5dd5d47fd3b3f       toleration-pod
+f4b73d212e68f       10541d8af03f40fae257735edd69b6c5dd0084bb9796649409ac7b5660705148                                  2 days ago          Running             kube-controller-manager   9                   ec6fb09bd322a       kube-controller-manager-master
+c409691b1fb45       9d3465f8477c6b383762d90ec387c9d77da8a402a849265805f86feaa57aeeea                                  3 days ago          Running             kube-scheduler            9                   da7386103a7e5       kube-scheduler-master
+9d5ef5550d9b5       ead0a4a53df89fd173874b46093b6e62d8c72967bbf606d672c9e8c9b601a4fc                                  3 days ago          Running             coredns                   8                   4766e1f8cffa2       coredns-5dd5756b68-m64mp
+06384161e74c5       5c6ffd2b2a1d03e9506d4669a91587cd464de04cb141392742fbf4dff2fbd931                                  3 days ago          Running             calico-node               4                   d9b143ecbd013       calico-node-mrm6j
+d8f6e7ad8de12       ead0a4a53df89fd173874b46093b6e62d8c72967bbf606d672c9e8c9b601a4fc                                  3 days ago          Running             coredns                   8                   a33d4cc5f7544       coredns-5dd5756b68-84w4t
+fb1da0f27ec86       5c6ffd2b2a1d03e9506d4669a91587cd464de04cb141392742fbf4dff2fbd931                                  3 days ago          Exited              mount-bpffs               4                   d9b143ecbd013       calico-node-mrm6j
+7f8ff1b4d8a25       6527a355814010ee83110dd5165fae88f7d9de75775b78565824d51f8da54897                                  3 days ago          Exited              install-cni               4                   d9b143ecbd013       calico-node-mrm6j
+360ec20612cbb       6527a355814010ee83110dd5165fae88f7d9de75775b78565824d51f8da54897                                  3 days ago          Exited              upgrade-ipam              4                   d9b143ecbd013       calico-node-mrm6j
+12d30fc53e100       ba6d7f8bc25be40b51dfeb5ddfda697527ba55073620c1c5fa04a5f0ae9e3816                                  3 days ago          Running             kube-proxy                8                   73174be73313a       kube-proxy-k4pzl
+c97b7c10fdad0       2e96e5913fc06e3d26915af3d0f2ca5048cc4b6327e661e80da792cbf8d8d9d4                                  3 days ago          Running             etcd                      8                   57455d9b0b208       etcd-master
+0170428d6fac6       9d3465f8477c6b383762d90ec387c9d77da8a402a849265805f86feaa57aeeea                                  3 days ago          Exited              kube-scheduler            8                   da7386103a7e5       kube-scheduler-master
+65ccd82336515       10541d8af03f40fae257735edd69b6c5dd0084bb9796649409ac7b5660705148                                  3 days ago          Exited              kube-controller-manager   8                   ec6fb09bd322a       kube-controller-manager-master
+e5bec8d476efb       9dc6939e7c573673801790fcfad6f994282c216e005578f5836b5fafc6685fc2                                  3 days ago          Running             kube-apiserver            8                   aeb48e59b488a       kube-apiserver-master
+root@master:~/app/scheduling#
+
+### to resume the scheduling back again 
+# node1 and node2 are now enabled for scheduling
+root@master:~/app/scheduling# kubectl uncordon node1
+node/node1 uncordoned
+root@master:~/app/scheduling# kubectl uncordon node2
+node/node2 uncordoned
+root@master:~/app/scheduling# kubectl get nodes
+NAME     STATUS   ROLES           AGE   VERSION
+master   Ready    control-plane   38d   v1.28.15
+node1    Ready    <none>          37d   v1.28.15
+node2    Ready    <none>          35d   v1.28.15
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl delete -f toleration-pod.yaml
+pod "toleration-pod" deleted
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl get pods
+NAME              READY   STATUS    RESTARTS   AGE
+mango-pod         1/1     Running   0          24h
+podaff-pref-pod   1/1     Running   0          24h
+
+root@master:~/app/scheduling# kubectl delete pod mango-pod podaff-pref-pod
+pod "mango-pod" deleted
+pod "podaff-pref-pod" deleted
+root@master:~/app/scheduling# kubectl get pods
+No resources found in default namespace.
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kubectl describe node node1 | grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling# kubectl describe node node2 | grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling#
+
+### check whether we have a taint added on a worker nodes
+################# TOLERATION ENDS #################
+
+
+
+## We have enough disk space but incase if you run out of /  
+root@master:~/app/scheduling# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs           790M  3.9M  786M   1% /run
+/dev/sda2        49G   14G   34G  29% /
+tmpfs           3.9G     0  3.9G   0% /dev/shm
+
+### apt clean cache to make space 
+root@master:~/app/scheduling# apt-get clean
+root@master:~/app/scheduling#
+root@master:~/app/scheduling# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs           790M  3.9M  786M   1% /run
+/dev/sda2        49G   13G   34G  28% /
+tmpfs           3.9G     0  3.9G   0% /dev/shm
+
+# delete garbage from your node to make disk space, so tmp files can be deleted after backup 
+
+
