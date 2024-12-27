@@ -179,7 +179,8 @@ Containers:
       # tcpSocket: if you are using non-web based server application, you can then check the health of the container by checking the container port number through tcpSocket e.g for mysql you can check 3306 port number
       # exec: if you are not using web application or any port number. Like you doing a backof the cluster or performing a scheduled job, at the time no http or tcpSocket port will be availabe. You can execute the command. If the command is success the probe is passed and if it is not success then it will fail.
               the container will check 3 times, only then it will recreating the container. 
-2. ReadinessProbe - 
+2. ReadinessProbe - if it fails 3 times, the container will be considered not ready and will not receive traffic from the service. The initialDelaySeconds is how long Kubernetes will wait before the first readiness check.
+3. StartupProbe - the use of this probe is to check whether the container is started or not
 
 
 #===================LIVENESS PROBE===================#
