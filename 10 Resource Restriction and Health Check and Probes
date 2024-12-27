@@ -1,0 +1,347 @@
+
+############## RESOURCE LIMITATION ##############
+# Whenever we are creating a pod with one container or multiple container as well. The containers are getting deployed on the node. The container will not having any restrictions
+# there are two types of restrictions/limit resource usage on our container based on the container.
+# based on namespace also we can have limitation for resource accessibilities cpu or memory that will be covered under RBAC
+root@master:~/app/scheduling# kubectl get namespaces
+NAME              STATUS   AGE
+default           Active   38d
+kube-node-lease   Active   38d
+kube-public       Active   38d
+kube-system       Active   38d
+root@master:~/app/scheduling#
+
+### How to define the resource limit on our container
+
+# untain the node1 so that it is allowed to accept the pod deployment without the taint effect
+root@master:~/app/scheduling# kkdn node1|grep "Taint"
+root@master:~/app/scheduling# kkdn node1|grep "Taint"
+Taints:             color=green:NoExecute
+root@master:~/app/scheduling# kk taint node node1 color-
+node/node1 untainted
+root@master:~/app/scheduling# kkdn node1|grep "Taint"
+Taints:             <none>
+root@master:~/app/scheduling#
+
+# if the pods/deployments are stucked you can also delete them by force "becareful whenever you delete"
+root@master:~/app/scheduling# kkgp
+NAME                      READY   STATUS        RESTARTS   AGE
+mydep-2-54f8467d9-5zvv2   0/1     Terminating   0          4h15m
+mydep-2-54f8467d9-z4gwn   0/1     Terminating   0          4h15m
+mydep-66c55fb688-8psfk    0/1     Terminating   0          4h4m
+mydep-66c55fb688-9x2h9    0/1     Terminating   0          4h21m
+mydep-66c55fb688-hwwwt    0/1     Terminating   0          4h21m
+mydep-66c55fb688-jztjn    0/1     Terminating   0          4h4m
+newpod                    2/2     Running       0          6m25s
+
+root@master:~/app/scheduling# kk delete pod --force mydep-2-54f8467d9-z4gwn mydep-66c55fb688-8psfk mydep-66c55fb688-9x2h9 mydep-66c55fb688-hwwwt mydep-66c55fb688-jztjn
+Warning: Immediate deletion does not wait for confirmation that the running resource has been terminated. The resource may continue to run on the cluster indefinitely.
+pod "mydep-2-54f8467d9-z4gwn" force deleted
+pod "mydep-66c55fb688-8psfk" force deleted
+pod "mydep-66c55fb688-9x2h9" force deleted
+pod "mydep-66c55fb688-hwwwt" force deleted
+pod "mydep-66c55fb688-jztjn" force deleted
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          15m
+root@master:~/app/scheduling#
+
+
+root@master:~/app/scheduling# cat pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kk create -f pod.yaml
+pod/newpod created
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          4s
+root@master:~/app/scheduling#
+
+### if you see there is no resource limit (minimum or maximum) are configured.  
+### This is not a good practice to create a pod/deployment in a kubernetes cluster
+# assume that your container is resource hungry, it will consume all the resources from the particular node wherever it gets deployed. Which will cause issues with other pod; where other pods will also need resroucs.
+  con2:
+    Container ID:   cri-o://7856d6a6ebcf9c4d0565ece7f60e0d5acd1479cc8a85c973ff050f9b18c35927
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 26 Dec 2024 14:42:04 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5rfl8 (ro)
+Conditions:
+
+### DEFINE THE RESROUCE ###
+root@master:~/app/scheduling# nano resroucerestriction.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kubectl create -f resourcelimitation.yaml
+pod/newpod created
+
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          2m26s
+root@master:~/app/scheduling#
+
+### check the con1 has a limitation set for resource accessibility
+root@master:~/app/scheduling# kkdp newpod
+
+...
+Containers:
+  con1:
+    Container ID:   cri-o://7acc4b394fb4d123eb489c83d650051dbf070d470ec233ff751f3e3edf969268
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 07:11:14 -0500
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-lkqj6 (ro)
+  con2:
+    Container ID:   cri-o://03dcf3038b7f497f73b70b3f2f11bc27eb6d7a8c7876d20c59e84e488eee9e28
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 07:11:14 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+...
+
+############## RESOURCE LIMITATION ENDS ##############
+
+############## HEALTH CHECK ##############
+### health check of your containers
+### two types of probes are available
+=== healthcheck probs ===
+1. LivenessProbe - if liveness probe is getting failed, then your container will be killed and recreated.
+      #during the killing and recreating process, if some user is requesting the data. Surely, it will be routing/forwarding the request to container which is currently not available.
+      # the drawback of this is that the user/application users will be able to see the failed errors on the screen.
+ LivenessProbe CheckTypes: - e.g http, exec, tcpSocket...
+      # http: when to use http probe? when there is a web based server based application. Which could be nginx, apache, and etc 
+      # tcpSocket: if you are using non-web based server application, you can then check the health of the container by checking the container port number through tcpSocket e.g for mysql you can check 3306 port number
+      # exec: if you are not using web application or any port number. Like you doing a backof the cluster or performing a scheduled job, at the time no http or tcpSocket port will be availabe. You can execute the command. If the command is success the probe is passed and if it is not success then it will fail.
+              the container will check 3 times, only then it will recreating the container. 
+2. ReadinessProbe - 
+
+root@master:~/app/scheduling# nano healthcheck-LivenessProbe.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    livenessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /index.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed and be ready and then perform any probing. if the application is not ready and you are performing a probe, your container will be stuck in loop of killing and recreating. You have to know the nature of the application and how long it takes to be ready.
+      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kk create -f healthcheck-LivenessProbe.yaml
+pod/newpod created
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          3m35s
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkdp newpod
+
+### Additional line (Livness) has been added on the containe1 which is not present on container2
+
+... 
+Containers:
+  con1:
+    Container ID:   cri-o://11de04bd701c6f0ef64584ce374be70e18562f1395d0865bddebd2fe55af8209
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 08:11:34 -0500
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     http-get http://:80/index.html delay=5s timeout=1s period=5s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-4zznw (ro)
+  con2:
+    Container ID:   cri-o://80c03d126365c5a2b3c96c4d72ada2fcf431199e950ef1db2f110ab0156d1927
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 08:11:35 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-4zznw (ro)
+...
+
+### lets create a service ###
+root@master:~/app/scheduling# kkgs
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   39d
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   2/2     Running   0          7m3s
+root@master:~/app/scheduling#
+
+### ClusterIp has been added on the newpod. newpod has a virtual ip now which is not accessible from anywhere, it is for k8s usage.
+root@master:~/app/scheduling# kk expose pod newpod
+service/newpod exposed
+root@master:~/app/scheduling# kkgs
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)           AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP           39d
+newpod       ClusterIP   10.96.246.192   <none>        80/TCP,8080/TCP   3s
+root@master:~/app/scheduling#
+
+### pod ip
+root@master:~/app/scheduling# kkgp -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   2/2     Running   0          8m53s   172.17.166.153   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+#whenever you are creating a service, your services are mapping your pod to it.
+root@master:~/app/scheduling# kk describe svc newpod
+Name:              newpod
+Namespace:         default
+Labels:            app=myapp
+Annotations:       <none>
+Selector:          app=myapp
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.96.246.192
+IPs:               10.96.246.192
+Port:              port-1  80/TCP
+TargetPort:        80/TCP
+Endpoints:         172.17.166.153:80
+Port:              port-2  8080/TCP
+TargetPort:        8080/TCP
+Endpoints:         172.17.166.153:8080  <--------------- check this it is going to randomly assign a port 8080 because we didnt define it. And it is a faulty configuration
+Session Affinity:  None
+Events:            <none>
+root@master:~/app/scheduling#
+
+### exposing the pod to service with the port
+root@master:~/app/scheduling# kk delete svc newpod
+service "newpod" deleted
+
+root@master:~/app/scheduling# kk expose pod newpod --port 80
+service/newpod exposed
+root@master:~/app/scheduling#
+
+### if you check now the Endpoint port is mapped correctly. Traffic is going to correct port number now.
+root@master:~/app/scheduling# kkds newpod
+Name:              newpod
+Namespace:         default
+Labels:            app=myapp
+Annotations:       <none>
+Selector:          app=myapp
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.102.85.76
+IPs:               10.102.85.76
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:         172.17.166.153:80
+Session Affinity:  None
+Events:            <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkgp -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   2/2     Running   0          14m   172.17.166.153   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+
+
+############## HEALTH CHECK ENDS ##############
