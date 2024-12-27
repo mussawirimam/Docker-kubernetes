@@ -181,6 +181,7 @@ Containers:
               the container will check 3 times, only then it will recreating the container. 
 2. ReadinessProbe - 
 
+#### HTTP LIVENESS PROBE ####
 root@master:~/app/scheduling# nano healthcheck-LivenessProbe.yaml
 apiVersion: v1
 kind: Pod
@@ -243,7 +244,7 @@ Containers:
     Requests:
       cpu:        100m
       memory:     64Mi
-    Liveness:     http-get http://:80/index.html delay=5s timeout=1s period=5s #success=1 #failure=3
+    Liveness:     http-get http://:80/index.html delay=5s timeout=1s period=5s #success=1 #failure=3    <----------------- since the port 80 is showing the http file called index.html if there will be any issues, it will fail.
     Environment:  <none>
     Mounts:
       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-4zznw (ro)
@@ -341,6 +342,229 @@ root@master:~/app/scheduling# kkgp -o wide
 NAME     READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
 newpod   2/2     Running   0          14m   172.17.166.153   node1   <none>           <none>
 root@master:~/app/scheduling#
+
+###if you will access this service from outside, it will not be available. If you try to access from outside while probe is getting failed or containers recreating. You will be seeing errors
+### liveness probe will allow you to send the request traffic towards your container, whether it is running or notice any trouble. This is one issue with liveness probe but good thing is that it will recreate the container. 
+### if the your check is failed in pod describe, then it will show the event log
+
+### CREATING A ERROR WITHIN FILE TO SHOW THE PROBE IN ACTION ###
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    livenessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html #ERROR because the /test.html doesnt exist
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kk delete -f healthcheck-LivenessProbe.yaml
+pod "newpod" deleted
+root@master:~/app/scheduling# nano healthcheck-LivenessProbe.yaml
+root@master:~/app/scheduling#
+root@master:~/app/scheduling# nano healthcheck-LivenessProbe.yaml
+root@master:~/app/scheduling# kk create -f healthcheck-LivenessProbe.yaml
+
+root@master:~/app/scheduling# kkdp newpod
+
+### KUBELET IS DOING THE HEALTHCHECK 
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  91s                default-scheduler  Successfully assigned default/newpod to node1
+  Normal   Created    90s                kubelet            Created container con2
+  Normal   Pulled     90s                kubelet            Successfully pulled image "nginx:latest" in 610ms (610ms including waiting)
+  Normal   Started    90s                kubelet            Started container con2
+  Normal   Pulling    90s                kubelet            Pulling image "tomcat:latest"
+  Normal   Pulled     90s                kubelet            Successfully pulled image "tomcat:latest" in 489ms (489ms including waiting)
+  Normal   Pulled     71s                kubelet            Successfully pulled image "nginx:latest" in 527ms (527ms including waiting)
+  Normal   Created    56s (x3 over 90s)  kubelet            Created container con1
+  Normal   Started    56s (x3 over 90s)  kubelet            Started container con1
+  Normal   Killing    56s (x2 over 71s)  kubelet            Container con1 failed liveness probe, will be restarted
+  Normal   Pulling    56s (x3 over 91s)  kubelet            Pulling image "nginx:latest"
+  Normal   Pulled     56s                kubelet            Successfully pulled image "nginx:latest" in 526ms (526ms including waiting)
+  Warning  Unhealthy  51s (x7 over 81s)  kubelet            Liveness probe failed: HTTP probe failed with statuscode: 404      <--------------------------
+
+### probe will try to restart/recreate the container 5 
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS             RESTARTS      AGE
+newpod   1/2     CrashLoopBackOff   5 (19s ago)   2m25s
+root@master:~/app/scheduling#
+
+#### EXEC LIVENESS PROBE ####
+root@master:~/app/scheduling# root@master:~/app/scheduling# nano healthcheck-LivenessProbe-exec.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod-exec
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /usr/share/nginx/html/index.html
+      initialDelaySeconds: 5
+      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+
+root@master:~/app/scheduling# kk create -f healthcheck-LivenessProbe-exec.yaml
+pod/newpod-exec created
+root@master:~/app/scheduling# kkgp
+NAME          READY   STATUS              RESTARTS       AGE
+newpod        2/2     Running             8 (5m8s ago)   11m
+newpod-exec   0/2     ContainerCreating   0              7s
+
+Containers:
+  con1:
+    Container ID:
+    Image:          nginx:latest
+    Image ID:
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       ContainerCreating
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     exec [cat /usr/share/nginx/html/index.html] delay=5s timeout=1s period=5s #success=1 #failure=3    <----------------------- command is executed successfully INTERVIEW QUESTION: WHEN my pod will go in state of CrashLoopBackOff: there could be few reason of healthcheck of your container. If you container is continously failed 5th time, it will be going in the CrashLoopBackOff.
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-kwrxx (ro)
+  con2:
+    Container ID:
+    Image:          tomcat:latest
+    Image ID:
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       ContainerCreating
+    Ready:          False
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+
+
+INTERVIEW QUESTION: 
+Q WHEN my pod will go in state of CrashLoopBackOff: there could be few reason of healthcheck of your container. If you container is continously failed 5th time, it will be going in the CrashLoopBackOff.
+Q what can be the issue instead of healthcheck my container is not starting? or I didnt define health check but my still container is going in CrashLoopBackOff? that can be because of misconfiguration in image or entrypoint inspection which is not able to make your application continously running. 
+
+#### TCPSOCKET LIVENESS PROBE ####
+root@master:~/app/scheduling# nano healthcheck-LivenessProbe-tcpSocket.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod-tcp
+  labels:
+    app: myapp-tcp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    livenessProbe:
+      tcpSocket:
+        port: 80 # Our container port is 80
+      initialDelaySeconds: 5
+      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kk create -f healthcheck-LivenessProbe-tcpSocket.yaml
+pod/newpod-tcp created
+root@master:~/app/scheduling# kkgp
+NAME          READY   STATUS             RESTARTS       AGE
+newpod        1/2     CrashLoopBackOff   13 (73s ago)   24m
+newpod-exec   2/2     Running            0              13m
+newpod-tcp    2/2     Running            0              3s
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkdp newpod-tcp
+Containers:
+  con1:
+    Container ID:   cri-o://7f32920acc30820b42f090594413087160b0ec8cd7111a32c7ff508a1c5751df
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 10:46:19 -0500
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     tcp-socket :80 delay=5s timeout=1s period=5s #success=1 #failure=3    <------------------------ tcpSocket probe if the port number is not available, it will fail.
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-q6ksh (ro)
+  con2:
+    Container ID:   cri-o://4d5435b34e7099e0b42e0ea7d283b06b15cd68d8ceb51f000c1c6d6ed1b4ed10
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 10:46:20 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
 
 
 
