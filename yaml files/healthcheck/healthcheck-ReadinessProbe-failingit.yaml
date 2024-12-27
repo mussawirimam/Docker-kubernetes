@@ -22,7 +22,8 @@ spec:
       httpGet: # because nginx is webserver, so use the http probe
         path: /test.html
         port: 80
-      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>    readinessProbe:
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>
+    readinessProbe:
       httpGet: # because nginx is webserver, so use the http probe
         path: /test.html
         port: 80
