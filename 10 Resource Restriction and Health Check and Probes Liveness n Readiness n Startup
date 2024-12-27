@@ -751,5 +751,172 @@ root@master:~/app/scheduling#
       initialDelaySeconds: 5
       periodSeconds: 5 # every 5 second perform the probeCheck
 
+#===================STARTUP PROBE===================#
+#what is the use of the startup probe?
+### before performing readiness and liveness, first probe that will be performed is the startup probe.
+### the use of the startup probe is to check whether my container is started or not. 
+
+root@master:~/app/scheduling# nano healthcheck-StartupProbe.yaml
+### StartupProbe failing on purpose to check the behaviour of 3 Probefailures. ###
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    startupProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>        
+    livenessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>
+    readinessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS             RESTARTS      AGE
+newpod   1/2     CrashLoopBackOff   6 (69s ago)   5m29s
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkdp newpod
+Name:             newpod
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             node1/192.168.29.135
+Start Time:       Fri, 27 Dec 2024 16:52:43 -0500
+Labels:           app=myapp
+Annotations:      cni.projectcalico.org/containerID: fa51e2e4bfe28fab9dd597d9950cf44479aa94cc029fde7efced3b3210b8995a
+                  cni.projectcalico.org/podIP: 172.17.166.158/32
+                  cni.projectcalico.org/podIPs: 172.17.166.158/32
+Status:           Running
+IP:               172.17.166.158
+IPs:
+  IP:  172.17.166.158
+Containers:
+  con1:
+    Container ID:   cri-o://081562e0f934b9cf0de6d56e2b1856d7a689489747df80bef23e9c39a1e44639
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 27 Dec 2024 16:54:44 -0500
+      Finished:     Fri, 27 Dec 2024 16:55:13 -0500
+    Ready:          False
+    Restart Count:  4
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     http-get http://:80/test.html delay=5s timeout=1s period=10s #success=1 #failure=3    <---------------- Liveness probe
+    Readiness:    http-get http://:80/test.html delay=5s timeout=1s period=10s #success=1 #failure=3    <---------------- Readiness probe
+    Startup:      http-get http://:80/test.html delay=5s timeout=1s period=10s #success=1 #failure=3    <---------------- Startup probe
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wlfql (ro)
+  con2:
+    Container ID:   cri-o://f0e7ccd6ec07c143761e16b53e7d5a5260eebb600589056d58e211e1337db862
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 16:52:45 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wlfql (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  kube-api-access-wlfql:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                   From               Message
+  ----     ------     ----                  ----               -------
+  Normal   Scheduled  2m48s                 default-scheduler  Successfully assigned default/newpod to node1
+  Normal   Pulled     2m47s                 kubelet            Successfully pulled image "nginx:latest" in 765ms (765ms including waiting)
+  Normal   Started    2m46s                 kubelet            Started container con2
+  Normal   Pulling    2m46s                 kubelet            Pulling image "tomcat:latest"
+  Normal   Pulled     2m46s                 kubelet            Successfully pulled image "tomcat:latest" in 630ms (630ms including waiting)
+  Normal   Created    2m46s                 kubelet            Created container con2
+  Normal   Pulled     2m17s                 kubelet            Successfully pulled image "nginx:latest" in 782ms (782ms including waiting)
+  Normal   Killing    108s (x2 over 2m18s)  kubelet            Container con1 failed startup probe, will be restarted
+  Normal   Created    107s (x3 over 2m46s)  kubelet            Created container con1
+  Normal   Pulling    107s (x3 over 2m47s)  kubelet            Pulling image "nginx:latest"
+  Normal   Pulled     107s                  kubelet            Successfully pulled image "nginx:latest" in 805ms (805ms including waiting)
+  Normal   Started    106s (x3 over 2m46s)  kubelet            Started container con1
+  Warning  Unhealthy  98s (x7 over 2m38s)   kubelet            Startup probe failed: HTTP probe failed with statuscode: 404
+root@master:~/app/scheduling#
+
+### NO ENDPOINT IS MENTIONED IN THE SERVICE 
+root@master:~/app/scheduling# root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS             RESTARTS      AGE
+newpod   1/2     CrashLoopBackOff   6 (69s ago)   5m29s
+root@master:~/app/scheduling# kkgs
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP   39d
+newpod       ClusterIP   10.102.85.76   <none>        80/TCP    8h
+root@master:~/app/scheduling# kkds newpod
+Name:              newpod
+Namespace:         default
+Labels:            app=myapp
+Annotations:       <none>
+Selector:          app=myapp
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.102.85.76
+IPs:               10.102.85.76
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:                          <-------------------------- no end point is mentioned. 
+Session Affinity:  None
+Events:            <none>
+root@master:~/app/scheduling#
 
 ############## HEALTH CHECK ENDS ##############
