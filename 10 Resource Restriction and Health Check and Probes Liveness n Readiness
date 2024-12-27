@@ -181,6 +181,8 @@ Containers:
               the container will check 3 times, only then it will recreating the container. 
 2. ReadinessProbe - 
 
+
+#===================LIVENESS PROBE===================#
 #### HTTP LIVENESS PROBE ####
 root@master:~/app/scheduling# nano healthcheck-LivenessProbe.yaml
 apiVersion: v1
@@ -566,6 +568,187 @@ Containers:
     Environment:    <none>
     Mounts:
 
+#===================READINESS PROBE===================#
+the main usage of readiness probe is: if your pod is not ready, then your container should not get any request or traffic towards particular container. 
+it will stop sending traffic to a pod, which will have a failed container in it. Rest of the things will be the same.. 
+the draw back of the readiness probe is that it cannot recreate the container. If your probe is failed, container cannot be killed or recreated. This is the problem with the readiness probe.
+how we will deal with this issue?
+then you will have to use both the probe together, then only your container will be recreated. 
+
+root@master:~/app/scheduling# kk delete -f healthcheck-LivenessProbe.yaml
+pod "newpod" deleted
+
+root@master:~/app/scheduling# kk delete -f healthcheck-LivenessProbe-tcpSocket.yaml
+pod "newpod-tcp" deleted
+
+root@master:~/app/scheduling# kk delete -f healthcheck-LivenessProbe-exec.yaml
+
+### im failing the probe, because I want to show how it is stopping traffic towards your container. ###
+root@master:~/app/scheduling#  nano healthcheck-ReadinessProbe-failingit.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    livenessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>
+    readinessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/scheduling# kk create -f healthcheck-ReadinessProbe.yaml
+pod/newpod created
+root@master:~/app/scheduling# kkgp
+NAME     READY   STATUS              RESTARTS   AGE
+newpod   0/2     ContainerCreating   0          3s
+root@master:~/app/scheduling# kkdp newpod
+
+root@master:~/app/scheduling# kkdp newpod
+Name:             newpod
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             node1/192.168.29.135
+Start Time:       Fri, 27 Dec 2024 15:50:39 -0500
+Labels:           app=myapp
+Annotations:      cni.projectcalico.org/containerID: bd8d72502844f901bad73ee7378236abc417981a593c54438b57c54924d33100
+                  cni.projectcalico.org/podIP: 172.17.166.157/32
+                  cni.projectcalico.org/podIPs: 172.17.166.157/32
+Status:           Running
+IP:               172.17.166.157
+IPs:
+  IP:  172.17.166.157
+Containers:
+  con1:
+    Container ID:   cri-o://d7deabbee470e9a83b992490e9448979923a16f6fa3495dcddb8175056b9c3b0
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 15:50:40 -0500
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     http-get http://:80/test.html delay=5s timeout=1s period=10s #success=1 #failure=3  <---------------------- both probes defined 
+    Readiness:    http-get http://:80/test.html delay=5s timeout=1s period=5s #success=1 #failure=3   <---------------------- both probes defined 
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-x6kkd (ro)
+  con2:
+    Container ID:   cri-o://204fa2f720822909ec6028780595b7125d2f752eff2f6a9cdeeb4b68fcc0f83e
+    Image:          tomcat:latest
+    Image ID:       docker.io/library/tomcat@sha256:59117505ccf7033bd67a595cf02dbaac3a032468385385acbb6246a4531a2e80
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 27 Dec 2024 15:50:41 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-x6kkd (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  kube-api-access-x6kkd:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age        From               Message
+  ----     ------     ----       ----               -------
+  Normal   Scheduled  12s        default-scheduler  Successfully assigned default/newpod to node1
+  Normal   Pulling    <invalid>  kubelet            Pulling image "nginx:latest"
+  Normal   Pulled     <invalid>  kubelet            Successfully pulled image "nginx:latest" in 601ms (601ms including waiting)
+  Normal   Created    <invalid>  kubelet            Created container con1
+  Normal   Started    <invalid>  kubelet            Started container con1
+  Normal   Pulling    <invalid>  kubelet            Pulling image "tomcat:latest"
+  Normal   Pulled     <invalid>  kubelet            Successfully pulled image "tomcat:latest" in 501ms (501ms including waiting)
+  Normal   Created    <invalid>  kubelet            Created container con2
+  Normal   Started    <invalid>  kubelet            Started container con2
+  Warning  Unhealthy  <invalid>  kubelet            Liveness probe failed: HTTP probe failed with statuscode: 404
+  Warning  Unhealthy  <invalid>  kubelet            Readiness probe failed: HTTP probe failed with statuscode: 404
+root@master:~/app/scheduling#
+
+### Get the ip address of the pod and correct service
+root@master:~/app/scheduling# kkgs
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP   39d
+newpod       ClusterIP   10.102.85.76   <none>        80/TCP    5h53m  <------------- 
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkgp -o wide
+NAME     READY   STATUS             RESTARTS            AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+newpod   1/2     CrashLoopBackOff   5 (<invalid> ago)   3m50s   172.17.166.157   node1   <none>           <none>          <-------------- see ip address is not matching
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kkds newpod
+Name:              newpod
+Namespace:         default
+Labels:            app=myapp
+Annotations:       <none>
+Selector:          app=myapp
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.102.85.76
+IPs:               10.102.85.76
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:                            <------------------ no ip address is mentioned, the reason behind it is that you configured readiness probe which is that if the readiness probe is failed, it will not get any traffic. Your endpoint is nothing but the ip address of a pod. Because of readiness probe we are not getting it. 
+Session Affinity:  None
+Events:            <none>
+root@master:~/app/scheduling#
+
+
+### all the other probe are similar for tcpSocket and exec
+### just change the livenessProbe line to readinessProbe
+    livenessProbe: <--------------- this line change it to readinessProbe and check on your own how the behaviour of the readiness probe is
+      exec:
+        command:
+        - cat
+        - /usr/share/nginx/html/index.html
+      initialDelaySeconds: 5
+      periodSeconds: 5 # every 5 second perform the probeCheck
 
 
 ############## HEALTH CHECK ENDS ##############
