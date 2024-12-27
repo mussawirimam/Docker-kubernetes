@@ -3,7 +3,7 @@ kind: Pod
 metadata:
   name: newpod-tcp
   labels:
-    app: myapp
+    app: myapp-tcp
 spec:
   containers:
   - name: con1
