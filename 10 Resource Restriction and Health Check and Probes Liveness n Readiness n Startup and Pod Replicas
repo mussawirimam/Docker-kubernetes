@@ -932,6 +932,9 @@ to create pod relicas, we have few objects called:
 
 
 #===================REPLICATION CONTROLLER===================#
+root@master:~/app/scheduling# nano replicationController.yaml
+
+DONT USE THE REPLICATION CONTROLLER BECAUSE IT HAS DRAW BACKS 
 # this file will create replicationController of 3 replicas of a pod which will have a label myapp assigned on it.
 # the pod will be created on the template below
 # if a pod that is already running on a cluster with label myapp that pod will be counted to this ReplicationController Replica
@@ -958,5 +961,53 @@ spec:
         image: tomcat:latest
         ports:
         - containerPort: 8080
+
+### this pod is already running with the label app=myapp with the CrashLoopBack. It doesnt matter if you are going to create a replicationControlloer replicas, it will scare..
+root@master:~/app/scheduling# kk get pod --show-labels
+NAME     READY   STATUS             RESTARTS             AGE     LABELS
+newpod   1/2     CrashLoopBackOff   75 (<invalid> ago)   3h38m   app=myapp
+root@master:~/app/scheduling#
+
+### naming convention is random characters to make it unique. And newpod has also a label, so it is replicating that pod as well. This is the draw back of the replicationController.
+root@master:~/app/scheduling# kk get pod
+NAME         READY   STATUS             RESTARTS        AGE
+myrc-8ztzb   2/2     Running            0               14s
+myrc-q587m   2/2     Running            0               14s
+newpod       1/2     CrashLoopBackOff   75 (4m7s ago)   15h
+
+### to check replication controllers. 
+root@master:~/app/scheduling# kk get replicationcontrollers
+NAME   DESIRED   CURRENT   READY   AGE
+myrc   3         3         2       36s
+root@master:~/app/scheduling#
+
+### if you delete replication controller the new pod will be deleted as well, because that shares the label app=myapp
+root@master:~/app/scheduling# kk delete -f replicationController.yaml
+replicationcontroller "myrc" deleted
+root@master:~/app/scheduling# kk get pods
+No resources found in default namespace.
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kk create -f replicationController.yaml
+replicationcontroller/myrc created
+root@master:~/app/scheduling# kk get pod -o wide
+NAME         READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+myrc-4fjpw   2/2     Running   0          5s    172.17.104.25    node2   <none>           <none>
+myrc-sqsjb   2/2     Running   0          5s    172.17.166.160   node1   <none>           <none>
+myrc-xq4m6   2/2     Running   0          5s    172.17.166.161   node1   <none>           <none>
+root@master:~/app/scheduling#
+
+root@master:~/app/scheduling# kk create deployment mydep --image nginx --replicas 3
+deployment.apps/mydep created
+root@master:~/app/scheduling# kk get pod -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-66c55fb688-4dthg   1/1     Running   0          9s    172.17.104.27    node2   <none>           <none>
+mydep-66c55fb688-5msc5   1/1     Running   0          9s    172.17.166.162   node1   <none>           <none>
+mydep-66c55fb688-h26dd   1/1     Running   0          9s    172.17.104.26    node2   <none>           <none>
+myrc-4fjpw               2/2     Running   0          87s   172.17.104.25    node2   <none>           <none>
+myrc-sqsjb               2/2     Running   0          87s   172.17.166.160   node1   <none>           <none>
+myrc-xq4m6               2/2     Running   0          87s   172.17.166.161   node1   <none>           <none>
+root@master:~/app/scheduling#
+
 
 ############## REPLICA ENDS ##############
