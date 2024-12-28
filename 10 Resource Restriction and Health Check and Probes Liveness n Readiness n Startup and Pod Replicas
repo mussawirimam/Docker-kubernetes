@@ -920,3 +920,43 @@ Events:            <none>
 root@master:~/app/scheduling#
 
 ############## HEALTH CHECK ENDS ##############
+
+############## REPLICA BEGINS ##############
+### so far we have been creating single pods, this doesnt lead to HA (high availability) of pods. 
+### to resolve this issue you have to create replicas of pods on different nodes, so if one goes down other is available. 
+
+to create pod relicas, we have few objects called:
+1. replicationController - (people dont use it)
+2. replicaSet - works with deployment but is a seperate object
+3. Deployment - (advanced one, this is beneficial)
+
+
+#===================REPLICATION CONTROLLER===================#
+# this file will create replicationController of 3 replicas of a pod which will have a label myapp assigned on it.
+# the pod will be created on the template below
+# if a pod that is already running on a cluster with label myapp that pod will be counted to this ReplicationController Replica
+# and if you delete this replicationController that pod will also be deleted (so becareful)
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: myrc
+spec:
+  replicas: 3
+  selector:
+    app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      - name: con2
+        image: tomcat:latest
+        ports:
+        - containerPort: 8080
+
+############## REPLICA ENDS ##############
