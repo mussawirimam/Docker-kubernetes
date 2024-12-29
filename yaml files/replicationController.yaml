@@ -1,0 +1,29 @@
+DONT USE THE REPLICATION CONTROLLER BECAUSE IT HAS DRAW BACKS 
+
+# this file will create replicationController of 3 replicas of a pod which will have a label myapp assigned on it.
+# the pod will be created on the template below
+# if a pod that is already running on a cluster with label myapp that pod will be counted to this ReplicationController Replica
+# and if you delete this replicationController that pod will also be deleted (so becareful)
+# and if a pod with the same label that is running on 
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: myrc
+spec:
+  replicas: 3
+  selector:
+    app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      - name: con2
+        image: tomcat:latest
+        ports:
+        - containerPort: 8080
