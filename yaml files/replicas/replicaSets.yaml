@@ -1,7 +1,7 @@
 ### first it will look for matchExpressions for pods with any labels
 # if it doesnt finds any pods with those labels, then it will initiate the template and create the pods with the defined labels in template sections below.
 apiVersion: apps/v1
-kind: ReplicationSet
+kind: ReplicaSet
 metadata:
   name: myrs
 spec:
