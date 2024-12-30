@@ -128,3 +128,12 @@ root@master:~/app/replication# kk get rs
 NAME   DESIRED   CURRENT   READY   AGE
 myrs   2         2         2       11m
 root@master:~/app/replication#
+
+### deployment with 3 replicas
+mydep.yaml
+# creates a random string for replicas in the background to make it unique
+  replica 1 mydep--abc 123
+  replica 2 mydep--abc 124
+  replica 3 mydep--abc 125
+# assume that you are having rolling update, as soon as you are having triggering command kubectl sec image to update the image
+
