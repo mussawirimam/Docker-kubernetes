@@ -129,6 +129,8 @@ NAME   DESIRED   CURRENT   READY   AGE
 myrs   2         2         2       11m
 root@master:~/app/replication#
 
+
+######## go back to the video at 26:00 to understand the logic
 ### deployment with 3 replicas
 mydep.yaml
 # creates a random string for replicas in the background to make it unique
@@ -136,4 +138,50 @@ mydep.yaml
   replica 2 mydep--abc 124
   replica 3 mydep--abc 125
 # assume that you are having rolling update, as soon as you are having triggering command kubectl sec image to update the image
+
+######## go back to the video at 26:00 to understand the logic END
+
+### CREATING DEPLOYMENT
+root@master:~/app/replication# nano deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydep
+spec:
+  replicas: 3
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset is automatically is assigned to the pod. One additional label will be replicaSet id to the pod
+template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      - name: con2
+        image: tomcat:latest
+        ports:
+        - containerPort: 8080
+
+
+root@master:~/app/replication# kkgp
+NAME         READY   STATUS    RESTARTS   AGE
+myrs-84xnv   2/2     Running   0          7h57m
+myrs-t8bwh   2/2     Running   0          7h57m
+newpod       2/2     Running   0          8h
+root@master:~/app/replication# kk delete replicasets.apps myrs
+replicaset.apps "myrs" deleted
+root@master:~/app/replication#
+
+root@master:~/app/replication# kk create -f deployment.yaml
+deployment.apps/mydep created
+
+root@master:~/app/replication# kkg deploy
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+mydep   3/3     3            3           75s
+root@master:~/app/replication#
 
