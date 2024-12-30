@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydep
+spec:
+  replicas: 3
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset is automatically is assigned to the pod. One additional label will be replicaSet id to the pod
+template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      - name: con2
+        image: tomcat:latest
+        ports:
+        - containerPort: 8080
