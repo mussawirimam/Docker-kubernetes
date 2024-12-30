@@ -1,3 +1,4 @@
+####### FOR LIST OF ALIAS FOR K8S
 put this in ~/.bashrc
 nano ~/.bashrc
 # put it under ls aliases and comment it seperately
@@ -17,4 +18,21 @@ alias kka='kubectl apply -f'
 alias kkksystem'kubectl get pods -n kube-system'
 
 # type this in command prompt to load the aliases
+source ~/.bashrc
+
+
+######## FOR ADDING AUTO-COMPLETION TO K8S API ON COMMAND LINE
+#Enable autocompletion: Run the following command to enable kubectl autocompletion for your current shell session:
+
+source <(kubectl completion bash)
+
+#TO Make the autocompletion permanent:
+#For Bash: You need to add the kubectl completion script to your ~/.bashrc file.
+#Open the ~/.bashrc file:
+nano ~/.bashrc
+
+#Add the following line to the file:
+source <(kubectl completion bash)
+
+#After saving the file, apply the changes:
 source ~/.bashrc
