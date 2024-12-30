@@ -1,3 +1,4 @@
+################ REPLICASET ################
 ### replicaSet uses equality based Selectors
 # you can use condition which kinds of pods to be selected and which should be ignored
 
@@ -129,7 +130,7 @@ NAME   DESIRED   CURRENT   READY   AGE
 myrs   2         2         2       11m
 root@master:~/app/replication#
 
-
+################ DEPLOYMENT ################
 ######## go back to the video at 26:00 to understand the logic
 ### deployment with 3 replicas
 mydep.yaml
@@ -138,6 +139,7 @@ mydep.yaml
   replica 2 mydep--abc 124
   replica 3 mydep--abc 125
 # assume that you are having rolling update, as soon as you are having triggering command kubectl sec image to update the image
+# When you do deployment logically it creates a replicaSet in the background with xyz id and then it attaches that id to deployment 
 
 ######## go back to the video at 26:00 to understand the logic END
 
@@ -184,4 +186,206 @@ root@master:~/app/replication# kkg deploy
 NAME    READY   UP-TO-DATE   AVAILABLE   AGE
 mydep   3/3     3            3           75s
 root@master:~/app/replication#
+
+### replicaset id concept displayed here
+root@master:~/app/replication# kubectl get replicasets.apps
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-76449b474c   3         3         3       11m
+root@master:~/app/replication#
+
+### match the id with replicasets above and you will it is similar (76449b474c) to make it unique, random numbers and strings are added at suffix
+root@master:~/app/replication# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-76449b474c-jr827   1/1     Running   0          12m
+mydep-76449b474c-njx24   1/1     Running   0          12m
+mydep-76449b474c-ww7dt   1/1     Running   0          12m
+newpod                   2/2     Running   0          8h
+root@master:~/app/replication#
+
+### TO SCALE UP REPLICAS MANUALLY
+root@master:~/app/replication# kubectl scale deployment mydep --replicas 5
+deployment.apps/mydep scaled
+root@master:~/app/replication# kubectl get replicasets.apps
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-76449b474c   5         5         5       14m
+root@master:~/app/replication# kubectl get deployments.apps
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+mydep   5/5     5            5           14m
+root@master:~/app/replication# kubectl get pod
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-76449b474c-7s597   1/1     Running   0          38s
+mydep-76449b474c-jr827   1/1     Running   0          15m
+mydep-76449b474c-k65cf   1/1     Running   0          38s
+mydep-76449b474c-njx24   1/1     Running   0          15m
+mydep-76449b474c-ww7dt   1/1     Running   0          15m
+newpod                   2/2     Running   0          8h
+root@master:~/app/replication#
+
+### TO SCALE DOWN REPLICAS MANUALLY
+root@master:~/app/replication# kubectl scale deployment mydep --replicas 3
+deployment.apps/mydep scaled
+root@master:~/app/replication# kubectl get pod
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-76449b474c-7s597   1/1     Running   0          90s
+mydep-76449b474c-jr827   1/1     Running   0          15m
+mydep-76449b474c-ww7dt   1/1     Running   0          15m
+newpod                   2/2     Running   0          8h
+root@master:~/app/replication#
+
+########### DEPLOYMENT AUTOSCALLING
+### autoscalling works with the average cpu usage of your pod, how it will be calulating that if there are no tools installed on the host machine, on the cluster?
+### to check that you need to use kubectl top pod
+
+### its not installed, how to install it?
+root@master:~/app/replication# kubectl top pods
+error: Metrics API not available
+root@master:~/app/replication#
+
+### METRIC SERVER NEEDS TO BE INSTALLED in the cluster
+# how to check if it is installed or not?
+# you can check it within the namespace
+# since we are not able to see any metric pod running in the kube-system namespace, then we need to install it.
+root@master:~/app/replication# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS       AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5              40d
+calico-node-mrm6j                          1/1     Running   4              40d
+calico-node-vhd49                          1/1     Running   5              40d
+calico-node-x4q65                          1/1     Running   4              40d
+coredns-5dd5756b68-84w4t                   1/1     Running   8              42d
+coredns-5dd5756b68-m64mp                   1/1     Running   8              42d
+etcd-master                                1/1     Running   8              42d
+kube-apiserver-master                      1/1     Running   8              42d
+kube-controller-manager-master             1/1     Running   12 (27h ago)   42d
+kube-proxy-k4pzl                           1/1     Running   8              42d
+kube-proxy-k88rh                           1/1     Running   5              41d
+kube-proxy-sr6kt                           1/1     Running   5              40d
+kube-scheduler-master                      1/1     Running   11 (27h ago)   42d
+root@master:~/app/replication#
+
+### INSTALLING METRIC SERVER
+1. google kubernetes metric server
+2. open github link
+  https://github.com/kubernetes-sigs/metrics-server
+3. scroll down there will be installation section, copy the command.
+  command: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+4. paste the above command in your terminal and pass in the option for non-tls --kubelet-insecure-tls
+5. kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --kubelet-insecure-tls
+
+### dependent objects are installed as well, like clusterrole....cluster rolebinding etc
+root@master:~/app/replication# kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+serviceaccount/metrics-server created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/system:metrics-server created
+rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
+clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
+service/metrics-server created
+deployment.apps/metrics-server created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+root@master:~/app/replication#
+
+### IT IS FAILING BECAUSE THE TLS CERTIFICATES ARE NOT SET SINCE THIS IS MY LOCAL MACHINE
+root@master:~/app/replication# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS       AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5              40d
+calico-node-mrm6j                          1/1     Running   4              40d
+calico-node-vhd49                          1/1     Running   5              40d
+calico-node-x4q65                          1/1     Running   4              40d
+coredns-5dd5756b68-84w4t                   1/1     Running   8              42d
+coredns-5dd5756b68-m64mp                   1/1     Running   8              42d
+etcd-master                                1/1     Running   8              42d
+kube-apiserver-master                      1/1     Running   8              42d
+kube-controller-manager-master             1/1     Running   12 (27h ago)   42d
+kube-proxy-k4pzl                           1/1     Running   8              42d
+kube-proxy-k88rh                           1/1     Running   5              41d
+kube-proxy-sr6kt                           1/1     Running   5              40d
+kube-scheduler-master                      1/1     Running   11 (27h ago)   42d
+metrics-server-75bf97fcc9-zswhf            0/1     Running   0              2m29s  <----------------------------------
+root@master:~/app/replication#
+
+### TO RESOLVE THE ABOVE TLS ISSUE IS TO LOOK FOR NON-TLS METRIC. LOOK FOR IT ON GITHUB PAGE
+#Kubelet certificate needs to be signed by cluster Certificate Authority (or disable certificate validation by passing --kubelet-insecure-tls to Metrics Server)
+# if you are deploying in any of the cloud kubernetes, then you will not need to do anything with metric server. We are facing this issue because it is a local machine.
+
+root@master:~/app/replication# kubectl -n kube-system edit deployments.apps metrics-server
+
+
+....
+        k8s-app: metrics-server
+    spec:
+      containers:
+      - args:
+        - --kubelet-insecure-tls  <------------------------------ ADD THIS LINE TO THE FILE
+        - --cert-dir=/tmp
+        - --secure-port=10250
+        - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+        - --kubelet-use-node-status-port
+        - --metric-resolution=15s
+        image: registry.k8s.io/metrics-server/metrics-server:v0.7.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+....
+
+root@master:~# kubectl -n kube-system edit deployments.apps metrics-server
+deployment.apps/metrics-server edited
+root@master:~#
+
+### recreating the pods
+root@master:~# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS       AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5              40d
+calico-node-mrm6j                          1/1     Running   4              40d
+calico-node-vhd49                          1/1     Running   5              40d
+calico-node-x4q65                          1/1     Running   4              40d
+coredns-5dd5756b68-84w4t                   1/1     Running   8              42d
+coredns-5dd5756b68-m64mp                   1/1     Running   8              42d
+etcd-master                                1/1     Running   8              42d
+kube-apiserver-master                      1/1     Running   8              42d
+kube-controller-manager-master             1/1     Running   12 (27h ago)   42d
+kube-proxy-k4pzl                           1/1     Running   8              42d
+kube-proxy-k88rh                           1/1     Running   5              41d
+kube-proxy-sr6kt                           1/1     Running   5              40d
+kube-scheduler-master                      1/1     Running   11 (27h ago)   42d
+metrics-server-58ff449c8d-bch5w            0/1     Running   0              28s
+metrics-server-75bf97fcc9-zswhf            0/1     Running   0              26m
+root@master:~#
+
+### METRIC SERVER IS STARTED NOW
+root@master:~# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS       AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5              40d
+calico-node-mrm6j                          1/1     Running   4              40d
+calico-node-vhd49                          1/1     Running   5              40d
+calico-node-x4q65                          1/1     Running   4              40d
+coredns-5dd5756b68-84w4t                   1/1     Running   8              42d
+coredns-5dd5756b68-m64mp                   1/1     Running   8              42d
+etcd-master                                1/1     Running   8              42d
+kube-apiserver-master                      1/1     Running   8              42d
+kube-controller-manager-master             1/1     Running   12 (27h ago)   42d
+kube-proxy-k4pzl                           1/1     Running   8              42d
+kube-proxy-k88rh                           1/1     Running   5              41d
+kube-proxy-sr6kt                           1/1     Running   5              40d
+kube-scheduler-master                      1/1     Running   11 (27h ago)   42d
+metrics-server-58ff449c8d-bch5w            1/1     Running   0              51s
+
+### KUBECTL TOP
+
+root@master:~# kubectl top pods
+NAME                     CPU(cores)   MEMORY(bytes)
+mydep-76449b474c-7s597   0m           2Mi
+mydep-76449b474c-jr827   0m           2Mi
+mydep-76449b474c-ww7dt   0m           2Mi
+newpod                   2m           93Mi
+root@master:~#
+
+root@master:~# kubectl top node
+NAME     CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+master   128m         3%     3649Mi          46%
+node1    42m          2%     1981Mi          52%
+node2    50m          2%     2281Mi          60%
+root@master:~#
+
+
 
