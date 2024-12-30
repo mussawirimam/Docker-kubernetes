@@ -1,0 +1,30 @@
+### first it will look for matchExpressions for pods with any labels
+# if it doesnt finds any pods with those labels, then it will initiate the template and create the pods with the defined labels in template sections below.
+apiVersion: apps/v1
+kind: ReplicationSet
+metadata:
+  name: myrs
+spec:
+  replicas: 3
+  selector:
+    matchExpressions: # Now if you are deploying, it will be only counting myapp to the replicas, and not deploying the env key
+      - key: app
+        operator: In
+        values: ["myapp"]
+      - key: env
+        operator: NotIn
+        values: ["dev"]
+  template: # if there is no pod available on the keyvalue above, then based on the template below, your pod will be created where each pod will get
+    metadata:  #label and containers
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      - name: con2
+        image: tomcat:latest
+        ports:
+        - containerPort: 8080
