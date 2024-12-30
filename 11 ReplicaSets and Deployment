@@ -1,0 +1,130 @@
+### replicaSet uses equality based Selectors
+# you can use condition which kinds of pods to be selected and which should be ignored
+
+replicaSets supports set based selector. 
+  Meaning, we can define the Operators like In, NotIn, Exists.
+  whenever you find the key app: myapp count it as replica
+  matchExpressions: 
+  - key: app
+  operator: In
+  values: [myapp, mango] 
+  - key: env
+  operator: NotIn
+  values: [dev, uat, prod] 
+
+  #matchExpressions is used in the replicaSet, because of the matchExpressions, it will not be counting any other pod in it's replicas.
+
+Deployment - 
+  
+  ### creating a pod with two labels app=myapp and env=dev
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:        <----------------------------
+    app: myapp
+    env: dev
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on the node)
+        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    startupProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>
+
+    livenessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /index.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>
+    readinessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /index.html
+        port: 80
+      initialDelaySeconds: 5 # before performing this probe, how much time do we have to wait. E.g how much time it will take nginx to be first deployed an>      periodSeconds: 5 # every 5 second perform the probeCheck
+  - name: con2
+    image: tomcat:latest
+    ports:
+    - containerPort: 8080
+
+root@master:~/app/replication# kk create -f pod.yaml
+pod/newpod created
+
+root@master:~/app/replication# kkgp --show-labels
+NAME     READY   STATUS    RESTARTS   AGE   LABELS
+newpod   2/2     Running   0          11m   app=myapp,env=dev
+root@master:~/app/replication#
+
+### replicaSet
+root@master:~/app/replication# nano replicaSets.yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myrs
+spec:
+  replicas: 3
+  selector:
+    matchExpressions: # Now if you are deploying, it will be only counting myapp to the replicas, and not deploying the env key
+      - key: app
+        operator: In
+        values: ["myapp"]
+      - key: env
+        operator: NotIn
+        values: ["dev"]
+  template: # if there is no pod available on the keyvalue above, then based on the template below, your pod will be created where each pod will get
+    metadata:  #label and containers
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      - name: con2
+        image: tomcat:latest
+        ports:
+        - containerPort: 8080
+
+root@master:~/app/replication# nano replicaSets.yaml
+root@master:~/app/replication# kk create -f replicaSets.yaml
+replicaset.apps/myrs created
+root@master:~/app/replication# kk get replicaset
+NAME   DESIRED   CURRENT   READY   AGE
+myrs   3         3         3       33s
+
+root@master:~/app/replication# kk get po
+NAME         READY   STATUS    RESTARTS   AGE
+myrs-84xnv   2/2     Running   0          7m23s
+myrs-kfp4s   2/2     Running   0          7m23s
+myrs-t8bwh   2/2     Running   0          7m23s
+newpod       2/2     Running   0          49m
+
+### SCALING IN I want to increase the replicas SCALING REPLICAS
+
+root@master:~/app/replication# kk scale replicaset myrs --replicas 5
+replicaset.apps/myrs scaled
+root@master:~/app/replication# kk get rs
+NAME   DESIRED   CURRENT   READY   AGE
+myrs   5         5         5       10m
+root@master:~/app/replication#
+
+### SCALING OUT
+
+root@master:~/app/replication# kk scale replicaset myrs --replicas 2
+replicaset.apps/myrs scaled
+root@master:~/app/replication# kk get rs
+NAME   DESIRED   CURRENT   READY   AGE
+myrs   2         2         2       11m
+root@master:~/app/replication#
