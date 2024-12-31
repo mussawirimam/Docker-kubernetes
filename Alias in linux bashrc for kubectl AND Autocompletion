@@ -6,16 +6,27 @@ nano ~/.bashrc
 
 alias kk='kubectl'
 alias kkg='kubectl get'
+# TROUBLESHOOTING
 alias kkd='kubectl describe'
-alias kkgp='kubectl get pod'
-alias kkgn='kubectl get node'
-alias kkgs='kubectl get service'
 alias kkdp='kubectl describe pod'
 alias kkdn='kubectl describe node'
 alias kkds='kubectl describe service'
-alias kkd='kubectl delete -f'
-alias kka='kubectl apply -f'
+alias kktop='kubectl top' # you need to install the metric server
+
+
+# RESOURCES
+alias kkgp='kubectl get pod'
+alias kkgn='kubectl get node'
+alias kkgrs='kubectl get replicaset'
+alias kkgd='kubectl get deployment'
+alias kkgs='kubectl get service'
+
 alias kkksystem'kubectl get pods -n kube-system'
+# FILE
+alias kkdfile='kubectl delete -f'
+alias kkafile='kubectl apply -f'
+alias kkcfile='kubectl create -f'
+
 
 # type this in command prompt to load the aliases
 source ~/.bashrc
