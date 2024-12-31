@@ -268,8 +268,8 @@ root@master:~/app/replication#
   https://github.com/kubernetes-sigs/metrics-server
 3. scroll down there will be installation section, copy the command.
   command: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-4. paste the above command in your terminal and pass in the option for non-tls --kubelet-insecure-tls
-5. kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --kubelet-insecure-tls
+4. paste the above command in your terminal and ###### NOT SURE pass in the option for non-tls --kubelet-insecure-tls
+5. kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --kubelet-insecure-tls ###### LOOK BELOW BEFORE APPLYING
 
 ### dependent objects are installed as well, like clusterrole....cluster rolebinding etc
 root@master:~/app/replication# kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -387,5 +387,238 @@ node1    42m          2%     1981Mi          52%
 node2    50m          2%     2281Mi          60%
 root@master:~#
 
+##### AUTO SCALING USING METRIC FOR HPA
+# while having multiple replicas, how you would be accessing the replicas outside of the cluster?
+# we are having loadbalancer or nodeport service
+##### EXPOSING REPLICAS TO NODEPORT SERVICE TO ACCESS FROM OUTSIDE THE CLUSTER
+root@master:~# kubectl expose deployment mydep --port 80 --type NodePort --dry-run=client -o yaml
 
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  name: mydep
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: myapp
+  type: NodePort
+status:
+  loadBalancer: {}
+root@master:~#
+
+
+root@master:~# kubectl expose deployment mydep --port 80 --type NodePort
+service/mydep exposed
+root@master:~# kubectl get service
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        43d
+mydep        NodePort    10.110.18.118   <none>        80:32412/TCP   13s  <-------------- copy the port 32412
+newpod       ClusterIP   10.102.85.76    <none>        80/TCP         3d23h
+root@master:~#
+
+### copy the ip address of any node and plug it in the browser with the NodePort port 
+# traffic is flowing from service to the pod
+http://192.168.29.134:32412/
+Welcome to nginx!
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+############ LOGS
+### to know which pod is serving the request, go manually in the pod and check the log 
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-76449b474c-7s597   1/1     Running   0          14h
+mydep-76449b474c-jr827   1/1     Running   0          15h
+mydep-76449b474c-ww7dt   1/1     Running   0          15h
+newpod                   2/2     Running   0          23h
+root@master:~# kubectl logs mydep-76449b474c-7s597
+/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2024/12/30 21:57:55 [notice] 1#1: using the "epoll" event method
+2024/12/30 21:57:55 [notice] 1#1: nginx/1.27.3
+2024/12/30 21:57:55 [notice] 1#1: built by gcc 12.2.0 (Debian 12.2.0-14)
+2024/12/30 21:57:55 [notice] 1#1: OS: Linux 6.8.0-49-generic
+2024/12/30 21:57:55 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2024/12/30 21:57:55 [notice] 1#1: start worker processes
+2024/12/30 21:57:55 [notice] 1#1: start worker process 29
+2024/12/30 21:57:55 [notice] 1#1: start worker process 30
+root@master:~#
+
+### this pod is getting the traffic
+root@master:~# kubectl logs mydep-76449b474c-ww7dt
+/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2024/12/30 21:43:33 [notice] 1#1: using the "epoll" event method
+2024/12/30 21:43:33 [notice] 1#1: nginx/1.27.3
+2024/12/30 21:43:33 [notice] 1#1: built by gcc 12.2.0 (Debian 12.2.0-14)
+2024/12/30 21:43:33 [notice] 1#1: OS: Linux 6.8.0-49-generic
+2024/12/30 21:43:33 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2024/12/30 21:43:33 [notice] 1#1: start worker processes
+2024/12/30 21:43:33 [notice] 1#1: start worker process 28
+2024/12/30 21:43:33 [notice] 1#1: start worker process 29
+172.17.219.64 - - [31/Dec/2024:12:52:38 +0000] "GET / HTTP/1.1" 200 615 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0" "-"
+2024/12/31 12:52:38 [error] 28#28: *1 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 172.17.219.64, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "192.168.29.134:32412", referrer: "http://192.168.29.134:32412/"
+172.17.219.64 - - [31/Dec/2024:12:52:38 +0000] "GET /favicon.ico HTTP/1.1" 404 555 "http://192.168.29.134:32412/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0" "-"
+root@master:~#
+
+######## ISTIO ########
+# generally what happens is to find out the logs above, we have a service mesh called ISTIO. 
+# under it you will have to install the plugin called KIALI. It will be showing you live dashboard, which pod is currently serving the traffic. 
+# traffic flow will be displayed in Kiali, it is third party tool. (just for knowledge)
+
+### we will be exposing the service
+
+root@master:~# kkgd
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE  <------------- 3 are available to serve the traffic
+mydep   3/3     3            3           15h  
+root@master:~#
+root@master:~# kkgd -o wide
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES         SELECTOR
+mydep   3/3     3            3           15h   con1         nginx:latest   app=myapp
+root@master:~#
+
+root@master:~# kubectl describe deployments.apps mydep
+Name:                   mydep
+Namespace:              default
+CreationTimestamp:      Mon, 30 Dec 2024 16:43:31 -0500
+Labels:                 <none>            <-------------- no label defined in our deployment
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=myapp  <---------------------- label
+Replicas:               3 desired | 3 updated | 3 total | 3 available | 0 unavailable
+StrategyType:           RollingUpdate      <----------- IMPORTANT: right now we are only discussing RollingUpdate strategy
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge  <--------- IMPORTATNT: imagine we are having 100% pods, first 25% pods will be deleted and as soon as those 25% are updated. Only then, another 25% will be recreated as soon as those are ready. And so on it will be deleting 25% and recreating and updating.. this is the reason we have 100% UPTIME
+Pod Template:
+  Labels:  app=myapp
+  Containers:
+   con1:
+    Image:        nginx:latest
+    Port:         80/TCP
+    Host Port:    0/TCP
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   mydep-76449b474c (3/3 replicas created)
+Events:          <none>
+root@master:~#
+
+#LEARN ABOUT ROLLINGUPDATE STRATEGY AND OTHER STRATEGIES.
+============ROLLING UPDATE============
+root@master:~# kkgd -o wide
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES         SELECTOR
+mydep   3/3     3            3           15h   con1         nginx:latest   app=myapp
+root@master:~# kubectl set image deployment mydep con1=http:latest
+deployment.apps/mydep image updated
+root@master:~#
+
+root@master:~# kkgd -o wide
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES        SELECTOR
+mydep   3/3     1            3           15h   con1         http:latest   app=myapp
+
+### new replicaset is created
+root@master:~# kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-76449b474c   3         3         3       15h
+mydep-7cb7ffc4cf   1         1         0       24s
+root@master:~#
+
+### if first 25% pod is not updated, then what happens is that some Error will be there in new image, it will not be touching another pods.
+root@master:~# kkgp
+NAME                     READY   STATUS             RESTARTS   AGE
+mydep-76449b474c-7s597   1/1     Running            0          15h
+mydep-76449b474c-jr827   1/1     Running            0          15h
+mydep-76449b474c-ww7dt   1/1     Running            0          15h
+mydep-7cb7ffc4cf-t6hbs   0/1     ImagePullBackOff   0          94s  <----------------
+newpod                   2/2     Running            0          24h
+root@master:~#
+root@master:~#
+
+### purposefully we made the error when setting the image above.
+### let's correct it.
+root@master:~# kubectl set image deployment mydep con1=httpd:latest
+deployment.apps/mydep image updated
+# new replicaset is
+root@master:~# kk get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   1         1         0       7s
+mydep-76449b474c   3         3         3       16h
+mydep-7cb7ffc4cf   0         0         0       7m43s
+root@master:~#
+root@master:~# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-66d7c976c5-mr2rm   1/1     Running   0          34s
+mydep-66d7c976c5-tq2sp   1/1     Running   0          42s
+mydep-66d7c976c5-wvcgk   1/1     Running   0          27s
+newpod                   2/2     Running   0          24h
+root@master:~#
+### slowly all pods are replace because of the Rolling Strategy Update
+root@master:~# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-66d7c976c5-mr2rm   1/1     Running   0          65s
+mydep-66d7c976c5-tq2sp   1/1     Running   0          73s
+mydep-66d7c976c5-wvcgk   1/1     Running   0          58s
+newpod                   2/2     Running   0          24h
+root@master:~#
+
+### how we will be checking the history of the deployment
+1 way check the replicasets for the deployment they should have different ID and the previousl replicasets arent running
+root@master:~# kkgd
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+mydep   3/3     3            3           16h
+root@master:~# kkgrs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   3         3         3       2m14s
+mydep-76449b474c   0         0         0       16h    <---------------
+mydep-7cb7ffc4cf   0         0         0       9m50s <---------------
+root@master:~#
+
+### lets suppose there are 100 of pods, then it is not good idea to check each pod and replicaset.
+### then we should check the history 
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+1         <none>      <---------- change-cause is showing none is, because we didnt mentioned any annotations
+2         <none>
+3         <none>
+root@master:~#
+
+### VERY IMPORTATNT
+### if the change cause is not mentioned, then what should we do? lets say the what user did or which image the user used at the rollingUpdate?
+root@master:~# kubectl rollout history deployment mydep --revision 2
+deployment.apps/mydep with revision #2
+Pod Template:
+  Labels:       app=myapp
+        pod-template-hash=7cb7ffc4cf
+  Containers:
+   con1:
+    Image:      http:latest
+    Port:       80/TCP
+    Host Port:  0/TCP
+    Environment:        <none>
+    Mounts:     <none>
+  Volumes:      <none>
+
+root@master:~#
 
