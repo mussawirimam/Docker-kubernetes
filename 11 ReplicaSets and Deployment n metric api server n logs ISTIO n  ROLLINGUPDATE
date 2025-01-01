@@ -606,6 +606,7 @@ root@master:~#
 
 ### VERY IMPORTATNT
 ### if the change cause is not mentioned, then what should we do? lets say the what user did or which image the user used at the rollingUpdate?
+
 root@master:~# kubectl rollout history deployment mydep --revision 2
 deployment.apps/mydep with revision #2
 Pod Template:
@@ -621,4 +622,120 @@ Pod Template:
   Volumes:      <none>
 
 root@master:~#
+
+### VERY IMPORTANT
+### HOW TO WRITE THE CHANGE CAUSE?
+# only last annotation can be updated, you cannot modify the previous revisions
+
+root@master:~# kubectl annotate deployments.apps mydep kubernetes.io/change-cause="updated to httpd latest image"
+deployment.apps/mydep annotated
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+3         updated to httpd latest image
+
+root@master:~#
+
+### VERY IMPORTANT
+# now I want to go back and do a ROLLBACK
+# to go to the revision number 1
+
+root@master:~# kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   3         3         3       14m  <------------ these pods from the replicaset will be deleted, once you do the rollback
+mydep-76449b474c   0         0         0       16h
+mydep-7cb7ffc4cf   0         0         0       21m
+root@master:~#
+
+# on browser
+http://192.168.29.134:32412/
+It works!
+
+### new pods created and previous ones are getting deleted
+root@master:~# kubectl rollout undo deployment mydep --to-revision 1
+deployment.apps/mydep rolled back
+root@master:~# kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   1         1         1       16m
+mydep-76449b474c   3         3         2       16h
+mydep-7cb7ffc4cf   0         0         0       24m
+root@master:~#
+
+# on browser
+http://192.168.29.134:32412/
+Welcome to nginx!
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+### see the revision number got changed to last 4
+root@master:~# kubectl get deployments.apps -o wide
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES         SELECTOR
+mydep   3/3     3            3           16h   con1         nginx:latest   app=myapp
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+2         <none>
+3         updated to httpd latest image
+4         <none>
+
+### write something in annotation
+
+root@master:~# kubectl annotate deployments.apps mydep kubernetes.io/change-cause="rolled back to nginx latest"
+deployment.apps/mydep annotated
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+2         <none>
+3         updated to httpd latest image
+4         rolled back to nginx latest
+
+root@master:~#
+root@master:~#
+
+### why it is copying the the annotation?
+root@master:~# kubectl set image deployment mydep con1=tomcat:latest
+deployment.apps/mydep image updated
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+2         <none>
+3         updated to httpd latest image
+4         rolled back to nginx latest
+5         rolled back to nginx latest
+
+# because one annotation is added in your metadata section from previous rollout which you annotated
+root@master:~# kubectl edit deployments.apps mydep
+root@master:~#
+  annotations:
+    deployment.kubernetes.io/revision: "5"
+    kubernetes.io/change-cause: rolled back to nginx latest
+  creationTimestamp: "2024-12-30T21:43:31Z"
+
+### lets annotated 
+
+root@master:~# kubectl edit deployments.apps mydep
+Edit cancelled, no changes made.
+root@master:~# kubectl annotate deployments.apps mydep kubernetes.io/change-cause="updated image to tomcat"
+deployment.apps/mydep annotated
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+2         <none>
+3         updated to httpd latest image
+4         rolled back to nginx latest
+5         updated image to tomcat
+root@master:~#
+
+# it is because you will be having replicasets been increased 
+root@master:~# kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   0         0         0       24m
+mydep-76449b474c   0         0         0       16h
+mydep-79f47f56b7   3         3         3       3m17s
+mydep-7cb7ffc4cf   0         0         0       31m
+root@master:~#
+
+# it will fail on browser, because port 80 is mentioned and tomcat uses port 8080
+http://192.168.29.134:32412/
 
