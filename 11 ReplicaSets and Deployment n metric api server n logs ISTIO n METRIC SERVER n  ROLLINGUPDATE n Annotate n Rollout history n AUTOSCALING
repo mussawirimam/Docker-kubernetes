@@ -712,7 +712,7 @@ root@master:~#
     kubernetes.io/change-cause: rolled back to nginx latest
   creationTimestamp: "2024-12-30T21:43:31Z"
 
-### lets annotated 
+### lets annotated. Annotation will increase as the replicaset increases. 
 
 root@master:~# kubectl edit deployments.apps mydep
 Edit cancelled, no changes made.
@@ -739,3 +739,215 @@ root@master:~#
 # it will fail on browser, because port 80 is mentioned and tomcat uses port 8080
 http://192.168.29.134:32412/
 
+### ROLLBACK
+root@master:~# kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   0         0         0       22h
+mydep-76449b474c   0         0         0       39h
+mydep-79f47f56b7   3         3         3       22h
+mydep-7cb7ffc4cf   0         0         0       23h
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+2         <none>
+3         updated to httpd latest image
+4         rolled back to nginx latest
+5         updated image to tomcat
+
+root@master:~# kubectl rollout undo deployment mydep --to-revision 3
+deployment.apps/mydep rolled back
+root@master:~# kk get rs
+NAME               DESIRED   CURRENT   READY   AGE
+mydep-66d7c976c5   3         3         2       22h
+mydep-76449b474c   0         0         0       39h
+mydep-79f47f56b7   1         1         1       22h
+mydep-7cb7ffc4cf   0         0         0       23h
+root@master:~# kk get pod
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-66d7c976c5-9bhxl   1/1     Running   0          16s
+mydep-66d7c976c5-fxtkd   1/1     Running   0          12s
+mydep-66d7c976c5-m9s8l   1/1     Running   0          20s
+newpod                   2/2     Running   0          47h
+root@master:~#
+
+root@master:~# kubectl rollout history deployment mydep
+deployment.apps/mydep
+REVISION  CHANGE-CAUSE
+2         <none>
+4         rolled back to nginx latest
+5         updated image to tomcat
+6         updated to httpd latest image
+
+root@master:~#
+
+########### AUTO SCALING ###########
+## if in yaml file you mention 5 and for autoscaling the number 3 then the replicas will decrease.
+### auto scale deployment called mydep to minimum 3 and maximum to 10, once the cpu percentage reaches to the 75 percent.
+
+root@master:~# kk get deploy
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+mydep   3/3     3            3           39h
+root@master:~# kubectl autoscale deployment mydep --min 3 --max 10 --cpu-percent 75 --dry-run=client -o yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  creationTimestamp: null
+  name: mydep
+spec:
+  maxReplicas: 10
+  minReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mydep
+  targetCPUUtilizationPercentage: 75
+status:
+  currentReplicas: 0
+  desiredReplicas: 0
+root@master:~#
+
+
+root@master:~/app/replication# nano deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydep
+spec:
+  replicas: 3
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mydep
+spec:
+  maxReplicas: 10
+  minReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mydep
+  targetCPUUtilizationPercentage: 75
+### keep the autoscaling in yaml with the deployment, because most of the time whenever you are creating HPA in the imperative way with the
+### commands, when you are removing the deployment. The autoscaler will be left as it is. It is a bad idea to keep the unused autoscaler in the cluster
+### keep the autoscaler logic in the yaml with the deployment, so whenever you are deleting the yaml with delete command, whatever objects are
+# mentioned in the yaml file those will be removed as well
+
+### using the imperative way for demonstration purpose
+root@master:~/app/replication# kubectl autoscale deployment mydep --min 3 --max 10 --cpu-percent 75
+horizontalpodautoscaler.autoscaling/mydep autoscaled
+
+######## KUBECTL GET HPA
+root@master:~/app/replication# kubectl get hpa
+NAME    REFERENCE          TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+mydep   Deployment/mydep   <unknown>/75%   3         10        0          11s
+root@master:~/app/replication#
+
+### if you are seeing unknown, there are two reason
+# 1st check metric server is installed or not
+# 2nd your application is not having enough traffic, it cannot calculate the cpu usage.
+
+####### GOOD EXCERSISE FOR HOMEWORK AUTOSCALING KUBERNETES EXAMPLE:
+https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/
+root@master:~/app/replication# vi hpa-example-dep.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+spec:
+  selector:
+    matchLabels:
+      run: php-apache
+  template:
+    metadata:
+      labels:
+        run: php-apache
+    spec:
+      containers:
+      - name: php-apache
+        image: registry.k8s.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-apache
+  labels:
+    run: php-apache
+spec:
+  ports:
+  - port: 80
+  selector:
+    run: php-apache
+
+root@master:~/app/replication# kubectl delete deployments.apps mydep
+deployment.apps "mydep" deleted
+root@master:~/app/replication#
+
+root@master:~/app/replication# kubectl create -f hpa-example-dep.yaml
+deployment.apps/php-apache created
+service/php-apache created
+root@master:~/app/replication# kubectl get hpa
+NAME    REFERENCE          TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+mydep   Deployment/mydep   <unknown>/75%   3         10        3          18m
+root@master:~/app/replication# kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+horizontalpodautoscaler.autoscaling/php-apache autoscaled
+root@master:~/app/replication# kubectl get hpa
+NAME         REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+mydep        Deployment/mydep        <unknown>/75%   3         10        3          18m
+php-apache   Deployment/php-apache   <unknown>/50%   1         10        0          2s
+root@master:~/app/replication#
+
+# generating the load and open in another terminal
+kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
+
+
+root@master:~/app/replication# kubectl get pods
+NAME                          READY   STATUS              RESTARTS   AGE
+load-generator                1/1     Running             0          20s
+newpod                        2/2     Running             0          2d
+php-apache-598b474864-j6ntv   0/1     ContainerCreating   0          11s
+php-apache-598b474864-pchtx   1/1     Running             0          3m15s
+php-apache-598b474864-vtfvj   1/1     Running             0          11s
+root@master:~/app/replication# kubectl get hpa
+NAME         REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+mydep        Deployment/mydep        <unknown>/75%   3         10        3          21m
+php-apache   Deployment/php-apache   144%/50%        1         10        3          2m42s
+root@master:~/app/replication#
+
+### as the load is increasing the pods are being created
+root@master:~/app/replication# kubectl get hpa
+NAME         REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+mydep        Deployment/mydep        <unknown>/75%   3         10        3          22m
+php-apache   Deployment/php-apache   100%/50%        1         10        6          3m59s
+root@master:~/app/replication# kubectl get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+load-generator                1/1     Running   0          2m3s
+newpod                        2/2     Running   0          2d
+php-apache-598b474864-5t4cp   1/1     Running   0          39s
+php-apache-598b474864-g8tbh   1/1     Running   0          39s
+php-apache-598b474864-j6ntv   1/1     Running   0          114s
+php-apache-598b474864-pchtx   1/1     Running   0          4m58s
+php-apache-598b474864-vtfvj   1/1     Running   0          114s
+php-apache-598b474864-w5l7f   1/1     Running   0          39s
+root@master:~/app/replication#
+
+### my question is how it will auto-scale down, if the cpu usage is now low? 
