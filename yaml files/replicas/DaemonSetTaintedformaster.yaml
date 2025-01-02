@@ -1,0 +1,25 @@
+#https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
+# this will allow the DaemonSet to be tolerated on the masterNode. Meaning, these DaemonSet will be deployed on the 
+# masterNode as well now. 
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: my-daemonset
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      tolerations:
+      # these tolerations are to have the daemonset runnable on control plane nodes
+      # remove them if your control plane nodes should not run pods
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: con1
+        image: quay.io/fluentd_elasticsearch/fluentd:v2.5.2
