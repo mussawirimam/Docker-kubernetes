@@ -17,10 +17,17 @@ template:
         image: nginx:latest
         ports:
         - containerPort: 80
+        volumeMounts: # <---
+        - name: myvol
+          mountPath: /data # if the directory is not present, it will create it.
       - name: con2
         image: tomcat:latest
         ports:
         - containerPort: 8080
-      volumes:
+        volumeMounts:
+        - name: myvol
+          mountPath: /myData # if the directory is not present, it will create it.
+      - name: con2
+      volumes:      # <---
       - name: myvol
         emptyDir: {}
