@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: myapp
-template:
+  template:
     metadata:
       labels:
         app: myapp
@@ -17,17 +17,17 @@ template:
         image: nginx:latest
         ports:
         - containerPort: 80
-        volumeMounts: # <---
+        volumeMounts:  # volumeMount
         - name: myvol
-          mountPath: /data # if the directory is not present, it will create it.
+          mountPath: /data  # if the directory isnt present, it will create it
+      containers:
       - name: con2
         image: tomcat:latest
         ports:
         - containerPort: 8080
-        volumeMounts:
+        volumeMounts: # volumeMount
         - name: myvol
-          mountPath: /myData # if the directory is not present, it will create it.
-      - name: con2
-      volumes:      # <---
+          mountPath: /mydata # if the directory isnt present, it will create it
+      volumes:
       - name: myvol
-        emptyDir: {}
+        emptyDir: {}  # volume type
