@@ -1,6 +1,12 @@
 #https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
 # this will allow the DaemonSet to be tolerated on the masterNode. Meaning, these DaemonSet will be deployed on the 
 # masterNode as well now. 
+#root@master:~/app/replication# kk describe nodes master | grep -A 2 "Taint"
+#Taints:             node-role.kubernetes.io/control-plane:NoSchedule 
+#Unschedulable:      false
+#Lease:
+#root@master:~/app/replication#
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -17,7 +23,7 @@ spec:
       tolerations:
       # these tolerations are to have the daemonset runnable on control plane nodes
       # remove them if your control plane nodes should not run pods
-      - key: node-role.kubernetes.io/control-plane
+      - key: node-role.kubernetes.io/control-plane  node-role.kubernetes.io/control-plane:NoSchedule
         operator: Exists
         effect: NoSchedule
       containers:
