@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mydep
+  name: mydep-emp
 spec:
   replicas: 3
   selector:
@@ -20,7 +20,6 @@ spec:
         volumeMounts:  # volumeMount
         - name: myvol
           mountPath: /data  # if the directory isnt present, it will create it
-      containers:
       - name: con2
         image: tomcat:latest
         ports:
