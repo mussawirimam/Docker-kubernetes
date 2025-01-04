@@ -1,0 +1,21 @@
+### mypvc will be mounted into the data directory inside the container1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+    env: dev
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: myvol
+      mountPath: /data
+  volumes:
+  - name: myvol
+    persistentVolumeClaim: # type of volume
+      claimName: mypvc #the pvc you have created to claim it
