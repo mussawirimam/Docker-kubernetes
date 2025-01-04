@@ -1,0 +1,13 @@
+### first we will create StorageClass
+### 2nd create PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mypvc
+spec:
+  accessModes:  #Rancher supports these accessModes.
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
