@@ -574,8 +574,181 @@ root@node2:/#
 
 =============== DYNAMIC VOLUME PROVISIONING ===============
 ### Storage Class --> PVC <#of>GB
+On cloud you will have storage classes implemented and all you have to do is claim them. You dont have to put in the service now request in case of static volume provisioning (explained above).
+
+https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+### for kubeadm or local cluster, you need to install the rancher local path provisioner. 
+###  RANCHER LOCAL PATH PROVISIONER:
 
 ### https://github.com/rancher/local-path-provisioner
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.30/deploy/local-path-storage.yaml
+kubectl get storageclasses
+
+controlplane $ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.30/deploy/local-path-storage.yaml
+namespace/local-path-storage created
+serviceaccount/local-path-provisioner-service-account created
+role.rbac.authorization.k8s.io/local-path-provisioner-role created
+clusterrole.rbac.authorization.k8s.io/local-path-provisioner-role created
+rolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind created
+clusterrolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind created
+deployment.apps/local-path-provisioner created
+storageclass.storage.k8s.io/local-path created
+configmap/local-path-config created
+controlplane $ 
+
+root@master:~# kubectl get sc
+NAME         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  7s
+root@master:~# kubectl get sc -o wide
+
 root@master:~/app/volume# kubectl get sc
 No resources found
 root@master:~/app/volume#
+
+### message from kubernetes docs below
+Important! A volume can only be mounted using one access mode at a time, even if it supports many.
+### ACCESS MODE for volume types:
+we have multiple types of access modes
+RWO - ReadWriteOnce
+ROX - ReadOnlyMan
+RWX - ReadWriteMany  - even if your volume supports many, only one pod at a time from multiple worker nodes can read or write data into this volume. so this kind of volumes are required to read data from the specific locations. 
+RWOP - ReadWriteOncePod
+
+RWO scenes:
+scene1
+Worker node1   
+worker node2 
+worker node3
+
+
+scene2
+- you created a volume which is not attached
+volume
+Worker node1   
+worker node2 
+worker node3
+
+
+scene3
+volume is attached to node1
+Worker node1----volume linked 
+worker node2 
+worker node3
+
+what it means ReadWriteOnce? 
+So whenever you are creating a volume, your volume will be going and getting attached to the node. It means once the volume is attached to the worker node1.
+Generally, before deploying or creating the pod this volume will be available (accessable to all the workers nodes) but as soon as the volume is getting attached to a worker node1, it means what it will do is that 
+it will ReadWriteOnce (meaning only one node can read or write in the volume). If the worker node2 wants to do something like read or write, it will not be having access, because the volume has been attached to 
+the workernode1 only.
+
+ROX ReadOnlyMany
+Multiple nodes can be connected to the volume (mounted) or the volume can be mounted to multiple worker nodes but they all will have the Read access to Many Nodes.
+
+RWX
+this volume can be mounted to multiple nodes and the pods on the multiple nodes can read or write to the volume.
+
+RWOP
+meaning a pod can read or write once to the volume. 
+
+root@master:~# kubectl get pvc
+No resources found in default namespace.
+root@master:~#
+
+# we will create a pvc yaml files
+
+root@master:~# root@master:~# nano pvc.yaml
+### first we will create StorageClass
+### 2nd create PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mypvc
+spec:
+  accessModes:  #Rancher supports these accessModes.
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+
+root@master:~# kubectl create -f pvc.yaml
+persistentvolumeclaim/mypvc created
+
+### why is it in pending? 
+root@master:~# kubectl get pvc
+NAME    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+mypvc   Pending                                      local-path     45s
+root@master:~#
+
+### waiting for first consumber to be created before binding. 
+### it is waiting for some request that should be landed to this so that it can create the volume 
+root@master:~# kubectl describe pvc mypvc
+Name:          mypvc
+Namespace:     default
+StorageClass:  local-path
+Status:        Pending
+Volume:
+Labels:        <none>
+Annotations:   <none>
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:
+Access Modes:
+VolumeMode:    Filesystem
+Used By:       <none>
+Events:
+  Type    Reason                Age                From                         Message
+  ----    ------                ----               ----                         -------
+  Normal  WaitForFirstConsumer  11s (x6 over 79s)  persistentvolume-controller  waiting for first consumer to be created before binding
+root@master:~#
+
+
+### mypvc will be mounted into the data directory inside the container1
+root@master:~/app/volume# nano podtoclaimpvc.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: newpod
+  labels:
+    app: myapp
+    env: dev
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: myvol
+      mountPath: /data
+  volumes:
+  - name: myvol
+    persistentVolumeClaim: # type of volume
+      claimName: mypvc #the pvc you have created to claim it
+
+root@master:~/app/volume# kubectl create -f podtoclaimpvc.yaml
+pod/newpod created
+root@master:~/app/volume#
+
+### before it was pending because, no container/pod didnt claim this persistent volume
+### Pending mode is gone because it has been claimed and now is bound
+root@master:~/app/volume# kubectl get pvc
+NAME    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+mypvc   Bound    pvc-49ae8d8b-c605-4c9c-bbb4-64bfc5a0fc2c   2Gi        RWO            local-path     14m
+root@master:~/app/volume#
+
+
+root@master:~/app/volume# kkdp newpod
+...
+Volumes:
+  myvol:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace) <-------------------- type is a persistent volume claim.
+    ClaimName:  mypvc      <------------------------------------------------- Claim name is mypvc which we created earlier
+    ReadOnly:   false
+  kube-api-access-96b78:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+...
