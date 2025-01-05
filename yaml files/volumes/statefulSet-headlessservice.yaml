@@ -1,0 +1,13 @@
+### you will need to create a stateful.yaml first for this to work. 
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx ### this is the serviceName we have defined in StatefulSet.yaml file. This is nothing but a headless service. 
+spec:
+  type: ClusterIP
+  clusterIP: None # because of this configuration, your clusterIP service will not getting ip address, which will be making it headless service (without ip)                             
+  selector:
+    app: nginx 
+  ports:
+  - port: 80
+    name: web
