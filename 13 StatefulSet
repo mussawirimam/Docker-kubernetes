@@ -1,0 +1,84 @@
+assume that we have a deployment 
+Deploymenet
+my-dep 
+  dep1.  mydep-qwe098
+  dep2.  mydep-xyz12
+           pod1. mydep-xyz12-a23
+           pod2. mydep-xyz12-a23
+           pod3. mydep-qwe098-abc125
+
+Assume that we have 2 deployment running and in those there are three pods running in it. If I am in pod1 how can I access the pod2 while being into the pod1?
+how we can communicate? how this communication will happen? We need to create a service. e.g a ClusterIP Service. Through ClusterIP, I can communicate. 
+I will be using the service name as a hostname and I will be communicating to mydep-svc, mydep-svc can be used as the hostname. Randomy, any pod will be getting the 
+traffic but if I want to reach out to a specific pod, I cannot do that through the deployment. Specific pods are not allowed to access in deployment.
+
+Deployment creates c pod with a dynamic id's. Deployment will not be having static pod name, everytime a pod with a new name will be created if there's a pod failure or 
+node failiure. e.g:
+
+root@master:~/app/volume# kubectl create deployment mydep --image nginx --port 80 --replicas 3
+deployment.apps/mydep created
+root@master:~/app/volume# kkgp
+NAME                     READY   STATUS              RESTARTS   AGE
+mydep-58c68db89f-cvvtj   0/1     ContainerCreating   0          1s
+mydep-58c68db89f-d4cgm   0/1     ContainerCreating   0          1s
+mydep-58c68db89f-w6gjg   0/1     ContainerCreating   0          1s
+
+### see the naming convention, deploymentname, replicasetid, and podid.
+# let's suppose somehow, this pod got deleted 
+root@master:~/app/volume# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-58c68db89f-cvvtj   1/1     Running   0          15s
+mydep-58c68db89f-d4cgm   1/1     Running   0          15s
+mydep-58c68db89f-w6gjg   1/1     Running   0          15s
+root@master:~/app/volume#
+
+### this is not having a static naming with the pod
+# see that a new pod was created with a new id
+root@master:~/app/volume# kubectl delete pod mydep-58c68db89f-cvvtj
+pod "mydep-58c68db89f-cvvtj" deleted
+kkroot@master:~/app/volume# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-58c68db89f-d4cgm   1/1     Running   0          2m7s
+mydep-58c68db89f-h87hn   1/1     Running   0          2s
+mydep-58c68db89f-w6gjg   1/1     Running   0          2m7s
+root@master:~/app/volume#
+
+Example through database:
+Q: why we need to reach out to a specific pod, while each pods are serving the request through the ClusterIP? 
+whenever we are creating a database cluster to achieve the highly availability, you will create a multiple nodes. There you will see the concept of Master and Slave nodes
+We can assume that we have:
+Masternode 192.xxx.xxx.xxx
+slave1
+slave2
+
+Database highlyAvailability how it works, you know that there are some of the database we are having some of the operations. 
+Create 
+Delete 
+Updata
+Such queries will be perfomed on the masterNode. And each of the node will have the ip address, based on the ip address we will be accessing the nodes. 
+So, whenever you want to perform queries, you will have to do that through masterNodes. 
+When it comes to read the data, you can read through anyone of the nodes. So whenever you have to perform operations you have to do through master node and 
+you can do the reading through any node. 
+
+# you can keep simple cluster of mentioned above but if you are having a huge operations of database and clusters then keep that cluster outside of k8s
+# and then connect that cluster of db while being inside the k8s
+StatefulSet is the option that will be allowing you to reach out to a specific pod and you can make that pod a master and another to the slave.
+and the pod connection wil be static in StatefulSet. 
+
+all these pod will have the static naming convention. 
+pod1 mydb-0 if pod is getting deleted from the statefulset, then the new pod that will be created will have the same name
+pod2 mydb-1
+pod3 mydb-2
+
+IMPORTANT
+You need to create a service called HEADLESS SERVICE (headless meaning NO IP ) service ClusterIP meaning based on the pod name you can reach out to it. 
+We can use the ClusterIP with Headless Service, so that you can perform the read operations from any one of the random nodes 
+Headless to reach out to any pod
+Cluster to read opeartions from any node.
+
+Stateful set comes up with the additional or advance options which is called VOLUMETEMPLATES
+If you are defining the volumetemplate, you dont need to create the pvc for each of the pod. StatefulSet will automatically create a seperate pvc for each of the pods. 
+Your pod will be getting a seperate volume created to store or to persist the data on your cluster. 
+
+
+
