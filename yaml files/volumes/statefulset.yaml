@@ -1,0 +1,34 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx # has to match .spec.template.metadata.labels
+  serviceName: "nginx" #So this serviceName is the name of your HEALDESS SERVICE
+  replicas: 3 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: nginx # has to match .spec.selector.matchLabels
+    spec:
+      containers:
+      - name: nginx
+        image: registry.k8s.io/nginx-slim:0.24
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates: # this will create the volume claims
+  - metadata:
+      name: www
+    spec: ### similar to pvc if you see below
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-path" #"my-storage-class" # to get the storage class kubectl get sc
+      resources:
+        requests:
+          storage: 1Gi # each size of the storage will be 1Gi for each replicas
