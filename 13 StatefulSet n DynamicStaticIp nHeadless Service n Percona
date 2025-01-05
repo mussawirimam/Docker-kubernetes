@@ -1,0 +1,339 @@
+############ STATEFULSET ############ 
+
+assume that we have a deployment 
+Deploymenet
+my-dep 
+  dep1.  mydep-qwe098
+  dep2.  mydep-xyz12
+           pod1. mydep-xyz12-a23
+           pod2. mydep-xyz12-a23
+           pod3. mydep-qwe098-abc125
+
+Assume that we have 2 deployment running and in those there are three pods running in it. If I am in pod1 how can I access the pod2 while being into the pod1?
+how we can communicate? how this communication will happen? We need to create a service. e.g a ClusterIP Service. Through ClusterIP, I can communicate. 
+I will be using the service name as a hostname and I will be communicating to mydep-svc, mydep-svc can be used as the hostname. Randomy, any pod will be getting the 
+traffic but if I want to reach out to a specific pod, I cannot do that through the deployment. Specific pods are not allowed to access in deployment.
+
+Deployment creates c pod with a dynamic id's. Deployment will not be having static pod name, everytime a pod with a new name will be created if there's a pod failure or 
+node failiure. e.g:
+
+root@master:~/app/volume# kubectl create deployment mydep --image nginx --port 80 --replicas 3
+deployment.apps/mydep created
+root@master:~/app/volume# kkgp
+NAME                     READY   STATUS              RESTARTS   AGE
+mydep-58c68db89f-cvvtj   0/1     ContainerCreating   0          1s
+mydep-58c68db89f-d4cgm   0/1     ContainerCreating   0          1s
+mydep-58c68db89f-w6gjg   0/1     ContainerCreating   0          1s
+
+### see the naming convention, deploymentname, replicasetid, and podid.
+# let's suppose somehow, this pod got deleted 
+root@master:~/app/volume# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-58c68db89f-cvvtj   1/1     Running   0          15s
+mydep-58c68db89f-d4cgm   1/1     Running   0          15s
+mydep-58c68db89f-w6gjg   1/1     Running   0          15s
+root@master:~/app/volume#
+
+### this is not having a static naming with the pod
+# see that a new pod was created with a new id
+root@master:~/app/volume# kubectl delete pod mydep-58c68db89f-cvvtj
+pod "mydep-58c68db89f-cvvtj" deleted
+kkroot@master:~/app/volume# kkgp
+NAME                     READY   STATUS    RESTARTS   AGE
+mydep-58c68db89f-d4cgm   1/1     Running   0          2m7s
+mydep-58c68db89f-h87hn   1/1     Running   0          2s
+mydep-58c68db89f-w6gjg   1/1     Running   0          2m7s
+root@master:~/app/volume#
+
+Example through database:
+Q: why we need to reach out to a specific pod, while each pods are serving the request through the ClusterIP? 
+whenever we are creating a database cluster to achieve the highly availability, you will create a multiple nodes. There you will see the concept of Master and Slave nodes
+We can assume that we have:
+Masternode 192.xxx.xxx.xxx
+slave1
+slave2
+
+Database highlyAvailability how it works, you know that there are some of the database we are having some of the operations. 
+Create 
+Delete 
+Updata
+Such queries will be perfomed on the masterNode. And each of the node will have the ip address, based on the ip address we will be accessing the nodes. 
+So, whenever you want to perform queries, you will have to do that through masterNodes. 
+When it comes to read the data, you can read through anyone of the nodes. So whenever you have to perform operations you have to do through master node and 
+you can do the reading through any node. 
+
+# you can keep simple cluster of mentioned above but if you are having a huge operations of database and clusters then keep that cluster outside of k8s
+# and then connect that cluster of db while being inside the k8s
+StatefulSet is the option that will be allowing you to reach out to a specific pod and you can make that pod a master and another to the slave.
+and the pod connection wil be static in StatefulSet. 
+
+all these pod will have the static naming convention. 
+pod1 mydb-0 if pod is getting deleted from the statefulset, then the new pod that will be created will have the same name
+pod2 mydb-1
+pod3 mydb-2
+
+IMPORTANT
+You need to create a service called HEADLESS SERVICE (headless meaning NO IP ) service ClusterIP meaning based on the pod name you can reach out to it. 
+We can use the ClusterIP with Headless Service, so that you can perform the read operations from any one of the random nodes 
+Headless to reach out to any pod
+Cluster to read opeartions from any node.
+
+Stateful set comes up with the additional or advance options which is called VOLUMETEMPLATES
+If you are defining the volumetemplate, you dont need to create the pvc for each of the pod. StatefulSet will automatically create a seperate pvc for each of the pods. 
+Your pod will be getting a seperate volume created to store or to persist the data on your cluster. 
+
+Coming back to the DB example,
+We are performing these options Create Delete Update on master node in our DB cluster. Then, how the data is being replicated from master to the slave?
+we have a tool called Percona or extraBackup. We have to install/configure these tools on each of the nodes so that the software will be replicating the data
+from master to slave.
+
+Percona needs to be added/configured in our statefulSet pods so that the data can be replicated from the masternode to the worker nodes.  
+
+# We will look into 3 things: 
+# We will use the Killercoda for this implementation.
+StatefulSets
+Pod naming convention
+Volume template
+
+We are copying the yaml file from the kubernetes docs
+https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+
+controlplane $ cat statefulset.yaml 
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx # has to match .spec.template.metadata.labels
+  serviceName: "nginx" #So this serviceName is the name of your HEALDESS SERVICE
+  replicas: 3 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: nginx # has to match .spec.selector.matchLabels
+    spec:
+      containers:
+      - name: nginx
+        image: registry.k8s.io/nginx-slim:0.24
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates: # this will create the volume claims
+  - metadata:
+      name: www
+    spec: ### similar to pvc if you see below
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-path" #"my-storage-class" # to get the storage class kubectl get sc
+      resources:
+        requests:
+          storage: 1Gi # each size of the storage will be 1Gi for each replicas
+
+# get the storage class name and plug it into the yaml file at the storageClassName field. 
+# in our case the storageClassName is local-path
+controlplane $ kubectl get sc
+NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  3d12h
+controlplane $ 
+
+controlplane $ kubectl create -f statefulset.yaml 
+statefulset.apps/web created
+controlplane $ kubectl get statefulsets.apps  
+NAME   READY   AGE
+web    0/3     8s
+
+# as you see all of them arent getting creating at the same time, first it will create first pod successfull, then it will proceed to next and so on. 
+controlplane $ kubectl get statefulsets.apps
+NAME   READY   AGE
+web    1/3     18s
+controlplane $ 
+
+controlplane $ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          106s
+web-1   1/1     Running   0          89s
+web-2   1/1     Running   0          70s
+controlplane $ 
+
+### we defined www-web in our volume template 
+controlplane $ kubectl get pvc 
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+www-web-0   Bound    pvc-d8f66ae9-bd37-4021-9a9b-8d5b5d952d6e   1Gi        RWO            local-path     <unset>                 2m10s
+www-web-1   Bound    pvc-39dfb163-5ef9-4585-8109-635551870713   1Gi        RWO            local-path     <unset>                 113s
+www-web-2   Bound    pvc-c348110b-29a4-499e-9296-79fe1fb8db66   1Gi        RWO            local-path     <unset>                 94s
+controlplane $ 
+
+### if you will scale up the statefulset, the new volumes will be created as well of 1Gi that we have defined out manifest file. 
+controlplane $ kubectl scale statefulset web --replicas 5
+statefulset.apps/web scaled
+
+controlplane $ kubectl get pvc
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+www-web-0   Bound    pvc-d8f66ae9-bd37-4021-9a9b-8d5b5d952d6e   1Gi        RWO            local-path     <unset>                 5m26s
+www-web-1   Bound    pvc-39dfb163-5ef9-4585-8109-635551870713   1Gi        RWO            local-path     <unset>                 5m9s
+www-web-2   Bound    pvc-c348110b-29a4-499e-9296-79fe1fb8db66   1Gi        RWO            local-path     <unset>                 4m50s
+www-web-3   Bound    pvc-2f71d2d4-bb64-452d-bdd0-6ede548fd164   1Gi        RWO            local-path     <unset>                 12s
+www-web-4   Bound    pvc-81ae61b8-51ea-4ae7-991b-d24a24e0f0bb   1Gi        RWO            local-path     <unset>                 5s
+
+### if we scale it down, the pods will be deleted but the volume will not be deleted. 
+controlplane $ kubectl scale statefulset web --replicas 3
+statefulset.apps/web scaled
+controlplane $ kubectl get pvc 
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+www-web-0   Bound    pvc-d8f66ae9-bd37-4021-9a9b-8d5b5d952d6e   1Gi        RWO            local-path     <unset>                 7m39s
+www-web-1   Bound    pvc-39dfb163-5ef9-4585-8109-635551870713   1Gi        RWO            local-path     <unset>                 7m22s
+www-web-2   Bound    pvc-c348110b-29a4-499e-9296-79fe1fb8db66   1Gi        RWO            local-path     <unset>                 7m3s
+www-web-3   Bound    pvc-2f71d2d4-bb64-452d-bdd0-6ede548fd164   1Gi        RWO            local-path     <unset>                 2m25s
+www-web-4   Bound    pvc-81ae61b8-51ea-4ae7-991b-d24a24e0f0bb   1Gi        RWO            local-path     <unset>                 2m18s
+controlplane $ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          7m44s
+web-1   1/1     Running   0          7m27s
+web-2   1/1     Running   0          7m8s
+controlplane $ 
+
+# Lets assume that your pod were deleted the web-0, what will happen is that the same pod will spin up with the same name due to the fact
+# these pods are created with the statefulSet. Name will not be changed and whatever volume this pod use to have, the same volume will be attached to your pod.
+# no new volume will be created.
+
+controlplane $ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          7m44s
+web-1   1/1     Running   0          7m27s
+web-2   1/1     Running   0          7m8s
+controlplane $ kubectl delete pod web-0
+pod "web-0" deleted
+controlplane $  kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          49s  <--------------
+web-1   1/1     Running   0          9m24s
+web-2   1/1     Running   0          9m5s
+controlplane $ 
+controlplane $ kubectl get pvc
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+www-web-0   Bound    pvc-d8f66ae9-bd37-4021-9a9b-8d5b5d952d6e   1Gi        RWO            local-path     <unset>                 11m
+www-web-1   Bound    pvc-39dfb163-5ef9-4585-8109-635551870713   1Gi        RWO            local-path     <unset>                 11m
+www-web-2   Bound    pvc-c348110b-29a4-499e-9296-79fe1fb8db66   1Gi        RWO            local-path     <unset>                 11m
+www-web-3   Bound    pvc-2f71d2d4-bb64-452d-bdd0-6ede548fd164   1Gi        RWO            local-path     <unset>                 6m39s
+www-web-4   Bound    pvc-81ae61b8-51ea-4ae7-991b-d24a24e0f0bb   1Gi        RWO            local-path     <unset>                 6m32s
+controlplane $ 
+
+controlplane $ nano statefulSet-headlessservice.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx ### this is the serviceName we have defined in StatefulSet.yaml file. This is nothing but a headless service. 
+spec:
+  type: ClusterIP
+  clusterIP: None # because of this configuration, your clusterIP service will not getting ip address, which will be making it headless service (without ip)                             
+  selector:
+    app: nginx 
+  ports:
+  - port: 80
+    name: web
+
+### you see that after creating this headless service, the nginx ClusterIP service get none ip address. 
+controlplane $ kubectl create -f statefulSet-headlessservice.yaml 
+service/nginx created
+controlplane $ kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   3d12h
+nginx        ClusterIP   None         <none>        80/TCP    4s  <--------------- no ip address due to the headless service 
+controlplane $ 
+
+
+### I want to reach out to the web-0 pod, how can i reach to the web0 pod? 
+# lets create a simple pod and login inside it  
+controlplane $ kubectl run test --image nginx 
+pod/test created
+controlplane $ kubectl exec -it test -- bash
+root@test:/# 
+
+### how to interact with to another pod? we have a headless clusterIP service 
+controlplane $ kubectl exec -it test -- bash
+root@test:/# apt update && apt install dnsutils -y
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB].......
+
+### get the the name of the pod
+root@test:/# exit
+exit
+command terminated with exit code 130
+controlplane $ kubectl get pod -o wide
+NAME    READY   STATUS    RESTARTS   AGE     IP             NODE           NOMINATED NODE   READINESS GATES
+test    1/1     Running   0          3m19s   192.168.1.11   node01         <none>           <none>
+web-0   1/1     Running   0          16m     192.168.1.10   node01         <none>           <none>
+web-1   1/1     Running   0          24m     192.168.0.5    controlplane   <none>           <none>
+web-2   1/1     Running   0          24m     192.168.1.7    node01         <none>           <none>
+controlplane $ 
+
+### if I nslookup to my service it will show the ip addresses of the pod
+controlplane $ kubectl exec -it test -- bash
+root@test:/# nslookup nginx
+;; Got recursion not available from 10.96.0.10
+Server:         10.96.0.10
+Address:        10.96.0.10#53
+
+Name:   nginx.default.svc.cluster.local
+Address: 192.168.1.10
+Name:   nginx.default.svc.cluster.local
+Address: 192.168.0.5
+Name:   nginx.default.svc.cluster.local
+Address: 192.168.1.7
+;; Got recursion not available from 10.96.0.10
+controlplane $ kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   3d13h
+nginx        ClusterIP   None         <none>        80/TCP    8m7s
+
+controlplane $ kubectl describe svc nginx
+Name:                     nginx
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=nginx
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       None
+IPs:                      None
+Port:                     web  80/TCP
+TargetPort:               80/TCP
+Endpoints:                192.168.1.10:80,192.168.0.5:80,192.168.1.7:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+controlplane $ 
+root@test:/# 
+
+# my requirement is to reach to the web-0 pod, before reaching to this pod see the service fqdn or the dns address of the service
+# Name:   nginx.default.svc.cluster.local 
+# nginx is the service name
+# default is the namespace
+# svc object type is service
+# clusteer.local is your domain
+
+### now how can I reach to the pod web-o
+root@test:/# ns lookup web-0.nginx.default.svc.cluster.local
+bash: ns: command not found
+root@test:/# nslookup web-0.nginx.default.svc.cluster.local
+;; Got recursion not available from 10.96.0.10
+Server:         10.96.0.10
+Address:        10.96.0.10#53
+
+Name:   web-0.nginx.default.svc.cluster.local
+Address: 192.168.1.10  <--------------------------
+;; Got recursion not available from 10.96.0.10
+
+root@test:/# 
+
+### a good homework to deploy the statefulset for mysql which will include the headless service as well. 
+https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
