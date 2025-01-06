@@ -1,0 +1,32 @@
+### this file will call the configmap from the file
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wp
+  labels:
+    app: mywp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    volumeMounts: ### 2nd
+    - name: myvol
+      mountPath: /usr/share/nginx/html
+  volumes: ### 1st this is important when creating configmap from file.
+  - name: myvol
+    configMap: ### very important this volume will be spinned up through the configmap
+      name: myindex
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-svc
+spec:
+  type: NodePort
+  selector:
+    app: mywp
+  ports:
+  - port: 80
+    nodePort: 30123
