@@ -1,0 +1,29 @@
+# save it to the file
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: mywp
+data:
+  WORDPRESS_DB_HOST: mydb-svc
+  WORDPRESS_DB_NAME: wordpress
+  WORDPRESS_DB_PASSWORD: test123
+  WORDPRESS_DB_USER: root
+  WORDPRESS_TABLE_PREFIX: wp_
+
+### first step get the environment variables
+#place the environment variables on a note pad for now
+#    env:
+#    - name: WORDPRESS_DB_HOST
+#      value: mydb-svc
+#    - name: WORDPRESS_DB_USER
+#      value: root
+#    - name: WORDPRESS_DB_PASSWORD
+#      value: test123
+#    - name: WORDPRESS_DB_NAME
+#      value: wordpress
+#    - name: WORDPRESS_TABLE_PREFIX
+#      value: wp_
+
+### Second step get the configmap file from the command and redirect it to the file 
+# kubectl create configmap mywp --from-literal WORDPRESS_DB_HOST=mydb-svc --from-literal WORDPRESS_DB_USER=root --from-literal WORDPRESS_DB_PASSWORD=test123 --from-literal WORDPRESS_DB_NAME=wordpress --from-literal WORDPRESS_TABLE_PREFIX=wp_ --dry-run=client -o yaml
