@@ -336,4 +336,244 @@ https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-applica
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
+############ INIT CONTAINER ############
+root@master:~/app/volume# cp emptyDir.yaml init-container.yaml
+root@master:~/app/volume#
 
+### what is init container?
+lets say I want to create a pod, my pod needs some configuration to be ready before main container startsup 
+Init container will be started first of all before the main container. It will be configuring some of the settings for you, once the configuration is done
+then only your main container will be started. You can have multiple init container but we are going to use a simple init container. 
+
+kind: Deployment
+metadata:
+  name: mydep-emp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec: 
+      initContainers:
+      - name: icon1
+        image: ubuntu:latest
+        command: ["/bin/bash", "-c","echo '<h1> Hello from init container</h1>' > /data/index.html",]
+        volumeMounts:
+        - name: myvol
+          mountPath: /data
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: myvol
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: myvol
+        emptyDir: {}
+
+root@master:~/app/volume# kubectl create -f init-container.yaml
+deployment.apps/mydep-emp created
+root@master:~/app/volume# kkgp
+NAME                        READY   STATUS     RESTARTS   AGE
+mydep-emp-5876dd77d-bm5hc   0/1     Init:0/1   0          2s
+mydep-emp-5876dd77d-r75kq   0/1     Init:0/1   0          2s
+mydep-emp-5876dd77d-xq79t   0/1     Init:0/1   0          2s
+root@master:~/app/volume# kkgp
+NAME                        READY   STATUS     RESTARTS   AGE
+mydep-emp-5876dd77d-bm5hc   0/1     Init:0/1   0          2s
+mydep-emp-5876dd77d-r75kq   0/1     Init:0/1   0          2s
+mydep-emp-5876dd77d-xq79t   0/1     Init:0/1   0          2s
+root@master:~/app/volume# kkgp
+NAME                        READY   STATUS            RESTARTS   AGE
+mydep-emp-5876dd77d-bm5hc   0/1     PodInitializing   0          3s
+mydep-emp-5876dd77d-r75kq   0/1     PodInitializing   0          3s
+mydep-emp-5876dd77d-xq79t   0/1     Init:0/1          0          3s
+root@master:~/app/volume# kkgp
+NAME                        READY   STATUS            RESTARTS   AGE
+mydep-emp-5876dd77d-bm5hc   1/1     Running           0          4s
+mydep-emp-5876dd77d-r75kq   1/1     Running           0          4s
+mydep-emp-5876dd77d-xq79t   0/1     PodInitializing   0          4s
+root@master:~/app/volume# kkgp
+NAME                        READY   STATUS    RESTARTS   AGE
+mydep-emp-5876dd77d-bm5hc   1/1     Running   0          5s
+mydep-emp-5876dd77d-r75kq   1/1     Running   0          5s
+mydep-emp-5876dd77d-xq79t   1/1     Running   0          5s
+root@master:~/app/volume#
+
+### see where I mounted that volume 
+root@master:~/app/volume# kubectl exec -it mydep-emp-5876dd77d-bm5hc -- bash
+Defaulted container "con1" out of: con1, icon1 (init)
+root@mydep-emp-5876dd77d-bm5hc:/# cd /usr/share/nginx/html/
+root@mydep-emp-5876dd77d-bm5hc:/usr/share/nginx/html# ls
+index.html
+root@mydep-emp-5876dd77d-bm5hc:/usr/share/nginx/html#
+root@mydep-emp-5876dd77d-bm5hc:/usr/share/nginx/html# cat index.html
+<h1> Hello from init container</h1>
+root@mydep-emp-5876dd77d-bm5hc:/usr/share/nginx/html#
+
+### we can see this through our browser as well, we just need to expose the pod to the service.
+root@mydep-emp-5876dd77d-bm5hc:/usr/share/nginx/html# exit
+exit
+root@master:~/app/volume# kubectl expose deployment mydep-emp --port 80 --type NodePort
+service/mydep-emp exposed
+root@master:~/app/volume# kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        49d
+mydep        NodePort    10.110.18.118   <none>        80:32412/TCP   5d12h
+mydep-emp    NodePort    10.103.46.57    <none>        80:30993/TCP   4s    <---------------- this is your service which is accessible on the port 30993
+newpod       ClusterIP   10.102.85.76    <none>        80/TCP         9d
+root@master:~/app/volume#
+
+# look the the endpoints all the pod ip addresses are there
+root@master:~/app/volume# kk describe svc mydep-emp
+Name:                     mydep-emp
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=myapp
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.103.46.57
+IPs:                      10.103.46.57
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30993/TCP
+Endpoints:                172.17.104.8:80,172.17.166.146:80,172.17.166.147:80  <---------------- pod ip address on port 80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
+## look at the ip below and at the Endpoints above matches. 
+root@master:~/app/volume# kk get pod -o wide
+NAME                        READY   STATUS    RESTARTS   AGE     IP               NODE    NOMINATED NODE   READINESS GATES
+mydep-emp-5876dd77d-bm5hc   1/1     Running   0          6m13s   172.17.104.8     node2   <none>           <none>
+mydep-emp-5876dd77d-r75kq   1/1     Running   0          6m13s   172.17.166.147   node1   <none>           <none>
+mydep-emp-5876dd77d-xq79t   1/1     Running   0          6m13s   172.17.166.146   node1   <none>           <none>
+root@master:~/app/volume#
+
+
+Get the ip address of the any node and put it in the browser with the port 80 is mapped to on the port on host machine which is 30993
+root@master:~/app/volume# ifconfig
+ens33: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.29.134  netmask 255.255.255.0  broadcast 192.168.29.255
+        inet6 fe80::20c:29ff:fe61:8e3f  prefixlen 64  scopeid 0x20<link>
+
+IMPORTANT:
+#### this file has been placed in your main container by INIT CONTAINER
+=====ON BROWSWER=====
+http://192.168.29.134:30993/
+Hello from init container
+
+### INITCONTAINER is nothing but a container that will be started before your main container. Which initates the steps that you have configured in your manifest file.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+############## STATIC POD ############## 
+# clean your space before we begin our practice. 
+root@master:~/app/volume# kubectl delete -f init-container.yaml
+deployment.apps "mydep-emp" deleted
+root@master:~/app/volume# kkgp
+No resources found in default namespace.
+root@master:~/app/volume# kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        49d
+mydep        NodePort    10.110.18.118   <none>        80:32412/TCP   5d12h
+mydep-emp    NodePort    10.103.46.57    <none>        80:30993/TCP   9m9s
+newpod       ClusterIP   10.102.85.76    <none>        80/TCP         9d
+root@master:~/app/volume# kubectl delete svc mydep mydep-emp newpod
+service "mydep" deleted
+service "mydep-emp" deleted
+service "newpod" deleted
+root@master:~/app/volume# kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   49d
+root@master:~/app/volume#
+
+
+### we have few of the pods which are already running on cluster as static pods
+### how to identify if those pods are static? 
+root@master:~/app/volume# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS         AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5                46d
+calico-node-mrm6j                          1/1     Running   4                46d
+calico-node-vhd49                          1/1     Running   5                46d
+calico-node-x4q65                          1/1     Running   4                46d
+coredns-5dd5756b68-84w4t                   1/1     Running   8                49d
+coredns-5dd5756b68-m64mp                   1/1     Running   8                49d
+etcd-master                                1/1     Running   8                49d    <---------------- suffix is master so this is a static pod
+kube-apiserver-master                      1/1     Running   8                49d    <---------------- suffix is master so this is a static pod 
+kube-controller-manager-master             1/1     Running   12 (7d6h ago)    49d    <---------------- suffix is master so this is a static pod
+kube-proxy-k4pzl                           1/1     Running   8                49d
+kube-proxy-k88rh                           1/1     Running   5                47d
+kube-proxy-sr6kt                           1/1     Running   5                46d
+kube-scheduler-master                      1/1     Running   14 (3d10h ago)   49d    <---------------- suffix is master so this is a static pod 
+metrics-server-58ff449c8d-bch5w            1/1     Running   0                6d2h
+root@master:~/app/volume#
+
+### what is the hostname of our machine? master in our case
+### anywhere you see the master as the suffix in podname, those are your static pods. 
+root@master:~/app/volume# hostname
+master
+root@master:~/app/volume#
+
+### static pods are nothing which is created on your node directory through kubernetes. 
+### so this file you have to place in the kubernetes manifest location.
+### the location for all default manifest are kept : /etc/kubernetes/manifests/
+
+root@master:~/app# nano static-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apppod
+  labels:
+    app: myapp
+    env: dev
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+
+root@master:~/app# ls /etc/kubernetes/manifests/
+etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml
+root@master:~/app#
+
+### right now the static-pod.yaml location where it has been placed is at the /app. As soon as you move/copy the static-pod.yaml manifest file
+### to the /etc/kubernetes/manifests/
+### it will it will create the static pod for you with the suffix -master at the end of your pod name.  
+
+root@master:~/app# cp static-pod.yaml /etc/kubernetes/manifests/
+
+NAME            READY   STATUS    RESTARTS   AGE
+apppod-master   1/1     Running   0          77s
+root@master:~/app#
+
+### IMPORTANT: 
+### you cannot delete this pod by itself, it will recreate itself. 
+root@master:~/app# kubectl delete po apppod-master
+pod "apppod-master" deleted
+root@master:~/app# kkgp
+NAME            READY   STATUS    RESTARTS   AGE
+apppod-master   1/1     Running   0          10s
+
+### to remove this pod, you will have to remove the yaml file from the /etc/kubernetes/manifests/ location 
+### as soon as you remove the manifest file from the location, it will be deleted. 
+root@master:~/app# rm /etc/kubernetes/manifests/static-pod.yaml
+root@master:~/app# kkgp
+No resources found in default namespace.
+root@master:~/app#
+
+INTERVIEW QUESTION:
+### what is the use case of the static pod? 
+### the use case of the static pod is when you are creating a system configuration that you want to create and that shouldnot be deleted anyway, then you will
+### have to create the static pod.
+
+### if I want to create a static pod in the worker node?
+### logon to the worker node and do the same thing, place the manifest file within the location of the worker node and you should have a static pod created. 
