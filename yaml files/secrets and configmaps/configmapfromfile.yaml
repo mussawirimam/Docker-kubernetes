@@ -1,0 +1,34 @@
+apiVersion: v1
+data:
+  index.html: |
+    <h1> Hello from ConfigMap </h1>
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: myindex
+
+#root@master:~/app/secretsandconfigmap# nano index.html
+#root@master:~/app/secretsandconfigmap# cat index.html
+#<h1> Hello from ConfigMap </h1>
+#
+#root@master:~/app/secretsandconfigmap# kubectl create configmap myindex --from-file index.html --dry-run=client -o yaml > configmapfromfile.yaml
+#apiVersion: v1
+#data:
+#  index.html: |
+#    <h1> Hello from ConfigMap </h1>
+#kind: ConfigMap
+#metadata:
+#  creationTimestamp: null
+#  name: myindex
+#
+#root@master:~/app/secretsandconfigmap#
+#root@master:~/app/secretsandconfigmap# kubectl create configmap myindex --from-file index.html
+#configmap/myindex created
+#root@master:~/app/secretsandconfigmap#
+#
+#root@master:~/app/secretsandconfigmap# kubectl get configmap
+#NAME               DATA   AGE
+#kube-root-ca.crt   1      49d
+#myindex            1      69s
+#mywp               5      19m
+#root@master:~/app/secretsandconfigmap#
