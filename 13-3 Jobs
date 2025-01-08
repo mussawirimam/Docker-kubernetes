@@ -1,0 +1,49 @@
+################## JOBS ##################
+
+### generally let's say you want to perform a repetative task, we will be using the jobs.
+# jobs/cron are used to perform some of the housekeeping activity. Let's say you want to push or pull the data from somewhere
+# other places, you will use the jobs
+
+controlplane $ nano job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  completions: 10  <--------- executed with 10 times in 10 seperated pod and pod status will change to completed 
+  parallelism: 2   <--------- I want to do it super quickly in parallely multiple container
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never
+
+controlplane $ kubectl create -f job.yaml
+job.batch/pi created
+controlplane $ kubectl get jobs.batch 
+NAME   STATUS    COMPLETIONS   DURATION   AGE
+pi     Running   0/10          5s         5s
+controlplane $ kubectl get pods
+NAME         READY   STATUS              RESTARTS   AGE
+pi-tvd5j     0/1     ContainerCreating   0          11s
+pi-w9695     0/1     ContainerCreating   0          11s
+secret-vol   1/1     Running             0          29m
+controlplane $ kubectl get pods
+NAME         READY   STATUS              RESTARTS   AGE
+pi-tvd5j     0/1     ContainerCreating   0          18s
+pi-w9695     0/1     ContainerCreating   0          18s
+secret-vol   1/1     Running             0          29m
+controlplane $ kubectl get pods --watch
+NAME         READY   STATUS              RESTARTS   AGE
+pi-tvd5j     0/1     ContainerCreating   0          22s
+pi-w9695     0/1     ContainerCreating   0          22s
+secret-vol   1/1     Running             0          29m
+pi-tvd5j     1/1     Running             0          26s
+pi-w9695     1/1     Running             0          27s
+
+### once the job is completed the pods will remain there, once the job is completed you can remove these pods above.
+
+--------------------------------------------------------------------------------------------------------------
+################## CRONJOBS ##################
