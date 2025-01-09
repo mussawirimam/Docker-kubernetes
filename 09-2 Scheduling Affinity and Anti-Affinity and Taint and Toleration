@@ -50,6 +50,16 @@ spec:
             - ryzen
 
 ################# NODE AFFINITY BEGINS #################
+### First label the node.. (check previous notes)
+https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#add-a-label-to-a-node
+kubectl get nodes --show-labels
+kubectl label nodes <your-node-name> disktype=ssd
+kubectl get nodes --show-labels
+
+root@master:~/app/scheduling# kubectl label nodes node01 cpu=ryzen   
+node/node01 labeled
+controlplane $ 
+
 root@master:~/app/scheduling# nano aff-req.yaml
 root@master:~/app/scheduling# kubectl get pods
 NAME      READY   STATUS    RESTARTS   AGE
