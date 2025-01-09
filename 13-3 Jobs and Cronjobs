@@ -47,3 +47,47 @@ pi-w9695     1/1     Running             0          27s
 
 --------------------------------------------------------------------------------------------------------------
 ################## CRONJOBS ##################
+### linux follow set of rules to set up the cronjobs, you need to see for the examples below. 
+#remember the five stars 
+* * * * *   /path/to/script.sh (Command/Script to Execute)
+| | | | |-----5th star is DayOfWeek (0-7) 0,7 are "Sunday"
+| | | |----4th star is Month of Year (1-12)  
+| | |---3rd star is Day of Month (1-31)
+| |--2nd star is hour (0-23) 
+|-1st star is minute (0-59)
+
+Cronjob examples: https://crontab.guru/examples.html
+
+controlplane $ nano cronjob.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+
+
+controlplane $ kubectl create -f cronjob.yaml 
+cronjob.batch/hello created
+
+### Default time zone of the cronjob is the UTC time zone
+### For CronJobs with no time zone specified, the kube-controller-manager interprets schedules relative to its local time zone.
+### You can specify a time zone for a CronJob by setting .spec.timeZone to the name of a valid time zone. For example, setting .spec.timeZone: "Etc/UTC" instructs Kubernetes to interpret the schedule relative to Coordinated Universal Time
+### https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/ > find: timezone section
+controlplane $ kubectl get cronjobs.batch 
+NAME    SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+hello   * * * * *   <none>     False     0        <none>          8s
+controlplane $ 
