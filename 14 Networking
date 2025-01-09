@@ -1,0 +1,134 @@
+### im having multiple applications running in my cluster and a database
+these application uses backend database. I can create a networking rule, which says that who can talk to these application
+we will learn a simple networking rule implementation. Based on the labels, the network policies will be implemented 
+pods 
+----
+app1
+app2
+DB
+
+root@master:~/app# cp wordpressNodePort.yaml network/
+root@master:~/app# cp mysqlClusterIP.yaml network/
+root@master:~/app# cd network/
+root@master:~/app/network# cp wordpressNodePort.yaml wordpressNodePort-2.yaml
+root@master:~/app/network# ls
+mysqlClusterIP.yaml  wordpressNodePort-2.yaml  wordpressNodePort.yaml
+root@master:~/app/network#
+root@master:~/app/network# nano wordpressNodePort.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wp-1
+  labels:
+    app: mywp-1
+spec:
+  containers:
+  - name: con1
+    image: wordpress:latest
+    ports:
+    - containerPort: 80
+    env:
+    - name: WORDPRESS_DB_HOST
+      value: mydb-svc
+    - name: WORDPRESS_DB_USER
+      value: root
+    - name: WORDPRESS_DB_PASSWORD
+      value: test123
+    - name: WORDPRESS_DB_NAME
+      value: wordpress
+    - name: WORDPRESS_TABLE_PREFIX
+      value: wp_
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-svc-1
+spec:
+  type: NodePort
+  selector:
+    app: mywp1
+  ports:
+  - port: 80
+    nodePort: 30123
+    
+root@master:~/app/network#
+root@master:~/app/network# cp wordpressNodePort.yaml wordpressNodePort-2.yaml
+root@master:~/app/network# ls
+wordpressNodePort-2.yaml  wordpressNodePort.yaml
+root@master:~/app/network#
+root@master:~/app/network# nano wordpressNodePort-2.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wp-2
+  labels:
+    app: mywp-2
+spec:
+  containers:
+  - name: con1
+    image: wordpress:latest
+    ports:
+    - containerPort: 80
+    env:
+    - name: WORDPRESS_DB_HOST
+      value: mydb-svc
+    - name: WORDPRESS_DB_USER
+      value: root
+    - name: WORDPRESS_DB_PASSWORD
+      value: test123
+    - name: WORDPRESS_DB_NAME
+      value: wordpress
+    - name: WORDPRESS_TABLE_PREFIX
+      value: wp_
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-svc-2
+spec:
+  type: NodePort
+  selector:
+    app: mywp2
+  ports:
+  - port: 80
+    nodePort: 30124
+
+root@master:~/app/network#
+
+root@master:~/app# nano mysqlClusterIP.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mydb
+  labels:
+    app: mydb
+spec:
+  containers:
+  - name: db
+    image: mysql:latest
+    ports:
+    - containerPort: 3306
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: test123
+    - name: MYSQL_DATABASE
+      value: wordpress
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mydb-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: mydb
+  ports:
+  - port: 3306
+#how do I know that mysql is using the port 3306?
+##A: it is defined in the dockerhub.com image of mysql container documentation
+
+root@master:~/app#
