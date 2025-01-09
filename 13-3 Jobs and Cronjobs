@@ -48,6 +48,8 @@ pi-w9695     1/1     Running             0          27s
 --------------------------------------------------------------------------------------------------------------
 ################## CRONJOBS ##################
 ### linux follow set of rules to set up the cronjobs, you need to see for the examples below. 
+Cronjob examples: https://crontab.guru/examples.html
+
 #remember the five stars 
 * * * * *   /path/to/script.sh (Command/Script to Execute)
 | | | | |-----5th star is DayOfWeek (0-7) 0,7 are "Sunday"
@@ -56,7 +58,18 @@ pi-w9695     1/1     Running             0          27s
 | |--2nd star is hour (0-23) 
 |-1st star is minute (0-59)
 
-Cronjob examples: https://crontab.guru/examples.html
+another example 
+# ┌───────────── minute (0 - 59)
+# │ ┌───────────── hour (0 - 23)
+# │ │ ┌───────────── day of the month (1 - 31)
+# │ │ │ ┌───────────── month (1 - 12)
+# │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday)
+# │ │ │ │ │                                   OR sun, mon, tue, wed, thu, fri, sat
+# │ │ │ │ │ 
+# │ │ │ │ │
+# * * * * *
+
+
 
 controlplane $ nano cronjob.yaml
 apiVersion: batch/v1
@@ -82,6 +95,27 @@ spec:
 
 controlplane $ kubectl create -f cronjob.yaml 
 cronjob.batch/hello created
+controlplane $ kubectl get cronjobs.batch 
+NAME    SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+hello   * * * * *   <none>     False     0        <none>          8s
+controlplane $ kubectl get pod
+NAME                   READY   STATUS      RESTARTS   AGE
+hello-28939794-ptn8f   0/1     Completed   0          2m9s
+hello-28939795-rh54w   0/1     Completed   0          69s
+hello-28939796-tdcnl   0/1     Completed   0          9s
+controlplane $ 
+
+controlplane $ kubectl get po
+NAME                   READY   STATUS              RESTARTS   AGE
+hello-28939800-vkgc6   0/1     Completed           0          3m1s
+hello-28939801-845sj   0/1     Completed           0          2m1s
+hello-28939802-8v9kc   0/1     Completed           0          61s
+hello-28939803-lvjpt   0/1     ContainerCreating   0          1s
+
+### you can see from the log the command that you have put inside the cronjob.yaml file, it is getting applied inside your container. 
+controlplane $ kubectl logs hello-28939800-vkgc6
+error: error from server (NotFound): pods "hello-28939800-vkgc6" not found in namespace "default"
+controlplane $ 
 
 ### Default time zone of the cronjob is the UTC time zone
 ### For CronJobs with no time zone specified, the kube-controller-manager interprets schedules relative to its local time zone.
@@ -90,4 +124,45 @@ cronjob.batch/hello created
 controlplane $ kubectl get cronjobs.batch 
 NAME    SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
 hello   * * * * *   <none>     False     0        <none>          8s
+controlplane $ 
+
+
+### Adding timezone inside your cronjob yaml file. 
+controlplane $ nano cronjobtimezoneadded.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  timeZone: "Asia/Calcutta" # cronjob default time zone is UTC # look in the kubernetes doc and search for the timezone
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: nginx:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+
+controlplane $ kubectl delete -f cronjob.yaml 
+cronjob.batch "hello" deleted
+controlplane $ kubectl get po
+No resources found in default namespace.
+controlplane $ 
+
+controlplane $ kubectl create -f cronjobtimezoneadded.yaml 
+cronjob.batch/hello created
+controlplane $ kubectl get cronjobs.batch 
+NAME    SCHEDULE    TIMEZONE        SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+hello   * * * * *   Asia/Calcutta   False     0        <none>          5skube
+
+controlplane $ kubectl logs hello-28939808-c948w
+Thu Jan  9 02:08:00 UTC 2025
+Hello from the Kubernetes cluster
 controlplane $ 
