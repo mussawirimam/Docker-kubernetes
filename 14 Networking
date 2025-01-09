@@ -81,7 +81,7 @@ spec:
     - name: WORDPRESS_DB_NAME
       value: wordpress
     - name: WORDPRESS_TABLE_PREFIX
-      value: wp_
+      value: wp2_ # table needs to be different, so that there are seperate enteries inside your database
 ---
 apiVersion: v1
 kind: Service
