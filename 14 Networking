@@ -132,3 +132,41 @@ spec:
 ##A: it is defined in the dockerhub.com image of mysql container documentation
 
 root@master:~/app#
+
+
+root@master:~/app/network# kubectl create -f .
+pod/mydb created
+service/mydb-svc created
+pod/wp-2 created
+service/wordpress-svc-2 created
+Error from server (AlreadyExists): error when creating "wordpressNodePort.yaml": pods "wp" already exists
+Error from server (Invalid): error when creating "wordpressNodePort.yaml": Service "wordpress-svc" is invalid: spec.ports[0].nodePort: Invalid value: 30123: provided port is already allocated
+root@master:~/app/network# kubectl get svc
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes        ClusterIP   10.96.0.1        <none>        443/TCP        52d
+mydb-svc          ClusterIP   10.108.210.100   <none>        3306/TCP       19s
+wordpress-svc     NodePort    10.105.111.172   <none>        80:30123/TCP   2d23h
+wordpress-svc-2   NodePort    10.106.246.35    <none>        80:30124/TCP   19s
+root@master:~/app/network#  kubectl delete -f .
+pod "mydb" deleted
+service "mydb-svc" deleted
+pod "wp-2" deleted
+service "wordpress-svc-2" deleted
+pod "wp" deleted
+service "wordpress-svc" deleted
+kroot@master:~/app/network# kubectl delete svc wordpress-svc
+Error from server (NotFound): services "wordpress-svc" not found
+root@master:~/app/network# kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   52d
+root@master:~/app/network#
+
+### app1 app2 and db has been created
+root@master:~/app/network# kubectl create -f .
+pod/mydb created
+service/mydb-svc created
+pod/wp-2 created
+service/wordpress-svc-2 created
+pod/wp created
+service/wordpress-svc created
+root@master:~/app/network#
