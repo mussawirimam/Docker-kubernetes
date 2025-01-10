@@ -57,17 +57,17 @@ root@master:~/app/network# cp wordpressNodePort.yaml wordpressNodePort-2.yaml
 root@master:~/app/network# ls
 wordpressNodePort-2.yaml  wordpressNodePort.yaml
 root@master:~/app/network#
-root@master:~/app/network# nano wordpressNodePort-2.yaml
 
+root@master:~/app/network# cat wordpressNodePort-2.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: wp-2
+  name: wp2
   labels:
-    app: mywp-2
+    app: mywp2
 spec:
   containers:
-  - name: con1
+  - name: con2
     image: wordpress:latest
     ports:
     - containerPort: 80
@@ -81,7 +81,7 @@ spec:
     - name: WORDPRESS_DB_NAME
       value: wordpress
     - name: WORDPRESS_TABLE_PREFIX
-      value: wp2_ # table needs to be different, so that there are seperate enteries inside your database
+      value: wp2_
 ---
 apiVersion: v1
 kind: Service
@@ -133,7 +133,7 @@ spec:
 
 root@master:~/app#
 
-
+### creates the all the resources from the current directly 
 root@master:~/app/network# kubectl create -f .
 pod/mydb created
 service/mydb-svc created
