@@ -215,6 +215,7 @@ kube-scheduler-master                      1/1     Running   14 (8d ago)     54d
 metrics-server-58ff449c8d-bch5w            1/1     Running   0               11d
 root@master:~/app/network#
 
+================================= EGRESS AND INGRESS ================================= 
 ### How to implement the Network policies
 https://kubernetes.io/docs/concepts/services-networking/network-policies/
 
@@ -326,6 +327,3 @@ egress        ingress
 wp1            db
       <-------
 ingress       egress
-
-
-
