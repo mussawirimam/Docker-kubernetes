@@ -216,5 +216,116 @@ metrics-server-58ff449c8d-bch5w            1/1     Running   0               11d
 root@master:~/app/network#
 
 ### How to implement the Network policies
-
 https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+
+root@master:~/app/network# nano networkpolicy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+#  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: mydb
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+#    - ipBlock:
+#        cidr: 172.17.0.0/16
+#        except:
+#        - 172.17.1.0/24
+#    - namespaceSelector:
+#        matchLabels:
+#          project: myproject
+    - podSelector:
+        matchLabels:
+          app: mywp ### label of the pod
+    ports:
+    - protocol: TCP
+      port: 3306 ### port needs to be added
+#  egress:
+#  - to:
+#    - ipBlock:
+#        cidr: 10.0.0.0/24
+#    ports:
+#    - protocol: TCP
+#      port: 5978
+
+root@master:~/app/network#
+
+
+
+### previously you could see both the wordpress on pods with port mapped to 30123 and 30124 but after applying the network policy rule, you will only be able to see 30123 on the browser accessible
+root@master:~/app/network# nano networkpolicy.yaml
+root@master:~/app/network# kubectl create -f networkpolicy.yaml
+networkpolicy.networking.k8s.io/test-network-policy created
+root@master:~/app/network# kubectl get networkpolicies.
+networkpolicies.crd.projectcalico.org  networkpolicies.networking.k8s.io
+root@master:~/app/network# kubectl get networkpolicies.networking.k8s.io
+NAME                  POD-SELECTOR   AGE
+test-network-policy   app=mydb       12s
+root@master:~/app/network#
+
+root@master:~/app/network# kubectl describe networkpolicies.networking.k8s.io
+Name:         test-network-policy
+Namespace:    default
+Created on:   2025-01-11 12:35:42 -0500 EST
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     app=mydb
+  Allowing ingress traffic:
+    To Port: 3306/TCP
+    From:
+      PodSelector: app=mywp1
+  Allowing egress traffic:
+    <none> (Selected pods are isolated for egress connectivity)
+  Policy Types: Ingress, Egress
+root@master:~/app/network#
+
+### DENY ALL INGRESS
+### we will not apply this policy but this policy denies any incoming (ingress) traffic to your cluster
+### we will not apply this but this is the code below 
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+
+### DENY ALL EGRESS
+### we will not apply this policy but this policy denies any out going (egress) traffic to your cluster
+### we will not apply this but this is the code below 
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+
+### if you are implementing the Deny all Egress policy on node, pods inside your that particular node will node be able to communicate.
+In this case you will have to implement the network policy on each pod whenever you are deploying stating about the egress and ingress communication. 
+example: wp1 has egress and db will have the ingress so that the db will be able to listen to the traffic coming from the wp1
+if db wants to send traffic to the wp1 and if there is no policy for ingress, then the wp1 will block the traffic. For this reason, we will need to implement the ingress policy 
+on the wp1 pod as well.
+short: both the pods will need ingress and egress policies on both sides for incoming traffic and outgoing traffic (inbound/outbound) to be able to communicate with each other. 
+
+egress        ingress
+      ------->
+wp1            db
+      <-------
+ingress       egress
+
+
+
