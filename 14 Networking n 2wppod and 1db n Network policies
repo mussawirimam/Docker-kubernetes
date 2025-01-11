@@ -19,9 +19,9 @@ root@master:~/app/network# nano wordpressNodePort.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: wp-1
+  name: wp1
   labels:
-    app: mywp-1
+    app: mywp1    ### this is the label for the pod and selector is in the Nodeport section below
 spec:
   containers:
   - name: con1
@@ -47,7 +47,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: mywp1
+    app: mywp1      ### this is a selector which is selecting the pod label above
   ports:
   - port: 80
     nodePort: 30123
@@ -62,9 +62,9 @@ root@master:~/app/network# cat wordpressNodePort-2.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: wp2
+  name: wp2    
   labels:
-    app: mywp2
+    app: mywp2    ### this is the label for the pod and selector is in the Nodeport section below
 spec:
   containers:
   - name: con2
@@ -90,7 +90,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: mywp2
+    app: mywp2    ### this is a selector which is selecting the pod label above
   ports:
   - port: 80
     nodePort: 30124
@@ -104,7 +104,7 @@ kind: Pod
 metadata:
   name: mydb
   labels:
-    app: mydb
+    app: mydb    ### this is the label for the pod and selector is in the Nodeport section below
 spec:
   containers:
   - name: db
@@ -116,7 +116,6 @@ spec:
       value: test123
     - name: MYSQL_DATABASE
       value: wordpress
-
 ---
 apiVersion: v1
 kind: Service
@@ -125,9 +124,11 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: mydb
+    app: mydb    ### this is a selector which is selecting the pod label above
   ports:
   - port: 3306
+
+
 #how do I know that mysql is using the port 3306?
 ##A: it is defined in the dockerhub.com image of mysql container documentation
 
@@ -170,3 +171,50 @@ service/wordpress-svc-2 created
 pod/wp created
 service/wordpress-svc created
 root@master:~/app/network#
+
+### THESE TWO APPLICATION PODS (WORDPRESS) ARE USING THE SAME DATABASE
+============ ON BROWSER: =============
+http://192.168.29.134:30123/wp-admin/install.php
+Welcome
+Welcome to the famous five-minute WordPress installation process! Just fill in the information below and you’ll be on your way to using the most extendable and powerful personal publishing platform in the world.
+
+http://192.168.29.134:30124/wp-admin/install.php?step=1
+Welcome
+Welcome to the famous five-minute WordPress installation process! Just fill in the information below and you’ll be on your way to using the most extendable and powerful personal publishing platform in the world.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+################################## CNI BEGINS ##################################
+###
+if you are thinking to implement networking rule, where wp1 is only talk to DB. 
+we need to implement the network policy 
+these network policies will be working with few of the CNI image cluster creation
+
+
+### some widely CNI's are Calico, Cilium, and WeaveNet.
+### are few of the plugins which supports Network Policies
+# flannel is also a CNI and it will allow you to create the network policy but it will not work. Becareful which CNI you use. 
+# Calico and Cilium is most widely used 
+# WeaveNet is lightweight
+### we have deployed calico here 
+
+root@master:~/app/network# kubectl get pod -n kube-system
+NAME                                       READY   STATUS    RESTARTS        AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5               51d
+calico-node-mrm6j                          1/1     Running   4               51d
+calico-node-vhd49                          1/1     Running   5               51d
+calico-node-x4q65                          1/1     Running   4               51d
+coredns-5dd5756b68-84w4t                   1/1     Running   8               54d
+coredns-5dd5756b68-m64mp                   1/1     Running   8               54d
+etcd-master                                1/1     Running   8               54d
+kube-apiserver-master                      1/1     Running   8               54d
+kube-controller-manager-master             1/1     Running   14 (4d6h ago)   54d
+kube-proxy-k4pzl                           1/1     Running   8               54d
+kube-proxy-k88rh                           1/1     Running   5               52d
+kube-proxy-sr6kt                           1/1     Running   5               51d
+kube-scheduler-master                      1/1     Running   14 (8d ago)     54d
+metrics-server-58ff449c8d-bch5w            1/1     Running   0               11d
+root@master:~/app/network#
+
+### How to implement the Network policies
+
+https://kubernetes.io/docs/concepts/services-networking/network-policies/
