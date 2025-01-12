@@ -321,6 +321,10 @@ root@master:~/app/rbac#
 
 ============== RESOURCE QUOTA ============== 
 ### Let's implement the resource quota
+# go through this document and read Object Count Quota
+https://kubernetes.io/docs/concepts/policy/resource-quotas/#object-count-quota
 
+### Lets create a resource quota 
+root@master:~/app/rbac# nano resource-quota.yaml
 
 
