@@ -1,0 +1,326 @@
+Role based access control, 
+in our cluster we can create namespaces. 
+In our cluster, we have different application teams and everyone is working on different applications. It is not possible for me to give seperate cluster for each of the teams.
+I dont want to give them five different servers for the dev environment or UAT etc. So, what I will do is I will create in my cluster a logical space. So that each team can have the access to that logcial space. 
+
+
+----------------------
+| Dev | UAT | app-POC|
+|     |     |        |
+|     |     |        |
+----------------------
+
+So, how we can create these logical spaces? we are already having logical spaces like namespaces in our cluster. 
+but with RBAC you get much more capabilities
+
+lets check the namespaces in k8s
+root@master:~/app/network# kubectl get ns
+NAME                 STATUS   AGE
+default              Active   55d
+kube-node-lease      Active   55d
+kube-public          Active   55d
+kube-system          Active   55d
+local-path-storage   Active   7d9h
+root@master:~/app/network#
+
+root@master:~/app/network# kubectl get pods -n kube-system
+NAME                                       READY   STATUS    RESTARTS        AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5               52d
+calico-node-mrm6j                          1/1     Running   4               52d
+calico-node-vhd49                          1/1     Running   5               52d
+calico-node-x4q65                          1/1     Running   4               52d
+coredns-5dd5756b68-84w4t                   1/1     Running   8               55d
+coredns-5dd5756b68-m64mp                   1/1     Running   8               55d
+etcd-master                                1/1     Running   8               55d
+kube-apiserver-master                      1/1     Running   8               55d
+kube-controller-manager-master             1/1     Running   14 (5d6h ago)   55d
+kube-proxy-k4pzl                           1/1     Running   8               55d
+kube-proxy-k88rh                           1/1     Running   5               53d
+kube-proxy-sr6kt                           1/1     Running   5               52d
+kube-scheduler-master                      1/1     Running   14 (9d ago)     55d
+metrics-server-58ff449c8d-bch5w            1/1     Running   0               12d
+root@master:~/app/network#
+
+
+root@master:~/app/rbac# kubectl get namespaces
+NAME                 STATUS   AGE
+default              Active   55d
+kube-node-lease      Active   55d
+kube-public          Active   55d
+kube-system          Active   55d  <----### this namespace contains system pods running you can see below.
+local-path-storage   Active   7d11h
+root@master:~/app/rbac#
+
+###this namespace contains system pods running you can see below.
+root@master:~/app/rbac# kubectl get pods -n kube-system
+NAME                                       READY   STATUS    RESTARTS        AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5               52d
+calico-node-mrm6j                          1/1     Running   4               52d
+calico-node-vhd49                          1/1     Running   5               52d
+calico-node-x4q65                          1/1     Running   4               52d
+coredns-5dd5756b68-84w4t                   1/1     Running   8               55d
+coredns-5dd5756b68-m64mp                   1/1     Running   8               55d
+etcd-master                                1/1     Running   8               55d
+kube-apiserver-master                      1/1     Running   8               55d
+kube-controller-manager-master             1/1     Running   14 (5d8h ago)   55d
+kube-proxy-k4pzl                           1/1     Running   8               55d
+kube-proxy-k88rh                           1/1     Running   5               53d
+kube-proxy-sr6kt                           1/1     Running   5               52d
+kube-scheduler-master                      1/1     Running   14 (9d ago)     55d
+metrics-server-58ff449c8d-bch5w            1/1     Running   0               12d
+root@master:~/app/rbac#
+
+###you can create your own namespace for your team members
+root@master:~/app/rbac# kubectl create namespace devops --dry-run=client -o yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: devops
+spec: {}
+status: {}
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl create namespace devops
+namespace/devops created
+root@master:~/app/rbac# kubectl get ns
+NAME                 STATUS   AGE
+default              Active   55d
+devops               Active   7s
+kube-node-lease      Active   55d
+kube-public          Active   55d
+kube-system          Active   55d
+local-path-storage   Active   8d
+root@master:~/app/rbac#
+
+### to see what are the things running in your namespace:
+root@master:~/app/rbac# kubectl get all -n devops
+No resources found in devops namespace.
+root@master:~/app/rbac#
+
+### important things are no resource quote and No limitRange resource
+root@master:~/app/rbac# kubectl describe namespaces devops
+Name:         devops
+Labels:       kubernetes.io/metadata.name=devops
+Annotations:  <none>
+Status:       Active
+
+No resource quota.  
+
+No LimitRange resource.
+root@master:~/app/rbac#
+
+###Interview question:
+what is resource quota and limit range?
+Resource quote is something
+
+
+----------------------
+| Dev | UAT | app-POC|
+|     |     |        |
+|     |     |        |
+----------------------
+
+###### IMPORTANT:
+RESOURCE QUOTA:
+assume that above is my cluster.
+in this cluster, im having 24 gb rams and 20 cpu. You can distribute/dividing these resources to different namespaces and this called a limit quota.
+Lets's suppose I want to limit the Dev namespace to be using not more then 10gb ram and more then 5 cpu and etc and UAT namespace some different resource limitation and app-POC namespace different limitation.
+This is how we limit the resources based per the name space in the cluster. 
+--------------------------
+| Dev    | UAT | app-POC|
+|ram10GB |     |        |
+|cpu5    |     |        | 
+|deploy=5|     |        |
+|pods=20 |     |        |
+|PV=5    |     |        |
+--------------------------
+###### IMPORTANT:
+LIMIT RANGE:
+assume that we are having careless people working in our team, who are deploying the application without configuring minimum and maximum resources to the pods or deployments.
+Those people are not difining the resource configuration in the manifest in the yaml file. We can implement the limit range. If any one is not deploying their pod with minimum and 
+maximum cpu and memory resources logic in their yaml file; then limit range will be adding by default to their pod. 
+
+### if you see below, we havent defined the limitation to our resources, yet the k8s allowed the resources to be created.
+root@master:~/app/rbac# kubectl run test --image nginx --port 80 -n devops
+pod/test created
+root@master:~/app/rbac# kubectl -n devops get pod
+NAME   READY   STATUS    RESTARTS   AGE
+test   1/1     Running   0          16s
+root@master:~/app/rbac#
+root@master:~/app/rbac# kubectl -n devops describe pod test
+...
+Containers:
+  test:
+    Container ID:   cri-o://f4b4bf102c465f511617e6b3b91142ba1d2f47b186f5def19dfa659e1d3bf960
+    Image:          nginx
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sun, 12 Jan 2025 10:12:31 -0500
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-tjs9h (ro)
+Conditions:
+...
+
+========== LIMIT RANGE ========== 
+root@master:~/app/rbac# nano limitrange.yaml
+### Let's implement the limit range
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-resource-constraint
+  namespace: devops
+spec:
+  limits:
+  - default: # this section defines default limits
+      cpu: "300m"
+      memory: "256Mi"
+    defaultRequest: # this section defines default requests
+      cpu: 100m
+      memory: "64Mi"
+    max: # max and min define the limit range
+      cpu: "1"
+    min:
+      cpu: 100m
+    type: Container
+
+root@master:~/app/rbac# kubectl create -f limitrange.yaml
+limitrange/cpu-resource-constraint created
+
+root@master:~/app/rbac# kubectl describe ns devops
+Name:         devops
+Labels:       kubernetes.io/metadata.name=devops
+Annotations:  <none>
+Status:       Active
+
+No resource quota.
+
+Resource Limits
+ Type       Resource  Min   Max  Default Request  Default Limit  Max Limit/Request Ratio
+ ----       --------  ---   ---  ---------------  -------------  -----------------------
+ Container  cpu       100m  1    100m             300m           -
+ Container  memory    -     -    64Mi             256Mi          -
+root@master:~/app/rbac#
+
+### Now create a pod in devops namespace wihtout the resource and you will see in describe section that limitation to the 
+# create it imperative way or declarative way, if there will be no resource cpu memory limitation logic added, the resource quota will automatically apply the limitation to the pod/deployment
+root@master:~/app/rbac# kubectl run newpod --image nginx --port 80 -n devops
+pod/newpod created
+
+root@master:~/app/rbac# kubectl -n devops get pods
+NAME     READY   STATUS    RESTARTS   AGE
+newpod   1/1     Running   0          17s
+test     1/1     Running   0          39m
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl -n devops describe pod newpod
+...
+ Containers:
+  newpod:
+    Container ID:   cri-o://7a17b80ee2600048a5488c8ece3b0411a3656acf0b62c930b54beb7e3fc7c27d
+    Image:          nginx
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sun, 12 Jan 2025 10:51:47 -0500
+    Ready:          True
+    Restart Count:  0
+     Limits:            <-------------------------------------- IMPORTANT: you see, though we didnt add the resource limitation in our command; the resource limitation was added through our limtation quota configration for our name space
+      cpu:     300m      <-----------------
+      memory:  256Mi      <-----------------
+    Requests:            <-----------------
+      cpu:        100m    <-----------------
+      memory:     64Mi    <-----------------
+    Environment:  <none>
+    Mounts:
+...
+
+### you need to create a pod with yaml file with adding the resources limitation, whatver you put in yaml file will have more priority. 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: devops
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: con1
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      requests: #e.g 1GB memory    # minimum request to the resources on a node (if my node doesnt have 1gb, then it will not be deployed on th>        memory: "64Mi"
+        cpu: "100m"
+      limits: #e.g 2GB memory    # maximum limit to the resources pod can have access from a node
+        memory: "1024Mi"
+        cpu: "500m" #1000 mili cpu is equals to 1 cpu
+    livenessProbe:
+      httpGet: # because nginx is webserver, so use the http probe
+        path: /test.html #ERROR because the /test.html doesnt exist
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5 # every 5 second perform the probeCheck
+
+root@master:~/app/rbac# kubectl -n devops create -f pod.yaml
+pod/devops created
+
+root@master:~/app/rbac# kubectl -n devops get pods
+NAME     READY   STATUS    RESTARTS   AGE
+devops   1/1     Running   0          10s
+newpod   1/1     Running   0          19m
+test     1/1     Running   0          59m
+root@master:~/app/rbac# kubectl describe pod devops -n devops
+...
+  con1:
+    Container ID:   cri-o://06666391a6a4b94f7ba2f9b0b4265b2348d9b553a611e55fad059cb76704818a
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:42e917aaa1b5bb40dd0f6f7f4f857490ac7747d7ef73b391c774a41a8b994f15
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sun, 12 Jan 2025 11:12:09 -0500
+    Last State:     Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Sun, 12 Jan 2025 11:11:49 -0500
+      Finished:     Sun, 12 Jan 2025 11:12:08 -0500
+    Ready:          True
+    Restart Count:  2
+    Limits:
+      cpu:     500m
+      memory:  1Gi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     http-get http://:80/test.html delay=5s timeout=1s period=5s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:
+...
+
+root@master:~/app/rbac# kubectl describe ns devops
+Name:         devops
+Labels:       kubernetes.io/metadata.name=devops
+Annotations:  <none>
+Status:       Active
+
+No resource quota.
+
+Resource Limits
+ Type       Resource  Min   Max  Default Request  Default Limit  Max Limit/Request Ratio
+ ----       --------  ---   ---  ---------------  -------------  -----------------------
+ Container  cpu       100m  1    100m             300m           -
+ Container  memory    -     -    64Mi             256Mi          -
+root@master:~/app/rbac#
+
+
+============== RESOURCE QUOTA ============== 
+### Let's implement the resource quota
+
+
+
