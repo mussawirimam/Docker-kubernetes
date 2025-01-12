@@ -1,0 +1,71 @@
+Role based access control, 
+in our cluster we can create namespaces. 
+In our cluster, we have different application teams and everyone is working on different applications. It is not possible for me to give seperate cluster for each of the teams.
+I dont want to give them five different servers for the dev environment or UAT etc. So, what I will do is I will create in my cluster a logical space. So that each team can have the access to that logcial space. 
+
+
+----------------------
+| Dev | UAT | app-POC|
+|     |     |        |
+|     |     |        |
+----------------------
+
+So, how we can create these logical spaces? we are already having logical spaces like namespaces in our cluster. 
+but with RBAC you get much more capabilities
+
+lets check the namespaces in k8s
+root@master:~/app/network# kubectl get ns
+NAME                 STATUS   AGE
+default              Active   55d
+kube-node-lease      Active   55d
+kube-public          Active   55d
+kube-system          Active   55d
+local-path-storage   Active   7d9h
+root@master:~/app/network#
+
+root@master:~/app/network# kubectl get pods -n kube-system
+NAME                                       READY   STATUS    RESTARTS        AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5               52d
+calico-node-mrm6j                          1/1     Running   4               52d
+calico-node-vhd49                          1/1     Running   5               52d
+calico-node-x4q65                          1/1     Running   4               52d
+coredns-5dd5756b68-84w4t                   1/1     Running   8               55d
+coredns-5dd5756b68-m64mp                   1/1     Running   8               55d
+etcd-master                                1/1     Running   8               55d
+kube-apiserver-master                      1/1     Running   8               55d
+kube-controller-manager-master             1/1     Running   14 (5d6h ago)   55d
+kube-proxy-k4pzl                           1/1     Running   8               55d
+kube-proxy-k88rh                           1/1     Running   5               53d
+kube-proxy-sr6kt                           1/1     Running   5               52d
+kube-scheduler-master                      1/1     Running   14 (9d ago)     55d
+metrics-server-58ff449c8d-bch5w            1/1     Running   0               12d
+root@master:~/app/network#
+
+
+root@master:~/app/rbac# kubectl get namespaces
+NAME                 STATUS   AGE
+default              Active   55d
+kube-node-lease      Active   55d
+kube-public          Active   55d
+kube-system          Active   55d  <----### this namespace contains system pods running you can see below.
+local-path-storage   Active   7d11h
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl get pods -n kube-system
+NAME                                       READY   STATUS    RESTARTS        AGE
+calico-kube-controllers-787f445f84-gdc7t   1/1     Running   5               52d
+calico-node-mrm6j                          1/1     Running   4               52d
+calico-node-vhd49                          1/1     Running   5               52d
+calico-node-x4q65                          1/1     Running   4               52d
+coredns-5dd5756b68-84w4t                   1/1     Running   8               55d
+coredns-5dd5756b68-m64mp                   1/1     Running   8               55d
+etcd-master                                1/1     Running   8               55d
+kube-apiserver-master                      1/1     Running   8               55d
+kube-controller-manager-master             1/1     Running   14 (5d8h ago)   55d
+kube-proxy-k4pzl                           1/1     Running   8               55d
+kube-proxy-k88rh                           1/1     Running   5               53d
+kube-proxy-sr6kt                           1/1     Running   5               52d
+kube-scheduler-master                      1/1     Running   14 (9d ago)     55d
+metrics-server-58ff449c8d-bch5w            1/1     Running   0               12d
+root@master:~/app/rbac#
+
