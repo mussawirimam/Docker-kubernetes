@@ -326,5 +326,77 @@ https://kubernetes.io/docs/concepts/policy/resource-quotas/#object-count-quota
 
 ### Lets create a resource quota 
 root@master:~/app/rbac# nano resource-quota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resources
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    configmaps: "10"
+    persistentvolumeclaims: "4"
+    pods: "8"
+    replicationcontrollers: "20" #if you are defining this many RC but only out of 20 you will create 8 pods and 13 will be going into pending state
+    secrets: "10"
+    services: "10"
+    services.loadbalancers: "2"
+
+root@master:~/app/rbac# kubectl create -f resource-quota.yaml -n devops
+resourcequota/compute-resources created
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl describe ns devops
+Name:         devops
+Labels:       kubernetes.io/metadata.name=devops
+Annotations:  <none>
+Status:       Active
+
+### you can see below the RESOURCE QUOTAS has been implemented 
+Resource Quotas      <-----------------------------------------------------------------
+  Name:                   compute-resources
+  Resource                Used    Hard
+  --------                ---     ---
+  configmaps              1       10    <--------------
+  limits.cpu              800m    2     <--------------
+  limits.memory           1280Mi  2Gi   <--------------
+  persistentvolumeclaims  0       4     <--------------
+  pods                    3       8     <--------------
+  replicationcontrollers  0       20    <--------------
+  requests.cpu            200m    1     <--------------
+  requests.memory         128Mi   1Gi   <--------------
+  secrets                 0       10    <--------------
+  services                0       10    <--------------
+  services.loadbalancers  0       2     <--------------
+
+Resource Limits
+ Type       Resource  Min   Max  Default Request  Default Limit  Max Limit/Request Ratio
+ ----       --------  ---   ---  ---------------  -------------  -----------------------
+ Container  cpu       100m  1    100m             300m           -
+ Container  memory    -     -    64Mi             256Mi          -
+root@master:~/app/rbac#
+
+### Important
+if you implemeneted resource quota and you didnt created the resource limit, in this situation it will try to create any deployment pod without defining
+the resource min max on container level it will not allow to create a pod. It will throw the Error. To avoid this, implement the LIMIT RANGE first or define 
+RESOURCES in your yaml file. 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+######################################## RBAC ######################################## 
+Theoratical:
+Role                     -- RoleBinding (role + user/service-account/group)
+permissions on objects
+Role is a combination of the Verb and resources
+Verbs: operations you can perform
+Edit,delete,update,list,patch
+
+resources: list of k8s objects
+pods,deployment.configmaps,secrets
 
 
+ClusterRole -- ClusterRoleBinding
+
+What is a role? 
+a role is nothing but a permission set on the object.
