@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resources
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    configmaps: "10"
+    persistentvolumeclaims: "4"
+    pods: "8"
+    replicationcontrollers: "20" #if you are defining this many RC but only out of 20 you will create 8 pods and 13 will be going into pending state
+    secrets: "10"
+    services: "10"
+    services.loadbalancers: "2"
