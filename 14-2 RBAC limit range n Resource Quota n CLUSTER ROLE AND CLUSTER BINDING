@@ -385,8 +385,10 @@ RESOURCES in your yaml file.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ######################################## RBAC ######################################## 
+CLUSTER ROLE AND CLUSTERROLEBINDING
+### INTERVIEW QUESTION:
 Theoratical:
-Role                     -- RoleBinding (role + user/service-account/group)
+Role                     -- RoleBinding (role + user/service-account/group) # role which needs to be binded to a user or service account or group with a role.
 permissions on objects
 Role is a combination of the Verb and resources
 Verbs: operations you can perform
@@ -396,7 +398,170 @@ resources: list of k8s objects
 pods,deployment.configmaps,secrets
 
 
-ClusterRole -- ClusterRoleBinding
+ClusterRole -- ClusterRoleBinding # a role which is having cluster level access. A role which is having cluster level access. A role which can look into another people's namespace. A complete cluster access. 
+# such role if you are binding with a user or ___? is called cluster role binding. If you want to allow user to give cluster level access, then implement cluster clusterrolebinding. If you want to give the 
+access to the user based on the name space alone that implement role and the rolebinding.   
 
 What is a role? 
 a role is nothing but a permission set on the object.
+
+
+root@master:~# kubectl create role devrole --resource pods,secrets,deployment --verb create,update,delete,list,get -n devops --dry-run=client -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: devrole
+  namespace: devops
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - secrets
+  verbs:
+  - create
+  - update
+  - delete
+  - list
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - update
+  - delete
+  - list
+  - get
+root@master:~#
+
+root@master:~/app/rbac# kubectl create role devrole --resource pods,secrets,deployment --verb create,update,delete,list,get -n devops --dry-run=client -o yaml > devrole.yaml
+root@master:~/app/rbac# ls
+devrole.yaml  limitrange.yaml  pod.yaml  resource-quota.yaml
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl create -f devrole.yaml
+role.rbac.authorization.k8s.io/devrole created
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl get role -n devops
+NAME      CREATED AT
+devrole   2025-01-15T21:51:32Z
+root@master:~/app/rbac# kubectl get role -n devops ^C
+root@master:~/app/rbac# kubectl -n devops describe role devrole
+Name:         devrole
+Labels:       <none>
+Annotations:  <none>
+PolicyRule:
+  Resources         Non-Resource URLs  Resource Names  Verbs
+  ---------         -----------------  --------------  -----
+  pods              []                 []              [create update delete list get]
+  secrets           []                 []              [create update delete list get]
+  deployments.apps  []                 []              [create update delete list get]
+root@master:~/app/rbac#
+root@master:~/app/rbac#
+
+### we want to bind this role to the user. 
+root@master:~/app/rbac# adduser aneesh
+info: Adding user `aneesh' ...
+info: Selecting UID/GID from range 1000 to 59999 ...
+info: Adding new group `aneesh' (1001) ...
+info: Adding new user `aneesh' (1001) with group `aneesh (1001)' ...
+info: Creating home directory `/home/aneesh' ...
+info: Copying files from `/etc/skel' ...
+New password:
+BAD PASSWORD: The password is shorter than 8 characters
+Retype new password:
+passwd: password updated successfully
+Changing the user information for aneesh
+Enter the new value, or press ENTER for the default
+        Full Name []: aneesh
+        Room Number []: 1
+        Work Phone []: 1
+        Home Phone []: 1
+        Other []: 1
+Is the information correct? [Y/n] y
+info: Adding new user `aneesh' to supplemental / extra groups `users' ...
+info: Adding user `aneesh' to group `users' ...
+root@master:~/app/rbac#
+
+
+root@master:~/app/rbac# kubectl create rolebinding devrolebind --role devrole --user aneesh --dry-run=client -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  name: devrolebind
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: devrole
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: aneesh
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl create rolebinding devrolebind --role devrole --user aneesh --dry-run=client -o yaml > rolebind.yaml
+root@master:~/app/rbac#
+
+### add the name space in the yaml file
+root@master:~/app/rbac# nano rolebind.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  name: devrolebind
+  namespace: devops
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: devrole
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: aneesh
+
+root@master:~/app/rbac# kubectl create -f rolebind.yaml
+rolebinding.rbac.authorization.k8s.io/devrolebind created
+root@master:~/app/rbac# kubectl get rolebindings.rbac.authorization.k8s.io -n devops
+NAME          ROLE           AGE
+devrolebind   Role/devrole   18s
+root@master:~/app/rbac#
+
+root@master:~/app/rbac# kubectl -n devops describe rolebindings.rbac.authorization.k8s.io devrolebind
+Name:         devrolebind
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  Role
+  Name:  devrole
+Subjects:
+  Kind  Name    Namespace
+  ----  ----    ---------
+  User  aneesh          <-------------  # not sure, because I did define it it in the yaml file. 
+root@master:~/app/rbac#
+### not definind the namespace above 
+
+### if you try to login from the user aneesh and try to authenticate the 
+### need to trouble shoot this point 
+aneesh@master:~$ kubectl get pod -n devops
+E0115 17:03:10.323517  172919 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0115 17:03:10.325211  172919 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0115 17:03:10.327981  172919 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0115 17:03:10.328704  172919 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+E0115 17:03:10.330403  172919 memcache.go:265] couldn't get current server API group list: Get "http://localhost:8080/api?timeout=32s": dial tcp 127.0.0.1:8080: connect: connection refused
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+aneesh@master:~$
+
+
+
+
+### IMPORTANT: it is simple to define the rolebinding through imperateive way. Try to define the role binding through the imperative way rather than defining it in the yaml file.
+
+### if it is the cloud k8s, how will I add the user? Use the IAM in AWS and create it programmatically. Once the user is created, then list the system pod 
+kubectl get pod -n kube-system
+there will be a pod running called O-Auth in that O-Auth pod you will define the ARN of the user name. That when you try to access/implement it, you will be able to access based on the cluster role. 
+https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html
