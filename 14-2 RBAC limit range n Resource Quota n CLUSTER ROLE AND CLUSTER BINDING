@@ -488,12 +488,13 @@ info: Adding user `aneesh' to group `users' ...
 root@master:~/app/rbac#
 
 
-root@master:~/app/rbac# kubectl create rolebinding devrolebind --role devrole --user aneesh --dry-run=client -o yaml
+root@master:~/app/rbac# kubectl create -n devops rolebinding devrolebind --role devrole --user aneesh --dry-run=client -o yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   creationTimestamp: null
   name: devrolebind
+  namespace: devops
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -504,7 +505,7 @@ subjects:
   name: aneesh
 root@master:~/app/rbac#
 
-root@master:~/app/rbac# kubectl create rolebinding devrolebind --role devrole --user aneesh --dry-run=client -o yaml > rolebind.yaml
+root@master:~/app/rbac# kubectl create -n devops rolebinding devrolebind --role devrole --user aneesh --dry-run=client -o yaml > rolebind.yaml
 root@master:~/app/rbac#
 
 ### add the name space in the yaml file
