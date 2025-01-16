@@ -142,7 +142,136 @@ controlplane $
 
 controlplane $ kubectl get csr             
 NAME     AGE     SIGNERNAME                            REQUESTOR          REQUESTEDDURATION   CONDITION
-aneesh   7m31s   kubernetes.io/kube-apiserver-client   kubernetes-admin   24h                 Approved,Issued
+aneesh   7m31s   kubernetes.io/kube-apiserver-client   kubernetes-admin   24h                 Approved,Issued     <---------------------- IT IS SELF-SIGNED APPROVED
 controlplane $ 
+
+controlplane $ kubectl describe csr aneesh
+Name:                aneesh
+Labels:              <none>
+Annotations:         <none>
+CreationTimestamp:   Thu, 16 Jan 2025 20:20:29 +0000
+Requesting User:     kubernetes-admin
+Signer:              kubernetes.io/kube-apiserver-client
+Requested Duration:  24h
+Status:              Approved,Issued
+Subject:
+         Common Name:    aneesh
+         Serial Number:  
+         Organization:   Internet Widgits Pty Ltd
+         Country:        AU
+         Province:       Some-State
+Events:  <none>
+controlplane $ 
+
+
+### Why is it not showing the user details for the username: aneesh (Need to do troubleshooting, I might have made mistake somewhere.. ) (the reason is this is approver, look below for the answers)
+controlplane $ kubectl get csr aneesh -o yaml
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  creationTimestamp: "2025-01-16T20:20:29Z"
+  name: aneesh
+  resourceVersion: "7902"
+  uid: ccbae82b-70d9-4f23-9e2b-64276a0b1a20
+spec:
+  expirationSeconds: 86400
+  groups:
+  - kubeadm:cluster-admins
+  - system:authenticated
+  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ216Q0NBWU1DQVFBd1ZqRUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdNQ2xOdmJXVXRVM1JoZEdVeApJVEFmQmdOVkJBb01HRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4MFpERVBNQTBHQTFVRUF3d0dZVzVsClpYTm9NSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXYwUjZ4MFlQZVBlaTlZRGEKNVdlbmNmNGVQRGQvTUF4M3NCaWNWRVRySk1CRmpqbWxrS09CaHo4dUY0R2VWSUZIRlBhWWFSQ0xLTWlYMDJ3QwpHQnF5akx4bFBFdS93WmlwcDQyOFBTclp3SVdOajBBWGE4aTdUUTU4ZUJuM0NKVEwvREhUZG5aa010N0RxS28yCjhCekVVTTdFWHpSV2h0cVR1UFJuN1MrSjZWUDF2Z0dSMGtCNVRhSi9SbHMvNDYrdWgrYVBYOUpIME5VVWZHQ2UKVFBDb0ErSEk1UFNjQmd3VjRBa0tHTTlsRWJ5MjVSeFpkZ0lqamxZZTNxRERPaEg3OUN3ZVJZS0pUdFR6dlNMagphSUZDWm5wWjZNQmZRSU1JWVRqV0l6MGo3ZlowOVVoTEJsemdIWWRYWjVRbXMxU0VOK3RBQU11Z0c2ck1hNmVMCi9aZ3BZUUlEQVFBQm9BQXdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBR0gvM2ZJQ1VRZE4rS0tqK2tKQmE0QjAKU3BPS21IT0hnaE5ZOVUraUwrZkozemZXUG5NNWxSbk00SERPUlNKc25qV1FaREN6QjZxcXFaamlrTTF0YTIrdAo5WDZHTWVzbGtucHZ0aFNjOGhlK2tOVkgrUkUvRzcxazZqTGMvMjN2MzZRNWhMMlBLTCtLbDBlZytKYVhac3Y0Cms4Y2FValUvMU9pRHBCdC9hZHd6cnZDL2xUbzZjL3k1TnlCNUxUTmxwaGN0OWh5MWxhcTEvQnJIckR3aUNhRUoKTDZNaUV1SGlwYmQ2UnZTalZMOTFyTHk3Q0xYa0d3dEZMSGJraWt5Y0NRUWtVSWFRc3cwS1lIdk4wSU04S0xaRAo1OFhsVGl5cVk3QkZ1VjZ6OU13alhpcnVLNlVaNEJXaTJIQUNObWtxZ3R3VENLd3ZtcEJJRzZmMG5BL005SGc9Ci0tLS0tRU5EIENFUlRJRklDQVRFIFJFUVVFU1QtLS0tLQo=
+  signerName: kubernetes.io/kube-apiserver-client
+  usages:
+  - client auth
+  username: kubernetes-admin         <----- approver name
+status:
+  certificate: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQRENDQWlTZ0F3SUJBZ0lSQU5Wdm1PT2dYMmt0RzU1aDN5RWg5WHd3RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE1UWXlNREUzTkRSYUZ3MHlOVEF4TVRjeQpNREUzTkRSYU1GWXhDekFKQmdOVkJBWVRBa0ZWTVJNd0VRWURWUVFJRXdwVGIyMWxMVk4wWVhSbE1TRXdId1lEClZRUUtFeGhKYm5SbGNtNWxkQ0JYYVdSbmFYUnpJRkIwZVNCTWRHUXhEekFOQmdOVkJBTVRCbUZ1WldWemFEQ0MKQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFMOUVlc2RHRDNqM292V0EydVZucDNIKwpIanczZnpBTWQ3QVluRlJFNnlUQVJZNDVwWkNqZ1ljL0xoZUJubFNCUnhUMm1Ha1FpeWpJbDlOc0FoZ2Fzb3k4ClpUeEx2OEdZcWFlTnZEMHEyY0NGalk5QUYydkl1MDBPZkhnWjl3aVV5L3d4MDNaMlpETGV3NmlxTnZBY3hGRE8KeEY4MFZvYmFrN2owWiswdmllbFQ5YjRCa2RKQWVVMmlmMFpiUCtPdnJvZm1qMS9TUjlEVkZIeGdua3p3cUFQaAp5T1QwbkFZTUZlQUpDaGpQWlJHOHR1VWNXWFlDSTQ1V0h0Nmd3em9SKy9Rc0hrV0NpVTdVODcwaTQyaUJRbVo2CldlakFYMENEQ0dFNDFpTTlJKzMyZFBWSVN3WmM0QjJIVjJlVUpyTlVoRGZyUUFETG9CdXF6R3VuaS8yWUtXRUMKQXdFQUFhTkdNRVF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdJd0RBWURWUjBUQVFIL0JBSXdBREFmQmdOVgpIU01FR0RBV2dCUUVCRG1VU20yVHVsTklFMmF1MlhTUlI0dHNuREFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBCkZCRHVVL2U5SGtlWXExUzFSNWw0MlNwQWE3SldiY3JOaHkrQ2ZNY21jR01GcVh6SmIxN1Jra3JzOHVJL2lvOUQKdXFpZVRMUE1lV0tGakZrbEU2SkNSelhZZUdkd213U0NzQTNSQTBpTTVtYkZacndPR214SVNadGR1QkNKcWdTVwpPNlN3TmhzWDBWVVVCMWx1TGFWdmE2NHdDMkdTNDgycEcxOXNQdGkyWFVBRVowZndvN1oyWFZkUlpqS0QvbGt5CmNhK0N3ekJmc3BxSkdBaldKMlRlZDFnMTByZ25zQ0dITHZIQ1FDelhHWDRRQnd0TXJwc0RNS1RwZkZoQ3RwemoKWU5ESDBoenorOUN3YWdsYitmeFJZT3FYOGVML2JmL0ZWNkRhQjJ6WDRFT2MvT0xjZWo3SFRibkN5V08xNUZUKwptRW9jV1FDa256VktaSUVaTE9HeXlBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  conditions:
+  - lastTransitionTime: "2025-01-16T20:22:44Z"
+    lastUpdateTime: "2025-01-16T20:22:44Z"
+    message: This CSR was approved by kubectl certificate approve.
+    reason: KubectlApprove
+    status: "True"
+    type: Approved
+controlplane $ 
+
+
+### kubernetes-admin is the approver name. I will be copying the certificate.
+### Let's copy the certificate from above output for csr 
+### change to the previous user, aneesh and we create a file 
+### but before we create that file, we will need to convert the file to certifcate format
+
+### remove the csr.yaml file not needed here: rm csr.yaml 
+aneesh@controlplane:~$ ls
+aneesh.cr  aneesh.csr  aneesh.key  csr.yaml
+aneesh@controlplane:~$ 
+
+
+aneesh@controlplane:~$ echo "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tS2EzVmlaWEp1WlhSbGN6QWVJBWVRBa0ZWTVJNd0VRWURWUVFJRXdwVGIyMWxMVk4wWVhSbE1TRXdId1lEClZRUUtFeGhKYm5SbGNtNWxkQ0JYYVdSbmFYUnpJRkIwZVNCTWRHUXhEekFOQmdOVkJBTVRCbUZ1WldWemFEQ0MKQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFMOUVlc2RHRDNqM292V0EydVZucDNIKwpIanczZnpBTWQ3QVluRlJFNnlUQVJZNDVwWkNqZ1ljL0xoZUJubFNCUnhUMm1Ha1FpeWpJbDlOc0FoZ2Fzb3k4ClpUeEx2OEdZcWFlTnZEMHEyY0NGalk5QUYydkl1MDBPZkhnWjl3aVV5L3d4MDNaMlpETGV3NmlxTnZBY3hGRE8KeEY4MFZvYmFrN2owWiswdmllbFQ5YjRCa2RKQWVVMmlmMFpiUCtPdnJvZm1qMS9TUjlEVkZIeGdua3p3cUFQaAp5T1QwbkFZTUZlQUpDaGpQWlJHOHR1VWNXWFlDSTQ1V0h0Nmd3em9SKy9Rc0hrV0NpVTdVODcwaTQyaUJRbVo2CldlakFYMENEQ0dFNDFpTTlJKzMyZFBWSVN3WmM0QjJIVjJlVUpyTlVoRGZyUUFETG9CdXF6R3VuaS8yWUtXRUMKQXdFQUFhTkdNRVF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdJd0RBWURWUjBUQVFIL0JBSXdBREFmQmdOVgpIU01FR0RBV2dCUUVCRG1VU20yVHVsTklFMmF1MlhTUlI0dHNuREFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBCkZCRHVVL2U5SGtlWXExUzFSNWw0MlNwQWE3SldiY3JOaHkrQ2ZNY21jR01GcVh6SmIxN1Jra3JzOHVJL2lvOUQKdXFpZVRMUE1lV0tGakZrbEU2SkNSelhZZUdkd213U0NzQTNSQTBpTTVtYkZacndPR214SVNadGR1QkNKcWdTVwpPNlN3TmhzWDBWVVVCMWx1TGFWdmE2NHdDMkdTNDgycEcxOXNQdGkyWFVBRVowZndvN1oyWFZkUlpqS0QvbGt5CmNhK0N3ekJmc3BxSkdBaldKMlRlZDFnMTByZ25zQ0dITHZIQ1FDelhHWDRRQnd0TXJwc0RNS1RwZkZoQ3RwemoKWU5ESDBoenorOUN3YWdsYitmeFJZT3FYOGVML2JmL0ZWNkRhQjJ6WDRFT2MvT0xjZWo3SFRibkN5V08xNUZUKwptRW9jV1FDa256VktaSUVaTE9HeXlBPT0KLS0tLS1FT
+kQgQ0VSVElGSUNBVEUtLS0tLQo=" | base64 -d > aneesh.crt
+aneesh@controlplane:~$ ls
+aneesh.crt  aneesh.csr  aneesh.key
+aneesh@controlplane:~$ 
+
+
+aneesh@controlplane:~$ cat aneesh.crt
+-----BEGIN CERTIFICATE-----
+MIIDPDCCAiSgAwIBAgIRANVvmOOgX2ktG55h3yEh9XwwDQYJKoZIhvcNAQELBQAw
+FTETMBEGA1UEAxMKa3ViZXJuZXRlczAeFw0yNTAxMTYyMDE3NDRaFw0yNTAxMTcy
+MDE3NDRaMFYxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYD
+VQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQxDzANBgNVBAMTBmFuZWVzaDCC
+ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL9EesdGD3j3ovWA2uVnp3H+
+Hjw3fzAMd7AYnFRE6yTARY45pZCjgYc/LheBnlSBRxT2mGkQiyjIl9NsAhgasoy8
+ZTxLv8GYqaeNvD0q2cCFjY9AF2vIu00OfHgZ9wiUy/wx03Z2ZDLew6iqNvAcxFDO
+xF80Vobak7j0Z+0vielT9b4BkdJAeU2if0ZbP+Ovrofmj1/SR9DVFHxgnkzwqAPh
+yOT0nAYMFeAJCh7Rkkrs8uI/io9D
+uqieTLPMeWKFjFklE6JCRzXYeGdwmwSCsA3RA0iM5mbFZrwOGmxISZtduBCJqgSW
+O6SwNhsX0VUUB1luLaVva64wC2GS482pG19sPti2XUAEZ0fwo7Z2XVdRZjKD/lky
+ca+CwzBfspqJGAjWJ2Ted1g10rgnsCGHLvHCQCzXGX4QBwtMrpsDMKTpfFhCtpzj
+YNDH0hzz+9Cwaglb+fxRYOqX8eL/bf/FV6DaB2zX4EOc/OLcej7HTbnCyWO15FT+
+mEocWQCknzVKZIEZLOGyyA==
+-----END CERTIFICATE-----
+aneesh@controlplane:~$ 
+
+
+### command to set user in this file using following command 
+### kubectl config set-credentials aneesh --client-key=aneesh.key --client-certificate=aneesh.crt --embed-certs
+
+aneesh@controlplane:~$ kubectl config set-credentials aneesh --client-key=aneesh.key --client-certificate=aneesh.crt --embed-certs
+User "aneesh" set.
+aneesh@controlplane:~$ 
+
+aneesh@controlplane:~$ ls -al
+total 52
+drwxr-xr-x 6 aneesh aneesh 4096 Jan 16 20:53 .
+drwxr-xr-x 4 root   root   4096 Jan 16 20:05 ..
+-rw------- 1 aneesh aneesh  272 Jan 16 20:19 .bash_history
+-rw-r--r-- 1 aneesh aneesh  220 Jan 16 20:05 .bash_logout
+-rw-r--r-- 1 aneesh aneesh 3771 Jan 16 20:05 .bashrc
+drwxrwxr-x 2 aneesh aneesh 4096 Jan 16 20:16 .cert
+drwx------ 3 aneesh aneesh 4096 Jan 16 20:10 .config
+drwxr-xr-x 2 aneesh aneesh 4096 Jan 16 20:53 .kube    <--------------- .kube file is now created here
+drwxrwxr-x 3 aneesh aneesh 4096 Jan 16 20:17 .local
+-rw-r--r-- 1 aneesh aneesh  807 Jan 16 20:05 .profile
+-rw-rw-r-- 1 aneesh aneesh 1184 Jan 16 20:48 aneesh.crt
+-rw-rw-r-- 1 aneesh aneesh  980 Jan 16 20:16 aneesh.csr
+-rw------- 1 aneesh aneesh 1675 Jan 16 20:16 aneesh.key
+aneesh@controlplane:~$ 
+
+
+### User is configured in this file but lots of things are missing from it
+aneesh@controlplane:~$ nano .kube/config 
+
+apiVersion: v1
+clusters: null    <-------------- this is missing, we need to fill these information from the root user SEE BELOW
+contexts: null    <-------------- this is missing, we need to fill these information from the root user SEE BELOW
+current-context: ""
+kind: Config
+preferences: {}
+users:
+- name: aneesh
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQRENDQWlTZ0F3SUJBZ0lSQU5Wdm1PT2dYMmt0RzU1aDN5RWg5WHd3RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRB>
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdjBSNngwWVBlUGVpOVlEYTVXZW5jZjRlUERkL01BeDNzQmljVkVUckpNQkZqam1sCmtLT0Joejh1RjRHZVZJRkhGUGFZYVJDTEtNaVgwMndDR0JxeWpMe
+
 
 
