@@ -90,21 +90,26 @@ M1JoZEdVeApJVEFmQmdOVkJBb01HRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4MFpERVBNQTBH
 aneesh $ 
 
 ### Copy your decoded csr key above and plug in the yaml file, we will be creating the certifcate by using the csr, you will be doing it through the kubernetes cluster: meaning through kubernetes we will be signing our certificate
-aneesh $ nano csr.yaml 
+
+### LOGIN IN BACK TO THE ROOT USER/OR KUBERNETES ADMIN ACCOUNT
+### do an exit from the user aneesh
+
+aneesh@controlplane:~$ exit
+logout
+controlplane $ 
+
+controlplane $ nano csr.yaml 
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
   name: aneesh
 spec:
-  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ216Q0NBWU1DQVFBd1ZqRUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdNQ2xOdmJXVXRVM1JoZEdVeApJVEFmQmdOVkJBb01HRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4>
+  request: ### <YOU WOULD ADD YOUR KEY HERE> ### LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ216Q0NBWU1DQVFBd1ZqRUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdNQ2xOdmJXVXRVM1JoZEdVeApJVEFmQmdOVkJBb01HRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4>
   signerName: kubernetes.io/kube-apiserver-client
   expirationSeconds: 86400 #one day
   usages: 
   - client auth
 
-################# I DID MISTAKE ABOVE ! copy the content of the file and go as root and create the file in root  
-
-controlplane $ nano csr.yaml
 controlplane $ kubectl create -f csr.yaml 
 certificatesigningrequest.certificates.k8s.io/aneesh created
 controlplane $ kubectl get csr 
@@ -136,6 +141,7 @@ An optional company name []:
 
 
 ### it is pending, because we have to approve it
+
 controlplane $ kubectl certificate approve aneesh
 certificatesigningrequest.certificates.k8s.io/aneesh approved
 controlplane $ 
@@ -184,7 +190,7 @@ spec:
   - client auth
   username: kubernetes-admin         <----- approver name
 status:
-  certificate: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQRENDQWlTZ0F3SUJBZ0lSQU5Wdm1PT2dYMmt0RzU1aDN5RWg5WHd3RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE1UWXlNREUzTkRSYUZ3MHlOVEF4TVRjeQpNREUzTkRSYU1GWXhDekFKQmdOVkJBWVRBa0ZWTVJNd0VRWURWUVFJRXdwVGIyMWxMVk4wWVhSbE1TRXdId1lEClZRUUtFeGhKYm5SbGNtNWxkQ0JYYVdSbmFYUnpJRkIwZVNCTWRHUXhEekFOQmdOVkJBTVRCbUZ1WldWemFEQ0MKQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFMOUVlc2RHRDNqM292V0EydVZucDNIKwpIanczZnpBTWQ3QVluRlJFNnlUQVJZNDVwWkNqZ1ljL0xoZUJubFNCUnhUMm1Ha1FpeWpJbDlOc0FoZ2Fzb3k4ClpUeEx2OEdZcWFlTnZEMHEyY0NGalk5QUYydkl1MDBPZkhnWjl3aVV5L3d4MDNaMlpETGV3NmlxTnZBY3hGRE8KeEY4MFZvYmFrN2owWiswdmllbFQ5YjRCa2RKQWVVMmlmMFpiUCtPdnJvZm1qMS9TUjlEVkZIeGdua3p3cUFQaAp5T1QwbkFZTUZlQUpDaGpQWlJHOHR1VWNXWFlDSTQ1V0h0Nmd3em9SKy9Rc0hrV0NpVTdVODcwaTQyaUJRbVo2CldlakFYMENEQ0dFNDFpTTlJKzMyZFBWSVN3WmM0QjJIVjJlVUpyTlVoRGZyUUFETG9CdXF6R3VuaS8yWUtXRUMKQXdFQUFhTkdNRVF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdJd0RBWURWUjBUQVFIL0JBSXdBREFmQmdOVgpIU01FR0RBV2dCUUVCRG1VU20yVHVsTklFMmF1MlhTUlI0dHNuREFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBCkZCRHVVL2U5SGtlWXExUzFSNWw0MlNwQWE3SldiY3JOaHkrQ2ZNY21jR01GcVh6SmIxN1Jra3JzOHVJL2lvOUQKdXFpZVRMUE1lV0tGakZrbEU2SkNSelhZZUdkd213U0NzQTNSQTBpTTVtYkZacndPR214SVNadGR1QkNKcWdTVwpPNlN3TmhzWDBWVVVCMWx1TGFWdmE2NHdDMkdTNDgycEcxOXNQdGkyWFVBRVowZndvN1oyWFZkUlpqS0QvbGt5CmNhK0N3ekJmc3BxSkdBaldKMlRlZDFnMTByZ25zQ0dITHZIQ1FDelhHWDRRQnd0TXJwc0RNS1RwZkZoQ3RwemoKWU5ESDBoenorOUN3YWdsYitmeFJZT3FYOGVML2JmL0ZWNkRhQjJ6WDRFT2MvT0xjZWo3SFRibkN5V08xNUZUKwptRW9jV1FDa256VktaSUVaTE9HeXlBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  certificate: ## COPY THIS THIS CERTIFCATE FROM YOUR TERMINAL AND CONVERT IT INTO CERTIFCATE FORMAT IN ANEESH USER -------> LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQRENDQWlTZ0F3SUJBZ0lSQU5Wdm1PT2dYMmt0RzU1aDN5RWg5WHd3RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE1UWXlNREUzTkRSYUZ3MHlOVEF4TVRjeQpNREUzTkRSYU1GWXhDekFKQmdOVkJBWVRBa0ZWTVJNd0VRWURWUVFJRXdwVGIyMWxMVk4wWVhSbE1TRXdId1lEClZRUUtFeGhKYm5SbGNtNWxkQ0JYYVdSbmFYUnpJRkIwZVNCTWRHUXhEekFOQmdOVkJBTVRCbUZ1WldWemFEQ0MKQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFMOUVlc2RHRDNqM292V0EydVZucDNIKwpIanczZnpBTWQ3QVluRlJFNnlUQVJZNDVwWkNqZ1ljL0xoZUJubFNCUnhUMm1Ha1FpeWpJbDlOc0FoZ2Fzb3k4ClpUeEx2OEdZcWFlTnZEMHEyY0NGalk5QUYydkl1MDBPZkhnWjl3aVV5L3d4MDNaMlpETGV3NmlxTnZBY3hGRE8KeEY4MFZvYmFrN2owWiswdmllbFQ5YjRCa2RKQWVVMmlmMFpiUCtPdnJvZm1qMS9TUjlEVkZIeGdua3p3cUFQaAp5T1QwbkFZTUZlQUpDaGpQWlJHOHR1VWNXWFlDSTQ1V0h0Nmd3em9SKy9Rc0hrV0NpVTdVODcwaTQyaUJRbVo2CldlakFYMENEQ0dFNDFpTTlJKzMyZFBWSVN3WmM0QjJIVjJlVUpyTlVoRGZyUUFETG9CdXF6R3VuaS8yWUtXRUMKQXdFQUFhTkdNRVF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdJd0RBWURWUjBUQVFIL0JBSXdBREFmQmdOVgpIU01FR0RBV2dCUUVCRG1VU20yVHVsTklFMmF1MlhTUlI0dHNuREFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBCkZCRHVVL2U5SGtlWXExUzFSNWw0MlNwQWE3SldiY3JOaHkrQ2ZNY21jR01GcVh6SmIxN1Jra3JzOHVJL2lvOUQKdXFpZVRMUE1lV0tGakZrbEU2SkNSelhZZUdkd213U0NzQTNSQTBpTTVtYkZacndPR214SVNadGR1QkNKcWdTVwpPNlN3TmhzWDBWVVVCMWx1TGFWdmE2NHdDMkdTNDgycEcxOXNQdGkyWFVBRVowZndvN1oyWFZkUlpqS0QvbGt5CmNhK0N3ekJmc3BxSkdBaldKMlRlZDFnMTByZ25zQ0dITHZIQ1FDelhHWDRRQnd0TXJwc0RNS1RwZkZoQ3RwemoKWU5ESDBoenorOUN3YWdsYitmeFJZT3FYOGVML2JmL0ZWNkRhQjJ6WDRFT2MvT0xjZWo3SFRibkN5V08xNUZUKwptRW9jV1FDa256VktaSUVaTE9HeXlBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
   conditions:
   - lastTransitionTime: "2025-01-16T20:22:44Z"
     lastUpdateTime: "2025-01-16T20:22:44Z"
@@ -199,6 +205,10 @@ controlplane $
 ### Let's copy the certificate from above output for csr 
 ### change to the previous user, aneesh and we create a file 
 ### but before we create that file, we will need to convert the file to certifcate format
+
+
+controlplane $ su - aneesh
+aneesh@controlplane:~$ 
 
 ### remove the csr.yaml file not needed here: rm csr.yaml 
 aneesh@controlplane:~$ ls
@@ -272,6 +282,95 @@ users:
   user:
     client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQRENDQWlTZ0F3SUJBZ0lSQU5Wdm1PT2dYMmt0RzU1aDN5RWg5WHd3RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRB>
     client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdjBSNngwWVBlUGVpOVlEYTVXZW5jZjRlUERkL01BeDNzQmljVkVUckpNQkZqam1sCmtLT0Joejh1RjRHZVZJRkhGUGFZYVJDTEtNaVgwMndDR0JxeWpMe
+
+
+### go to kubeadmin/root user 
+exit aneesh
+controlplane $ cd .kube/
+controlplane $ 
+
+### copy the certificate and get the clusters contexts current contexts
+controlplane $ cat config
+
+apiVersion: v1
+clusters: 
+- cluster: ##copy this from here <----------------------------
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJZCtVUFp3V2R4bTB3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE1ESXdPVFF5TkRsYUZ3MHpOREV5TXpFd09UUTNORGxhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURWOVpncDA3cW9nR2R3REJqa1RPaXY3bTE0a2FSYytRSXh3RWtNUXhhS3p4TTh1ODhHNk5vUW1xVk8KUFozSGdzbncwTHZxb3VUTGozZC9vNzVRR3Fkd01KNDZDVXZKUVNnSDlNRm1rMmJ0cndoaG5UZWQyNXlyRU1MeQp3MHVyVXE4eVBoVVdKYjloeEVQSms1OTduRkpNelBmWERzcmN5c1Z5dDhlWmFJYmJsbTNsanRsN01oZXJvczE2CngwMVhseS9kbGpTRmg5VkVpVUkyMGhJYlRRaUFLR0ZzY3dqNURUNlZTNlRqZ3ZGbnBMMGlSSndFcXd0L1BrbmQKMFJGaWRsaUljajdUeGprZ3hmVW9VdnBaZjlJcG1FTHptb1JUdHQyZ1pvTFNNaFB0MzNxRER6OUpuNWt6V055RQpLZUNzL2JhMU1YWWRCdGVwcVJ4bEJqUHFZd09wQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJRRUJEbVVTbTJUdWxOSUUyYXUyWFNSUjR0c25EQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ0R6UGs2ZjJsOApkdnJXZFFDQmpWQkVIVE41OUd1eTRRbWkxN2Z4QTQwMmQrbWV2ODNxT2puVjlCVzVZRXBkalpSa0VhSkY2NVNBCnZ1RzMzaTVZZjZnUUdPR3lwRnB5RDhwNFNQRnFTdnRhTkVJcVd5anNodjgrbUp6ZHFYZzFyS0VLTFpZcG9xMG4KVGpOL1VaL0RkdGs0aUl0N1huLzcxV2Fvdk4xSXVpeGRwVVFWaXNreHhpTXhHSHEvQlpQeXUyRURDVXZWeGdaTApEalNGNWd1TGdlV25DWEJ0R0huY3d5SXdrZVJaTUYrMkNWSkN0Y0krdGtCUkJVc0lyd0h5a2xlQ003T1ZuOVhuCnkzU1p4bE9yNkJCdGh3bisxN2Z1TTRoNFo1M1J4SXJSYm16Y3JXWk1qdTh0bGUvTnRvK0NYN0djMFcvbnhJKzEKTW9INGcyRlFnMmZwCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    server: https://172.30.1.2:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes  ### till here <------------------------
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: kubernetes-admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURLVENDQWhHZ0F3SUJBZ0lJT292dVFRRXBhY0l3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE1ESXdPVFF5TkRsYUZ3MHlOakF4TURJd09UUTNORGxhTUR3eApIekFkQmdOVkJBb1RGbXQxWW1WaFpHMDZZMngxYzNSbGNpMWhaRzFwYm5NeEdUQVhCZ05WQkFNVEVHdDFZbVZ5CmJtVjBaWE10WVdSdGFXNHdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFETUZPSWwKenYwNW9aWHMvWk1hWTAxMHd0eitUSkhOZmxxOUQxUnBqSmRYMktFWmFocnNTL0t2QWNYd3ZVWkRycVFmTXJINApjSTl6QUphME5RMEN6REhjaXN5L1RmMThPU2ZsVHVJdGtYMU1tRm8wdHVoZkM0dE4xQUZOTlVvUk5ZSmxNWlR2CjZBb3BqM3VtQmZGcEp1OERIZnY2elhlK0dEaEJGazFISm9Va2ZMUzhIKzZsYnJ6aGJBaE4vTEttRDh0ZU41VC8KdVBSVHlJL3dtbnJ4eXNCTmswb3FhZWxwaTF5MFNndTIydGRNaWduRloxcnR3MkRmbG9pSTJPTmdHSHVXWnU5Zgpmek1BQWZhUHV1M0dSdE1JMmJoL2NsVSsxUHNiTC92R2ZKbkNudVBFNlYyVDlMNmNsTU5sNnJjWEFzT1VMUVZSCjhIaE1UNGtiUGh1Z3lmM2JBZ01CQUFHalZqQlVNQTRHQTFVZER3RUIvd1FFQXdJRm9EQVRCZ05WSFNVRUREQUsKQmdnckJnRUZCUWNEQWpBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRkFRRU9aUktiWk82VTBnVApacTdaZEpGSGkyeWNNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUNqUllpb2dqQU5odzR5REYzd3ZJWEpYOXhJCmswZHIwK0NSOUgzWUhLalh1T0xoZHRHY0N0QnZhYThwR0J2YnIvTzYyeXNMZjBabHFCSDE5MEd2U3RaVFdBd0sKMi81YWRRVHBCZWZWalhjcXlkVmJ6UGd0Nkt1cGtDZDVZOVZXSzVGcW1LSkY1eS8yM2RZdlNUWWZXek5xOXNxSgppQ0UxMGtkUFV1Vm9PeHN1UE04ZTM1T3lWOFpxYXBpK1N0MmdEaXg5bXVudklFT215enp6Y1d4YUdYM05BZkg2ClVCeStZVmVrY09DMVV3Y3VFck5JM09FNnFsTnVzMWI2S01qOWRtM2FVNFJuWWZIaHJqVC9QTWxNTmJaRmR4aXIKQ0txZ05lUGI0VDZ5SVZhcmVDUUliRHR3bWo4MUc5aUtXV0ZoYXkxTVg4dEN1SCs1WmE3Z2x1dHYvaXA1Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBekJUaUpjNzlPYUdWN1AyVEdtTk5kTUxjL2t5UnpYNWF2UTlVYVl5WFY5aWhHV29hCjdFdnlyd0hGOEwxR1E2NmtIekt4K0hDUGN3Q1d0RFVOQXN3eDNJck12MDM5ZkRrbjVVN2lMWkY5VEpoYU5MYm8KWHd1TFRkUUJUVFZLRVRXQ1pUR1U3K2dLS1k5N3BnWHhhU2J2QXgzNytzMTN2aGc0UVJaTlJ5YUZKSHkwdkIvdQpwVzY4NFd3SVRmeXlwZy9MWGplVS83ajBVOGlQOEpwNjhjckFUWk5LS21ucGFZdGN0RW9MdHRyWFRJb0p4V2RhCjdjTmczNWFJaU5qallCaDdsbWJ2WDM4ekFBSDJqN3J0eGtiVENObTRmM0pWUHRUN0d5Lzd4bnlad3A3anhPbGQKay9TK25KVERaZXEzRndMRGxDMEZVZkI0VEUrSkd6NGJvTW45MndJREFRQUJBb0lCQVFDQy85UzZtRWVMdXVGVwpJdDlPVFBmblB6NUVManBaUWdaVTNZWTl5blZMZWs3TzFZRTZ0UFd1eU9DYVM2VFN4VU9za3dvU2c0NVJMOHVOCkdaQ2tmeFp5anRZbTVwVVVMRXdqc2FNVnhSSTlISDZxMzg0QlZKT3kvYWRvUEJDelF6blVZeU5MYkJNNTRsUm8KbWVBQXMzRXcrd3BJVDZQUmJoS09GUmE5MlVnVnhxRjNJVkZwMFZqbTFITEUvQnJMWVdzN1FHaDY0eU5LQkRNawptTmZGZjVSODNyc21iekwyUUVvT2l0RXBqczZadHFiK2NBNkVQd1gvRXNPT1g2VXA0YnRucmFKZjZvQS9EN0pUCkxuU1BKTE0xN1lQYVl6ODhlWm1DSlRWanB3M1hqMGc3UUhYQ3dkNzEzV2VXOXlDZEVYM3htaUZIbUNhSE92SVkKNWRMenNaVEJBb0dCQU9JTFlONXpPbmJvWG5sM0VZVVZoRHlPdCt0VFZSRVZLdkNhTzZzWUlOSGlLRjZ6bGlQOQpCdVRQOFBXRUdWNEhkNWVwdVoxcHA1U2JJQmNBSXJZTlFHa0tWUFVZSWo4L2t1emViU3lZSzFLcTFwQ05ZQ1JVCnZQR1JnaXZQVmgybm5NWlR2MUFNQzNxcEZ2WlNjUGFpb0R1RDNMQVNjUmpjak9iYkVKVm1kZFA1QW9HQkFPY2cKYUl6VWZ5NFh2VXRPcjVkYktiQmZtbEdET3lCdXBRb2Vidjh1S0VCNDRoN0U0RktyUmtZWXB4UXM5bkNnR2c5eAorYWZmNUNPMnZkaDNyV3E2WUJYTTRxdG5HV0VKSkd3dmI5V1h5bTRGcGVyR29IdGFRUy9ONUVxa1BZYnlLQVFjCmhrYmNLTlhJYmRMOUkwc04zcTNybXpiaU5rbGMwRWdFZmlzMG9TMXpBb0dCQU1ZRVY3aW5VcWtGeUhVNWhFU0UKWTlJMDZCTWpiaHJINDFUZ2w3SzdNVTBMaEhmcGRIWlVXdXlvNkpuN1BjbXNXdXltUnk4SmRqOXRZVUFrNDBOOQorbFhLTWtCL0FzbExaT2RSdG12aFpkcEdSQzVmV3NDWTV1ZnJvdy9EMHRtcGttSCt6VkpQS3VNcUt5NWZiQXZ5CnpORTJJMmF1MFJxSllubDlvRnB3Wm5ucEFvR0FJRVcvTTRMc2EwUTNVMCtlWnhUOG9qc0hNa0NQdmZ5VklPK1UKOGg3QTBoZlBBeHJjYzg2a2xsOFUzVlZWNSs0REZZc0ZvREk4Q2R5WGI2VnVXb3ZCcE9taDhPc0plU29zb3NxUQo1Qk00MmRvQ0MrRkdRVk1kN1EzanhhUmZUdnQ3S08vT3RCQkR4MjRnSDZqbkI3RGRHZzNlODIvc3dwdXFIWlE3CkJjOW9mZzhDZ1lFQW9MSjAzSGJRMWRDN1hNKzVGZGMzR25SeW5QZkh0azdrd2Y2ay9oY2JIRDZ5K21TQnpoWVIKeXVyb2djTERCNmozbUVjVHlJb2tyVzdYM2lPWjd6dWh3Uy8zM2c0NllpR3ZNTHYrYXhGZGczUmlPL3A5RnlBcwpTVzdXUE90ZUd6a1lVRkE4WEFSMUZjQVY2UVpDSU5LZm90ZTJ2OTNoVmZZekwxYmx2SHErdGw0PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+controlplane $ 
+
+su - aneesh
+### add the copied section from the kubeadmin user inside the config file of aneesh after switching the user to aneesh
+### we are doing this much work for on-premise kubernetes, on the cloud kubernetes it is much more easier with one command eks/aks to update settings. (need to find the command)
+aneesh@controlplane:~/.kube$ nano config
+apiVersion: v1
+clusters:
+- cluster: #certificate authority part was copied from the kubernetes admin config file check above 
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJZCtVUFp3V2R4bTB3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE1ESXdPVFF5TkR>
+    server: https://172.30.1.2:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: aneesh ## change this to aneesh
+  name: aneesh@kubernetes ## change this to aneesh
+current-context: aneesh@kubernetes ## change this to aneesh
+kind: Config
+preferences: {}
+users:
+- name: aneesh
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURQRENDQWlTZ0F3SUJBZ0lSQUxNb2tlY1dCb3pIQjZZL0ZmVVpTUk13RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBeE>
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcGdJQkFBS0NBUUVBdmlJZmwwdWVCdHRrVGJQalRaZU9XSDc0NDErVGp4S1Q4MlZzN0tub1NDMnFOejl6CjB4dFR6dHh2TWNERjAvYnYyaWdXTDI1VXRlbFZ3VUVsNlhEMnpDWEptcD>
+
+### my teacher made mistake because of the clusterrole but the results i got are correct below!
+### you are only allowed to perform the verbs that were spacified in the rolebind.yaml file (check above for the list for verbs the user can perform and match it below or on your terminal)
+aneesh@controlplane:~$ kubectl get pods
+Error from server (Forbidden): pods is forbidden: User "aneesh" cannot list resource "pods" in API group "" in the namespace "default"
+aneesh@controlplane:~$ kubectl -n devops get pods
+No resources found in devops namespace.
+aneesh@controlplane:~$ nano .kube/config 
+aneesh@controlplane:~$ kubectl -n devops get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          16s
+aneesh@controlplane:~$ 
+
+aneesh@controlplane:~$ kubectl get secrets -n devops
+No resources found in devops namespace.
+aneesh@controlplane:~$ kubectl get deployment -n devops
+No resources found in devops namespace.
+aneesh@controlplane:~$ kubectl get sts -n devops
+Error from server (Forbidden): statefulsets.apps is forbidden: User "aneesh" cannot list resource "statefulsets" in API group "apps" in the namespace "devops"
+aneesh@controlplane:~$ 
+
+### this is correct, if there was aneesh then you would be able to get the access to all the name spaces
+controlplane $ kubectl get clusterrole|grep "aneesh"
+controlplane $ 
+controlplane $ kubectl get clusterrolebindings.rbac.authorization.k8s.io | grep "aneesh"
+controlplane $ 
+
+### we can set it in our context 
+### this command will add the context to the config in your aneesh user and you dont have to define the -n devops again and again.
+kubectl config set-context $(kubectl config current-context) --namespace devops
+# to add the context 
+==========================ROLE BINDING ENDS====================
+
+CLUSTER LEVEL ACCESS
+instead of defining the role define the cluster
 
 
 
