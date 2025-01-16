@@ -52,7 +52,9 @@ aneesh $ ls
 aneesh.key  filesystem  snap
 aneesh $ 
 
+### from key we will make the csr 
 aneesh $ openssl req -new -key aneesh.key -out aneesh.csr
+
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
@@ -79,6 +81,7 @@ aneesh $
 
 ### Decode the aneesh.csr with base64
 aneesh $ cat aneesh.csr | base64 -w 0
+
 ### for security, I have removed a lot of strings from it
 LS0tLS1CRUdJTiBDRVJUSU
 ZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ216QWt
@@ -98,3 +101,48 @@ spec:
   expirationSeconds: 86400 #one day
   usages: 
   - client auth
+
+################# I DID MISTAKE ABOVE ! copy the content of the file and go as root and create the file in root  
+
+controlplane $ nano csr.yaml
+controlplane $ kubectl create -f csr.yaml 
+certificatesigningrequest.certificates.k8s.io/aneesh created
+controlplane $ kubectl get csr 
+NAME     AGE   SIGNERNAME                            REQUESTOR          REQUESTEDDURATION   CONDITION
+aneesh   6s    kubernetes.io/kube-apiserver-client   kubernetes-admin   24h                 Pending      <------ currently the condition is pending 
+controlplane $ 
+
+### how it got approve, because when you are creating the csr through the key openssl using the openssl, you have to add your name in FQDN or Your name section look below
+# DONT TYPE THIS NOW IT IS DONE ALREADY ABOVE ### aneesh@controlplane:~$ openssl req -new -key aneesh.key -out aneesh.csr
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:
+Common Name (e.g. server FQDN or YOUR name) []:aneesh        <-------------------------------------------------- HERE THIS IS WHAT YOU USED TO SIGNED THE CERTIFICATE TO APPROVE BELOW
+Email Address []:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+
+
+### it is pending, because we have to approve it
+controlplane $ kubectl certificate approve aneesh
+certificatesigningrequest.certificates.k8s.io/aneesh approved
+controlplane $ 
+
+controlplane $ kubectl get csr             
+NAME     AGE     SIGNERNAME                            REQUESTOR          REQUESTEDDURATION   CONDITION
+aneesh   7m31s   kubernetes.io/kube-apiserver-client   kubernetes-admin   24h                 Approved,Issued
+controlplane $ 
+
+
