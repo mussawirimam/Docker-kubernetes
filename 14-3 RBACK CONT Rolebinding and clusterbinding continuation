@@ -367,10 +367,17 @@ controlplane $
 ### this command will add the context to the config in your aneesh user and you dont have to define the -n devops again and again.
 kubectl config set-context $(kubectl config current-context) --namespace devops
 # to add the context 
+go to the aneesh .kube/config file and add look under the 
+- contexts: 
+    cluster: kubernetes
+    namespace: devops <--------------- this part will be added from the above command.
 ==========================ROLE BINDING ENDS====================
 
-CLUSTER LEVEL ACCESS
-instead of defining the role define the cluster
+####################### CLUSTER LEVEL ACCESS ####################### 
+now if you want your user to have the cluster level access, only one thing is required to do that.
+only one thing is required to do. In your same file devrole.yaml file instead of defining the role in kind: you define the clusterrole
 
+So to give your user the cluster level access, while you are binding it. you need to define in rolebind.yaml  file in the kind: clusterrolebinding.
+so the user will be havinf the access of the object on the cluster level
 
 
