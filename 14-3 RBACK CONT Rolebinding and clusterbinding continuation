@@ -380,4 +380,96 @@ only one thing is required to do. In your same file devrole.yaml file instead of
 So to give your user the cluster level access, while you are binding it. you need to define in rolebind.yaml  file in the kind: clusterrolebinding.
 so the user will be havinf the access of the object on the cluster level
 
+second thing is that while implementing the role and role binding to the user, can be assigned to a user or a group or a service account.
+What is the user of the service account. Whenever you are creating any pod with some of the service account.
+What is the use of the service account?
+when you do a kubectl describe pod <name>
+you will see these pods are being created with the default service account 
+This service account will have some of the limited permissions. We can create our own service account with the previledges/permissions. 
+Why permission is required to run a pod. sometimes, yuou want to perform the kubernetes actions while being inside the pod, then you need the permissions. 
+
+
+controlplane $ kubectl run test --image nginx
+Error from server (AlreadyExists): pods "test" already exists
+controlplane $ kubectl get pod
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          6m38s
+test    1/1     Running   0          80s
+controlplane $ kubectl exec -it test -- bash
+root@test:/# 
+
+if you want to run the kubectl command within the k8s container, we will have to first install the kubectl on ubuntu 
+
+### REMEMBER IM ON KILLER CODE THAT IS WHY THE VERSION IS DIFFERENT, YOURS MIGHT BE DIFFERENT. 
+### check the k8s version and install kubectl on the container accodingly
+controlplane $ kubectl exec -it test -- bash
+root@test:/# exit
+exit
+controlplane $ kubectl get nodes
+NAME           STATUS   ROLES           AGE   VERSION
+controlplane   Ready    control-plane   16d   v1.31.0
+node01         Ready    <none>          16d   v1.31.0
+controlplane $ 
+
+controlplane $ kubectl exec -it test -- bash
+root@test:/# curl -LO https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   138  100   138    0     0    809      0 --:--:-- --:--:-- --:--:--   807
+100 53.7M  100 53.7M    0     0  19.9M      0  0:00:02  0:00:02 --:--:-- 17.5M
+root@test:/# ls
+bin  boot  dev  docker-entrypoint.d  docker-entrypoint.sh  etc  home  kubectl  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+root@test:/# 
+
+### we need to make it executable
+root@test:/# ls -l
+-rw-r--r--   1 root root 56381592 Jan 18 13:32 kubectl
+root@test:/# chmod +x kubectl 
+root@test:/# ./kubectl
+...
+### move it to bin so that you can call the command from anywhere
+root@test:/# mv kubectl /bin
+root@test:/# 
+
+do we have to implement the certificate creation user creation and the steps we did in the clusterrolebinding etc? 
+kubectl is smart, it knows that you have downloaded it in the container on the k8s. It knows where it is being run.
+
+### it is looking for the service account by default when you type in the kubectl get pods and it is saying that the service....default cannot list resource "pods"
+### it (kubectl) knows that you are running inside the pod
+root@test:/# kubectl get pods
+Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:default:default" cannot list resource "pods" in API group "" in the namespace "default"
+root@test:/# 
+
+### we will be creating a role binding for the service account
+### how we will be creating the service account? 
+root@test:/# exit
+exit
+command terminated with exit code 1
+controlplane $ kubectl create sa mango
+serviceaccount/mango created
+controlplane $ 
+
+controlplane $ kubectl get sa
+NAME      SECRETS   AGE
+default   0         16d
+mango     0         24s
+controlplane $ 
+
+### important note: whenever you are creating a kubernetes object that should match/relevant to your application so that you can identify that application belongs to particular application. 
+if you will randomly choose the names, you will be having a huge list of the service account on your system, you will not be able to identify which service account belongs to which account.
+
+controlplane $ kubectl create sa orange
+serviceaccount/orange created
+controlplane $ kubectl get sa
+NAME      SECRETS   AGE
+default   0         16d
+orange    0         5s
+controlplane $ 
+
+
+### important 
+### In previous version of the kubernetes from .26.0 whenever we use to create a service account, that service account needs to get a token created with it. In the latest version of the kubernetes, you will not be having token created. 
+### token creation use to happen while you are running the command called kube create service account and service account name, so how is the token being created? with the help of the secret object, that means one more secret needs to 
+be created in the background. In the newer version of the kubernetes, you have to create the secret manually, you need to create the secret and you need to map that secret to this service account. You can do that with the yaml file. 
+
 
