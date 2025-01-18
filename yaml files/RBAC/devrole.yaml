@@ -1,1 +1,30 @@
-
+### the command through which this file was created:
+#root@master:~# kubectl create role devrole --resource pods,secrets,deployment --verb create,update,delete,list,get -n devops --dry-run=client -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: devrole
+  namespace: devops
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - secrets
+  verbs:
+  - create
+  - update
+  - delete
+  - list
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - update
+  - delete
+  - list
+  - get
