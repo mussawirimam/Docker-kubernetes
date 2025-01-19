@@ -422,3 +422,11 @@ Workload Status
 Running: 3
 Pods
 
+### on dashboard you can create the pods or resources from the yaml file or from the form look into it. 
+### you can scale it, edit it, restart it, delete it etc
+### limited objects you can create with the create from form and there are some limitations. So use the manifest file. 
+
+### you will not see the dashboard on your projects, because you are exposing your cluster on the internet using the web URL
+### attackers will know that you are having the dashboard and start attacking your kubernetes cluster. 
+### generally even if you are having the dashboards, you will be accessing it through the companies VPN but mosly you dont get to see the dashboard on the projects. 
+
