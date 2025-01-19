@@ -1,0 +1,25 @@
+### first you download the nginx ingress controller plugin:
+#kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0/deploy/static/provider/baremetal/deploy.yaml
+#kubectl get ns #namespace
+#kubectl get all -n ingress-nginx # copy the port
+#kubectl create deployment mango --image 966145/myserver121:latest --port 80
+#kubectl expose deployment mango --type ClusterIP
+#kubectl get ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: / ### explore on k8s docs: ingress controller is having lots of annotations, we can use them as per our requirement. Read the documentation
+spec:
+  ingressClassName: nginx
+  rules: ### existing applications needs to be routed through particular path. Rules are used to define the host and path
+  - http:
+      paths:
+      - path: /mango # if you want to access the application through some path, then define it here
+        pathType: Prefix
+        backend:
+          service:
+            name: mango # our service name is mango
+            port:
+              number: 80
