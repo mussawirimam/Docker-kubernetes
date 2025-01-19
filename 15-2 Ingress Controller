@@ -16,3 +16,295 @@ but your client can remember the domain name like google.com
 Nodeport: 192.168.1.20:30123 
 LB: 192.168.1.20:30123 or fqdn like example abcd.azmazonaws.com 
 
+## so clients cannot remember the complex names, so for that reason the domain names are easier for client to remember.
+google.com, amzon.com, aneesh.com.. how can we access our application using the domain names? for that we have
+to install the ingress controller.
+### there are many ingress controllers avaialable for our k8s 
+
+https://kubernetes.io/docs/concepts/services-networking/ingress/
+
+### whenever we are creating the deployments, we were accessing them through node port or the loadbalancer
+one mediator service is required, that service will be getting mapped to your pods. We can create service type clusterIP 
+which is not accessible outside of the cluster. Once, your service is created you can create the ingress rules or ingress for your application.
+To create the ingress, you will be definind the domain name and the path aneesh.com/shop. 
+
+and whenever a client is sending the request, that request will be sent to the ingress controller and the ingress will be routing internally to your 
+clusterIP service and it will be routing the request to the pod finally.
+
+### Read the document:
+https://kubernetes.io/docs/concepts/services-networking/ingress/
+https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
+What type of ingress controllers we have?
+we have multiple type of the ingress controllers. 
+example on the document:
+1. nginx ingress controller mostly people are using that
+2. ISTIO, will be helping you to create the virutal service and through virtual service you can route the request to your application. You will install the gateway and etc.
+3. HA proxy
+
+### we will be using Nginx ingress controller because it is mostly used in the projects. 
+### bare-metal is our Kubeadm cluster
+https://kubernetes.github.io/ingress-nginx/deploy/
+https://kubernetes.github.io/ingress-nginx/deploy/#bare-metal-clusters <----------------
+https://docs.nginx.com/nginx-ingress-controller/
+
+### we will be downloading the bare-metal of the nginx ingress controller 
+https://kubernetes.github.io/ingress-nginx/deploy/#bare-metal-clusters
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0/deploy/static/provider/baremetal/deploy.yaml
+
+# because we are going to use the bare-metal we are not going to have the loadbalancer feature. How we can get the loadbalancer feature on our bare-metal
+clusters?
+there is tool called ----> metal LB, this is something newly created tool to spin up the loadbalancer on the KubeAdm cluster/bare-metal or On-Premises
+that you need to learn and configure. 
+### if you are interested, you can do it on your as homework: https://metallb.io/installation/.
+
+### the installation of the bare-metal ingress controller we will be accessing it through the NodePort service. 
+
+
+########## Bare-Metal Ingress Controller Begins ##########
+
+### lets install the nginx ingress controller plugin:
+root@master:~# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0/deploy/static/provider/baremetal/deploy.yaml
+namespace/ingress-nginx created
+serviceaccount/ingress-nginx created
+serviceaccount/ingress-nginx-admission created
+role.rbac.authorization.k8s.io/ingress-nginx created
+role.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx-admission created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+configmap/ingress-nginx-controller created
+service/ingress-nginx-controller created
+service/ingress-nginx-controller-admission created
+deployment.apps/ingress-nginx-controller created
+job.batch/ingress-nginx-admission-create created
+job.batch/ingress-nginx-admission-patch created
+ingressclass.networking.k8s.io/nginx created
+validatingwebhookconfiguration.admissionregistration.k8s.io/ingress-nginx-admission created
+root@master:~#
+
+root@master:~# kubectl get ns #namespace
+NAME                   STATUS   AGE
+default                Active   62d
+devops                 Active   7d3h
+ingress-nginx          Active   114s
+kube-node-lease        Active   62d
+kube-public            Active   62d
+kube-system            Active   62d
+kubernetes-dashboard   Active   18h
+local-path-storage     Active   15d
+root@master:~#
+
+# we can see that admission create and admission path have completed the task, and the ingress nginx controller has started
+root@master:~# kubectl get all -n ingress-nginx
+NAME                                            READY   STATUS      RESTARTS   AGE
+pod/ingress-nginx-admission-create-gf26f        0/1     Completed   0          2m7s
+pod/ingress-nginx-admission-patch-89mtn         0/1     Completed   1          2m7s
+pod/ingress-nginx-controller-6d549f496b-cnwgj   1/1     Running     0          2m7s
+
+NAME                                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/ingress-nginx-controller             NodePort    10.111.181.93    <none>        80:31947/TCP,443:30561/TCP   2m7s    <------- copy this port number and go to the browser
+service/ingress-nginx-controller-admission   ClusterIP   10.103.225.169   <none>        443/TCP                      2m7s
+
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/ingress-nginx-controller   1/1     1            1           2m7s
+
+NAME                                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/ingress-nginx-controller-6d549f496b   1         1         1       2m7s
+
+NAME                                       COMPLETIONS   DURATION   AGE
+job.batch/ingress-nginx-admission-create   1/1           7s         2m7s
+job.batch/ingress-nginx-admission-patch    1/1           9s         2m7s
+root@master:~#
+
+### to test the ingress is installed and working or not to access your application through your Node Ip address
+=== on browser ===
+<NodeIpaddress>:<portnumberfromabove>
+404 Not Found
+nginx
+
+### we didnt define any application that is why 404 not found and the error belong to the nginx, it is working well with the ingress controller.
+### lets create the simple application so we can check how the ingress controller is routing the request. 
+# created the manifest file from here https://kubernetes.io/docs/concepts/services-networking/ingress/
+### lets create a deployment
+
+root@master:~/app# kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   62d
+root@master:~/app#
+
+root@master:~/app# kubectl create deployment mango --image 966145/myserver121:latest --port 80 # this is the image my teacher made and published it on the dockerhub
+deployment.apps/mango created
+root@master:~/app#
+
+### lets expose this deployment to a service
+root@master:~/app# kubectl expose deployment mango --type ClusterIP
+service/mango exposed
+
+root@master:~/app# kubectl get svc
+NAME         TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   62d
+mango        ClusterIP   10.102.76.4   <none>        80/TCP    9s
+root@master:~/app#
+
+### Lets create Ingress to access this deployment
+root@master:~/app# vi ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: / ### explore on k8s docs: ingress controller is having lots of annotations, we can use them as per our requirement. Read the documentation
+spec:
+  ingressClassName: nginx
+  rules: ### existing applications needs to be routed through particular path. Rules are used to define the host and path
+  - http:
+      paths:
+      - path: /mango # if you want to access the application through some path, then define it here
+        pathType: Prefix
+        backend:
+          service:
+            name: mango # our service name is mango
+            port:
+              number: 80
+root@master:~/app#
+
+root@master:~/app# kubectl create -f ingress.yaml
+ingress.networking.k8s.io/minimal-ingress created
+root@master:~/app#
+
+### name of our ingress is minimal-ingress
+# class is nginx that we are using
+# host * means any host. 
+# address we havent defined (?)
+# port 80
+root@master:~/app# kubectl get ingress
+NAME              CLASS   HOSTS   ADDRESS   PORTS   AGE
+minimal-ingress   nginx   *                 80      14s
+root@master:~/app#
+
+=== On Browser ===
+http://192.168.29.134:31947/mango
+Maxim
+About
+Services
+Works
+Blog
+Contact
+Page
+
+We loves simplicity
+
+creative and passion
+
+Eat and drink design
+
+
+root@master:~/app# kubectl describe ingress minimal-ingress
+Name:             minimal-ingress
+Labels:           <none>
+Namespace:        default
+Address:          192.168.29.135
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host        Path  Backends
+  ----        ----  --------
+  *
+              /mango   mango:80 (172.17.166.136:80)  <--------------- mapped properly on the port# 80
+Annotations:  nginx.ingress.kubernetes.io/rewrite-target: /
+Events:
+  Type    Reason  Age                   From                      Message
+  ----    ------  ----                  ----                      -------
+  Normal  Sync    106s (x2 over 2m38s)  nginx-ingress-controller  Scheduled for sync
+root@master:~/app#
+
+### you can see the same ip address is mapped to the Endpoint with the port 80
+root@master:~/app# kubectl describe service mango
+Name:              mango
+Namespace:         default
+Labels:            app=mango
+Annotations:       <none>
+Selector:          app=mango
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.102.76.4
+IPs:               10.102.76.4
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:         172.17.166.136:80    <---------------------------- end point is mentioned
+Session Affinity:  None
+Events:            <none>
+root@master:~/app#
+
+### check the ip address of the pod is showing on the endpoint in the service above
+root@master:~/app# kubectl get pod -o wide
+NAME                    READY   STATUS    RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+mango-b74bdd8c5-4lv78   1/1     Running   0          12m   172.17.166.136   node1   <none>           <none>
+root@master:~/app#
+
+root@master:~/app# kubectl -n ingress-nginx get svc
+NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             NodePort    10.111.181.93    <none>        80:31947/TCP,443:30561/TCP   39m
+ingress-nginx-controller-admission   ClusterIP   10.103.225.169   <none>        443/TCP                      39m
+root@master:~/app#
+
+### We need to define the domain now
+### I copied this file from here and made changeshttps://kubernetes.io/docs/concepts/services-networking/ingress/ | find file: service/networking/ingress-wildcard-host.yaml
+### we will mention the domain name in our ingress.yaml file from above
+root@master:~/app# mv ingress.yaml /tmp/
+root@master:~/app# vi ingress.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: / ### explore on k8s docs: ingress controller is having lots of annotations, we can use them as per our requirement. Read the documentation
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "aneesh.com" #"foo.bar.com" the domain name you want to provide
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/" #"/bar"
+        backend:
+          service:
+            name: mango #service1 define your service name here # you can check that with kubectl get svc
+            port:
+              number: 80
+
+
+root@master:~/app# kubectl get all -n ingress-nginx -o wide
+NAME                                            READY   STATUS      RESTARTS   AGE   IP               NODE    NOMINATED NODE   READINESS GATES
+pod/ingress-nginx-admission-create-gf26f        0/1     Completed   0          63m   172.17.104.30    node2   <none>           <none>
+pod/ingress-nginx-admission-patch-89mtn         0/1     Completed   1          63m   172.17.104.32    node2   <none>           <none>
+pod/ingress-nginx-controller-6d549f496b-cnwgj   1/1     Running     0          63m   172.17.166.133   node1   <none>           <none>
+
+NAME                                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE   SELECTOR
+service/ingress-nginx-controller             NodePort    10.111.181.93    <none>        80:31947/TCP,443:30561/TCP   63m   app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx
+service/ingress-nginx-controller-admission   ClusterIP   10.103.225.169   <none>        443/TCP                      63m   app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx
+
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES
+                                                              SELECTOR
+deployment.apps/ingress-nginx-controller   1/1     1            1           63m   controller   registry.k8s.io/ingress-nginx/controller:v1.12.0@sha256:e6b8de175acda6ca913891f0f727bca4527e797d52688cbe9fec9040d6f6b6fa   app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx
+
+NAME                                                  DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES
+                                                                    SELECTOR
+replicaset.apps/ingress-nginx-controller-6d549f496b   1         1         1       63m   controller   registry.k8s.io/ingress-nginx/controller:v1.12.0@sha256:e6b8de175acda6ca913891f0f727bca4527e797d52688cbe9fec9040d6f6b6fa   app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx,pod-template-hash=6d549f496b
+
+NAME                                       COMPLETIONS   DURATION   AGE   CONTAINERS   IMAGES
+                                                               SELECTOR
+job.batch/ingress-nginx-admission-create   1/1           7s         63m   create       registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.0@sha256:aaafd456bda110628b2d4ca6296f38731a3aaf0bf7581efae824a41c770a8fc4   batch.kubernetes.io/controller-uid=6d6e5b13-fd0f-4ba1-90af-3d397e5df2d0
+job.batch/ingress-nginx-admission-patch    1/1           9s         63m   patch        registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.0@sha256:aaafd456bda110628b2d4ca6296f38731a3aaf0bf7581efae824a41c770a8fc4   batch.kubernetes.io/controller-uid=1d447b20-c80b-4bc4-aba3-5dbbf61c3572
+root@master:~/app#
+
+
+### we will have to use the port number
+
+### TROUBLESHOOTING #there was an issue where I couldnt get the aneesh.com:31947 website 
+### TROUBLESHOOT TIME
