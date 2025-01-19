@@ -1,0 +1,424 @@
+### Dashboard is a graphical user interface, if you want to work on the graphical user interface, then choose openshift 
+openshift implemented additional services example: route, is (image stream)
+
+### we will be installing the k8s dashboard
+https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+
+### you have to install the helm for this, we will be doing that through the old way using the kubectl 
+# Add kubernetes-dashboard repository
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+# Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
+helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+
+### put this on browser to check if it is creating the namespace.
+https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+controlplane $ kubectl -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+error: unknown shorthand flag: 'f' in -f
+See 'kubectl --help' for usage.
+controlplane $ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+namespace/kubernetes-dashboard created
+serviceaccount/kubernetes-dashboard created
+service/kubernetes-dashboard created
+secret/kubernetes-dashboard-certs created
+secret/kubernetes-dashboard-csrf created
+secret/kubernetes-dashboard-key-holder created
+configmap/kubernetes-dashboard-settings created
+role.rbac.authorization.k8s.io/kubernetes-dashboard created      <----------------------- role is created 
+clusterrole.rbac.authorization.k8s.io/kubernetes-dashboard created    <------------------- cluster role is created on which we will work below 
+rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created    <------------------- role binding is also created with the same name
+clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created <------------------- cluster role binding is also created with the same name
+deployment.apps/kubernetes-dashboard created
+service/dashboard-metrics-scraper created
+deployment.apps/dashboard-metrics-scraper created
+controlplane $ 
+
+
+# the namespace is coming from the file that you used to installed the k8s dashboard file above
+controlplane $ kubectl get all -n kubernetes-dashboard 
+NAME                                             READY   STATUS    RESTARTS   AGE
+pod/dashboard-metrics-scraper-6b96ff7878-l8w59   1/1     Running   0          53s
+pod/kubernetes-dashboard-8696f5f494-pdllj        1/1     Running   0          53s
+
+NAME                                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/dashboard-metrics-scraper   ClusterIP   10.100.48.213   <none>        8000/TCP   53s
+service/kubernetes-dashboard        ClusterIP   10.96.79.40     <none>        443/TCP    53s    <----------- change it to NodePort to access the dashboard from outside
+
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/dashboard-metrics-scraper   1/1     1            1           53s
+deployment.apps/kubernetes-dashboard        1/1     1            1           53s
+
+NAME                                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/dashboard-metrics-scraper-6b96ff7878   1         1         1       53s
+replicaset.apps/kubernetes-dashboard-8696f5f494        1         1         1       53s
+controlplane $ 
+
+
+### we want to be able to access this dashboard from outside the cluster. We will have to change the name service from ClusterIP service to the 
+### Nodeport Service or the loadbalancer.
+
+controlplane $ kubectl -n kubernetes-dashboard edit svc kubernetes-dashboard
+
+BEFORE EDIT: 
+ Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"k8s-app":"kubernetes-dashboard"},"name":"kubernetes-dashboard","namespace":"kubernetes-dashboard"},"spec":{"ports":[{"port":443,
+  creationTimestamp: "2025-01-18T23:40:30Z"
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  resourceVersion: "7886"
+  uid: 7d8476dd-8439-4f47-9f67-616da6f182d2
+spec:
+  clusterIP: 10.96.79.40
+  clusterIPs:
+  - 10.96.79.40
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    k8s-app: kubernetes-dashboard
+  sessionAffinity: None
+  type: ClusterIP       <----------------------------------------- remove this to change it to the NodePort
+status:
+  loadBalancer: {}
+~                    
+
+AFTER EDIT:
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"k8s-app":"kubernetes-dashboard"},"name":"kubernetes-dashboard","namespace":"kubernetes-dashboard"},"spec":{"ports":[{"port":443,
+  creationTimestamp: "2025-01-18T23:40:30Z"
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  resourceVersion: "7886"
+  uid: 7d8476dd-8439-4f47-9f67-616da6f182d2
+spec:
+  clusterIP: 10.96.79.40
+  clusterIPs:
+  - 10.96.79.40
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    k8s-app: kubernetes-dashboard
+  sessionAffinity: None
+  type: NodePort      <----------------------------------------- added this in the file
+status:
+  loadBalancer: {}
+
+
+### the service is changed to the NodePort controlplane $ kubectl get all -n kubernetes-dashboard 
+NAME                                             READY   STATUS    RESTARTS   AGE
+pod/dashboard-metrics-scraper-6b96ff7878-l8w59   1/1     Running   0          6m24s
+pod/kubernetes-dashboard-8696f5f494-pdllj        1/1     Running   0          6m24s
+
+NAME                                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
+service/dashboard-metrics-scraper   ClusterIP   10.100.48.213   <none>        8000/TCP        6m24s
+service/kubernetes-dashboard        NodePort    10.96.79.40     <none>        443:32221/TCP   6m24s    <------------ changed to Nodeport 
+
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/dashboard-metrics-scraper   1/1     1            1           6m24s
+deployment.apps/kubernetes-dashboard        1/1     1            1           6m24s
+
+NAME                                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/dashboard-metrics-scraper-6b96ff7878   1         1         1       6m24s
+replicaset.apps/kubernetes-dashboard-8696f5f494        1         1         1       6m24s
+controlplane $ 
+
+### copy the port number 32221 or whatever port you see on your terminal and go on the browser 
+### and paste it with your any of your node ip address 
+### throwing a self certificate error
+==== on browser ====
+<ipaddress:port>
+### got the output below. So change the https to http in the url
+Client sent an HTTP request to an HTTPS server.
+
+we need to define the http
+
+https://192.168.29.xxx:32221/#/login
+
+Kubernetes Dashboard
+Token
+Every Service Account has a Secret with valid Bearer Token that can be used to log in to Dashboard. To find out more about how to configure and use Bearer Tokens, please refer to the Authentication section.
+Kubeconfig
+Please select the kubeconfig file that you have created to configure access to the cluster. To find out more about how to configure and use kubeconfig file, please refer to the Configure Access to Multiple Clusters section.
+
+### we have two options to either create a token or create kubeconfig, because of the browser certificate authorities they are not able to verify
+it is a self signed certificate throwing an error. We can login with two ways:
+generate a token or you can map with kubeconfig file.
+### we will be creating the token here. 
+### we will be creating a service account in the name space kubernetes dashboard and I am creating a secret and mapping the token service account called 
+kubernetes-dashboard...  check the file below:
+### first lets check some settings 
+
+
+### secret is not created, we will have to create the secret
+root@master:~# kubectl -n kubernetes-dashboard get secrets
+NAME                              TYPE     DATA   AGE
+kubernetes-dashboard-certs        Opaque   0      15m
+kubernetes-dashboard-csrf         Opaque   1      15m
+kubernetes-dashboard-key-holder   Opaque   2      15m
+
+root@master:~# kubectl -n kubernetes-dashboard get serviceaccounts kubernetes-dashboard
+NAME                   SECRETS   AGE
+kubernetes-dashboard   0         16m
+root@master:~#
+root@master:~# kubectl -n kubernetes-dashboard describe serviceaccounts kubernetes-dashboard
+Name:                kubernetes-dashboard
+Namespace:           kubernetes-dashboard
+Labels:              k8s-app=kubernetes-dashboard
+Annotations:         <none>
+Image pull secrets:  <none>
+Mountable secrets:   <none>
+Tokens:              <none>    <------------- you see here we dont have the token 
+Events:              <none>
+root@master:~#
+
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+    name: kubernetes-dashboard-secret
+    namespace: kubernetes-dashboard 
+    annotations: 
+      kubernetes.io/service-account.name: kubernetes-dashboard 
+type: kubernetes.io/service-account-token 
+EOF
+
+root@master:~# kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+    name: kubernetes-dashboard-secret
+    namespace: kubernetes-dashboard
+    annotations:
+      kubernetes.io/service-account.name: kubernetes-dashboard
+type: kubernetes.io/service-account-token
+EOF
+secret/kubernetes-dashboard-secret created
+root@master:~#
+
+### Now cluster-rolebinding for service account kubernets-dashboard
+root@master:~# kubectl create clusterrolebinding dashboard-admin -n kubernetes-dashboard --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:kubernetes-dashboard
+clusterrolebinding.rbac.authorization.k8s.io/dashboard-admin created
+root@master:~#
+
+
+### there are many cluster rolebinding in this namespace, look for the one we created just now from above command 
+root@master:~# kubectl -n kubernetes-dashboard get clusterrolebindings.rbac.authorization.k8s.io
+NAME                                                   ROLE                                                                               AGE
+calico-cni-plugin                                      ClusterRole/calico-cni-plugin                                                      59d
+calico-kube-controllers                                ClusterRole/calico-kube-controllers                                                59d
+calico-node                                            ClusterRole/calico-node                                                            59d
+cluster-admin                                          ClusterRole/cluster-admin                                                          62d
+dashboard-admin                                        ClusterRole/cluster-admin                                                          60s  <----------------------- this one 
+kubeadm:get-nodes                                      ClusterRole/kubeadm:get-nodes                                                      62d
+kubeadm:kubelet-bootstrap                              ClusterRole/system:node-bootstrapper                                               62d
+kubeadm:node-autoapprove-bootstrap                     ClusterRole/system:certificates.k8s.io:certificatesigningrequests:nodeclient       62d
+kubeadm:node-autoapprove-certificate-rotation          ClusterRole/system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   62d
+kubeadm:node-proxier                                   ClusterRole/system:node-proxier                                                    62d
+kubernetes-dashboard                                   ClusterRole/kubernetes-dashboard                                                   29m
+local-path-provisioner-bind                            ClusterRole/local-path-provisioner-role                                            14d
+metrics-server:system:auth-delegator                   ClusterRole/system:auth-delegator                                                  19d
+system:basic-user                                      ClusterRole/system:basic-user                                                      62d
+system:controller:attachdetach-controller              ClusterRole/system:controller:attachdetach-controller                              62d
+system:controller:certificate-controller               ClusterRole/system:controller:certificate-controller                               62d
+system:controller:clusterrole-aggregation-controller   ClusterRole/system:controller:clusterrole-aggregation-controller                   62d
+system:controller:cronjob-controller                   ClusterRole/system:controller:cronjob-controller                                   62d
+system:controller:daemon-set-controller                ClusterRole/system:controller:daemon-set-controller                                62d
+system:controller:deployment-controller                ClusterRole/system:controller:deployment-controller                                62d
+system:controller:disruption-controller                ClusterRole/system:controller:disruption-controller                                62d
+system:controller:endpoint-controller                  ClusterRole/system:controller:endpoint-controller                                  62d
+system:controller:endpointslice-controller             ClusterRole/system:controller:endpointslice-controller                             62d
+system:controller:endpointslicemirroring-controller    ClusterRole/system:controller:endpointslicemirroring-controller                    62d
+system:controller:ephemeral-volume-controller          ClusterRole/system:controller:ephemeral-volume-controller                          62d
+system:controller:expand-controller                    ClusterRole/system:controller:expand-controller                                    62d
+system:controller:generic-garbage-collector            ClusterRole/system:controller:generic-garbage-collector                            62d
+system:controller:horizontal-pod-autoscaler            ClusterRole/system:controller:horizontal-pod-autoscaler                            62d
+system:controller:job-controller                       ClusterRole/system:controller:job-controller                                       62d
+system:controller:namespace-controller                 ClusterRole/system:controller:namespace-controller                                 62d
+system:controller:node-controller                      ClusterRole/system:controller:node-controller                                      62d
+system:controller:persistent-volume-binder             ClusterRole/system:controller:persistent-volume-binder                             62d
+system:controller:pod-garbage-collector                ClusterRole/system:controller:pod-garbage-collector                                62d
+system:controller:pv-protection-controller             ClusterRole/system:controller:pv-protection-controller                             62d
+system:controller:pvc-protection-controller            ClusterRole/system:controller:pvc-protection-controller                            62d
+system:controller:replicaset-controller                ClusterRole/system:controller:replicaset-controller                                62d
+system:controller:replication-controller               ClusterRole/system:controller:replication-controller                               62d
+system:controller:resourcequota-controller             ClusterRole/system:controller:resourcequota-controller                             62d
+system:controller:root-ca-cert-publisher               ClusterRole/system:controller:root-ca-cert-publisher                               62d
+system:controller:route-controller                     ClusterRole/system:controller:route-controller                                     62d
+system:controller:service-account-controller           ClusterRole/system:controller:service-account-controller                           62d
+system:controller:service-controller                   ClusterRole/system:controller:service-controller                                   62d
+system:controller:statefulset-controller               ClusterRole/system:controller:statefulset-controller                               62d
+system:controller:ttl-after-finished-controller        ClusterRole/system:controller:ttl-after-finished-controller                        62d
+system:controller:ttl-controller                       ClusterRole/system:controller:ttl-controller                                       62d
+system:coredns                                         ClusterRole/system:coredns                                                         62d
+system:discovery                                       ClusterRole/system:discovery                                                       62d
+system:kube-controller-manager                         ClusterRole/system:kube-controller-manager                                         62d
+system:kube-dns                                        ClusterRole/system:kube-dns                                                        62d
+system:kube-scheduler                                  ClusterRole/system:kube-scheduler                                                  62d
+system:metrics-server                                  ClusterRole/system:metrics-server                                                  19d
+system:monitoring                                      ClusterRole/system:monitoring                                                      62d
+system:node                                            ClusterRole/system:node                                                            62d
+system:node-proxier                                    ClusterRole/system:node-proxier                                                    62d
+system:public-info-viewer                              ClusterRole/system:public-info-viewer                                              62d
+system:service-account-issuer-discovery                ClusterRole/system:service-account-issuer-discovery                                62d
+system:volume-scheduler                                ClusterRole/system:volume-scheduler                                                62d
+root@master:~#
+
+
+### check for the cluster roles, there are so many look for the one we are working with 
+root@master:~# kubectl -n kubernetes-dashboard get clusterrole
+NAME                                                                   CREATED AT
+admin                                                                  2024-11-17T23:14:19Z
+calico-cni-plugin                                                      2024-11-20T21:57:35Z
+calico-kube-controllers                                                2024-11-20T21:57:35Z
+calico-node                                                            2024-11-20T21:57:35Z
+cluster-admin                                                          2024-11-17T23:14:19Z
+edit                                                                   2024-11-17T23:14:19Z
+kubeadm:get-nodes                                                      2024-11-17T23:14:22Z
+kubernetes-dashboard                                                   2025-01-18T23:55:49Z
+local-path-provisioner-role                                            2025-01-04T14:40:54Z
+system:aggregate-to-admin                                              2024-11-17T23:14:19Z
+system:aggregate-to-edit                                               2024-11-17T23:14:19Z
+system:aggregate-to-view                                               2024-11-17T23:14:19Z
+system:aggregated-metrics-reader                                       2024-12-30T22:06:47Z
+system:auth-delegator                                                  2024-11-17T23:14:19Z
+system:basic-user                                                      2024-11-17T23:14:19Z
+system:certificates.k8s.io:certificatesigningrequests:nodeclient       2024-11-17T23:14:19Z
+system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   2024-11-17T23:14:19Z
+system:certificates.k8s.io:kube-apiserver-client-approver              2024-11-17T23:14:19Z
+system:certificates.k8s.io:kube-apiserver-client-kubelet-approver      2024-11-17T23:14:19Z
+system:certificates.k8s.io:kubelet-serving-approver                    2024-11-17T23:14:19Z
+system:certificates.k8s.io:legacy-unknown-approver                     2024-11-17T23:14:19Z
+system:controller:attachdetach-controller                              2024-11-17T23:14:19Z
+system:controller:certificate-controller                               2024-11-17T23:14:20Z
+system:controller:clusterrole-aggregation-controller                   2024-11-17T23:14:19Z
+system:controller:cronjob-controller                                   2024-11-17T23:14:19Z
+system:controller:daemon-set-controller                                2024-11-17T23:14:19Z
+system:controller:deployment-controller                                2024-11-17T23:14:19Z
+system:controller:disruption-controller                                2024-11-17T23:14:19Z
+system:controller:endpoint-controller                                  2024-11-17T23:14:19Z
+system:controller:endpointslice-controller                             2024-11-17T23:14:19Z
+system:controller:endpointslicemirroring-controller                    2024-11-17T23:14:19Z
+system:controller:ephemeral-volume-controller                          2024-11-17T23:14:19Z
+system:controller:expand-controller                                    2024-11-17T23:14:19Z
+system:controller:generic-garbage-collector                            2024-11-17T23:14:19Z
+system:controller:horizontal-pod-autoscaler                            2024-11-17T23:14:19Z
+system:controller:job-controller                                       2024-11-17T23:14:19Z
+system:controller:namespace-controller                                 2024-11-17T23:14:19Z
+system:controller:node-controller                                      2024-11-17T23:14:19Z
+system:controller:persistent-volume-binder                             2024-11-17T23:14:19Z
+system:controller:pod-garbage-collector                                2024-11-17T23:14:19Z
+system:controller:pv-protection-controller                             2024-11-17T23:14:20Z
+system:controller:pvc-protection-controller                            2024-11-17T23:14:20Z
+system:controller:replicaset-controller                                2024-11-17T23:14:19Z
+system:controller:replication-controller                               2024-11-17T23:14:20Z
+system:controller:resourcequota-controller                             2024-11-17T23:14:20Z
+system:controller:root-ca-cert-publisher                               2024-11-17T23:14:20Z
+system:controller:route-controller                                     2024-11-17T23:14:20Z
+system:controller:service-account-controller                           2024-11-17T23:14:20Z
+system:controller:service-controller                                   2024-11-17T23:14:20Z
+system:controller:statefulset-controller                               2024-11-17T23:14:20Z
+system:controller:ttl-after-finished-controller                        2024-11-17T23:14:20Z
+system:controller:ttl-controller                                       2024-11-17T23:14:20Z
+system:coredns                                                         2024-11-17T23:14:24Z
+system:discovery                                                       2024-11-17T23:14:19Z
+system:heapster                                                        2024-11-17T23:14:19Z
+system:kube-aggregator                                                 2024-11-17T23:14:19Z
+system:kube-controller-manager                                         2024-11-17T23:14:19Z
+system:kube-dns                                                        2024-11-17T23:14:19Z
+system:kube-scheduler                                                  2024-11-17T23:14:19Z
+system:kubelet-api-admin                                               2024-11-17T23:14:19Z
+system:metrics-server                                                  2024-12-30T22:06:47Z
+system:monitoring                                                      2024-11-17T23:14:19Z
+system:node                                                            2024-11-17T23:14:19Z
+system:node-bootstrapper                                               2024-11-17T23:14:19Z
+system:node-problem-detector                                           2024-11-17T23:14:19Z
+system:node-proxier                                                    2024-11-17T23:14:19Z
+system:persistent-volume-provisioner                                   2024-11-17T23:14:19Z
+system:public-info-viewer                                              2024-11-17T23:14:19Z
+system:service-account-issuer-discovery                                2024-11-17T23:14:19Z
+system:volume-scheduler                                                2024-11-17T23:14:19Z
+view                                                                   2024-11-17T23:14:19Z
+root@master:~#
+
+### we will be describing the secret so that we can login in to the kubernetes dashboard on the browser
+### copy the token and paste it inside the dashboard prompt for login 
+
+root@master:~# kubectl -n kubernetes-dashboard describe secrets kubernetes-dashboard-secret
+Name:         kubernetes-dashboard-secret
+Namespace:    kubernetes-dashboard
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: kubernetes-dashboard
+              kubernetes.io/service-account.uid: 20b882e1-655e-4e77-909f-9d0f4c037440
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1107 bytes
+namespace:  20 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6ImFPSE9SdmM3ZFp1WEswR24yN1p0ZHlMZnctQzU4bmZBRWVCaEozS3F0dm8ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1zZWNyZXQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoia3ViZXJuZXRlcy1kYXNoYm9hcmQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiIyMGI4ODJlMS02NTVlLTRlNzctOTA5Zi05ZDBmNGMwMzc0NDAiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZXJuZXRlcy1kYXNoYm9hcmQ6a3ViZXJuZXRlcy1kYXNoYm9hcmQifQ.nbVeoUg8RsjHPuoHzYCpt3vcbPZ7SAooand6lgdxWoQr_VxAP3E15nxY5bm-sruym4M90d5hiWUxJh7W-MjwKHaPPIIFFKvDPxqsaiCvPbyR_wmgZ533nv5qsCfmQDXaMRRCsYej9Pbo6KXGwGXTGO7INpuF0omlBHwnz4Df1DEp0XqDMKA1MAbqnEKyjQWBoY_PBtD-GGDW-jMugFVI-sIsZfA3wvPAXIc3hSkJy_u7PWnoSOOM1B2Vu8ggWDPciaWYngdHPVe6LGwwVGA8Zh-GZoTPMfwBgQbJxUrJdMvGofbw1F-FCFN9CXlhpd1Y-s6Z-UHgTwHYAi5lW2P6Ag
+root@master:~#root@master:~# kubectl -n kubernetes-dashboard describe secrets kubernetes-dashboard-secret
+Name:         kubernetes-dashboard-secret
+Namespace:    kubernetes-dashboard
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: kubernetes-dashboard
+              kubernetes.io/service-account.uid: 20b882e1-655e-4e77-909f-9d0f4c037440
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1107 bytes
+namespace:  20 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI...... <----------------------------------- this token you will plugin in the browser 
+root@master:~#
+
+=== browser ===
+https://192.168.29.134:31024/#/login
+Kubernetes Dashboard
+Token
+Every Service Account has a Secret with valid Bearer Token that can be used to log in to Dashboard. To find out more about how to configure and use Bearer Tokens, please refer to the Authentication section.
+Kubeconfig
+Please select the kubeconfig file that you have created to configure access to the cluster. To find out more about how to configure and use kubeconfig file, please refer to the Configure Access to Multiple Clusters section.
+••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+Enter token *
+
+### we are logged in the kubernetes dashboard:
+https://192.168.29.134:31024/#/workloads?namespace=default
+Workload Status
+Running: 3
+Pods
+
