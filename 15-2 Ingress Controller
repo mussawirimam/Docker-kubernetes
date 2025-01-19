@@ -1,0 +1,18 @@
+### so far we have seen the services as 
+cluster ip 
+nodeport 
+loadbalancer
+
+### what is the use of the ingress?
+to access your application from outside of the cluster. 
+Assume that, I want to access kubernetes outside of the cluster but the thing is that, I want to access it through the domain name. 
+So, if you are using the nodeport or loadbalancer..
+
+youll have to use the combination of the ip and port 
+Its not a good idea to tell your client visit the application on the this ip address, they will not be able to remember that. 
+even if you using the loadbalancer, you might be getting the fqdn or something. Again your client will not be able to remember complex fqdns.
+but your client can remember the domain name like google.com 
+### how to access th
+Nodeport: 192.168.1.20:30123 
+LB: 192.168.1.20:30123 or fqdn like example abcd.azmazonaws.com 
+
