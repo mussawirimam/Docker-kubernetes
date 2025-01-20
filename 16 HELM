@@ -1,6 +1,44 @@
 Helm Documentations:
 https://helm.sh/docs/intro/install/
 
+############### Helm Commands ############### 
+# this will print helm help
+helm
+
+# to see all available package in hub
+helm search hub
+
+# to list mysql charts
+helm search hub mysql
+
+# to list all available repo
+helm repo list 
+
+# add helm repo named bitnami
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+# search bitnami named repo in server
+helm search repo bitnami
+
+# update repo
+helm repo update
+
+# search chart in specific repo 
+helm search repo bitnami/mysql
+helm search repo -l bitnami/mysql
+
+# install chart from Helm repo
+helm install bitnami/mysql --generate-name
+or
+helm install name-of-deployment bitname/mysql
+
+# list all installed charts
+helm ls or helm list
+
+# uninstall helm chart
+helm uninstall chart-name
+
+
 ###  how do you download the packages on linux? 
 through tar files
 through curl 
@@ -544,3 +582,14 @@ Events:
   ----     ------            ----                 ----               -------
   Warning  FailedScheduling  48s (x2 over 5m53s)  default-scheduler  0/3 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling..
 root@master:~/app/helm#
+
+### do delete your chart 
+root@master:~/app/helm# helm uninstall myappdb
+release "myappdb" uninstalled
+root@master:~/app/helm#
+
+root@master:~/app/helm# helm ls
+NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
+root@master:~/app/helm#
+
+### It's time to create the chart
