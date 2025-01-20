@@ -87,12 +87,52 @@ STEPS:
 3. Find the helm binary in the unpacked directory, and move it to its desired destination (mv linux-amd64/helm /usr/local/bin/helm)
 
 
+
+root@master:~# wget https://github.com/helm/helm/archive/refs/tags/v3.17.0.tar.gz
+--2025-01-20 16:09:08--  https://github.com/helm/helm/archive/refs/tags/v3.17.0.tar.gz
+Resolving github.com (github.com)... 140.82.113.4
+Connecting to github.com (github.com)|140.82.113.4|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://codeload.github.com/helm/helm/tar.gz/refs/tags/v3.17.0 [following]
+--2025-01-20 16:09:08--  https://codeload.github.com/helm/helm/tar.gz/refs/tags/v3.17.0
+Resolving codeload.github.com (codeload.github.com)... 140.82.113.10
+Connecting to codeload.github.com (codeload.github.com)|140.82.113.10|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/x-gzip]
+Saving to: ‘v3.17.0.tar.gz’
+
+v3.17.0.tar.gz                             [ <=>                                                                         ] 729.86K  4.03MB/s    in 0.2s
+
+2025-01-20 16:09:08 (4.03 MB/s) - ‘v3.17.0.tar.gz’ saved [747381]
+
+root@master:~# ls
+apache.yaml  app  install.sh  pvc.yaml  snap  v3.17.0.tar.gz
+root@master:~# tar -xvzf v3.17.0.tar.gz
+helm-3.17.0/
+helm-3.17.0/.github/...................
+
+root@master:~# ls
+apache.yaml  app  helm-3.17.0  install.sh  pvc.yaml  snap  v3.17.0.tar.gz
+
+root@master:~# mv helm-3.17.0/ /usr/bin/
+root@master:~# cd /usr/bin
+root@master:/usr/bin#
+root@master:/usr/bin# cd helm-3.17.0
+
+root@master:/usr/bin/helm-3.17.0# ls
+ADOPTERS.md  code-of-conduct.md  go.mod  internal  LICENSE   OWNERS  README.md  SECURITY.md
+cmd          CONTRIBUTING.md     go.sum  KEYS      Makefile  pkg     scripts    testdata
+
+root@master:/usr/bin/helm-3.17.0# cd scripts/
+root@master:/usr/bin/helm-3.17.0/scripts# ls
+coverage.sh  get  get-helm-3  release-notes.sh  sync-repo.sh  util.sh  validate-license.sh
 root@master:/usr/bin/helm-3.17.0/scripts# ./get-helm-3
 [WARNING] Could not find git. It is required for plugin installation.
 Downloading https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz
 Verifying checksum... Done.
 Preparing to install helm into /usr/local/bin
-helm installed into /usr/local/bin/helm
+helm installed into /usr/local/bin/helm.....................
+
 root@master:/usr/bin/helm-3.17.0/scripts# helm
 The Kubernetes package manager
 
@@ -197,6 +237,310 @@ Flags:
       --repository-config string        path to the file containing repository names and URLs (default "/root/.config/helm/repositories.yaml")
 
 Use "helm [command] --help" for more information about a command.
+
 root@master:/usr/bin/helm-3.17.0/scripts# helm version
 version.BuildInfo{Version:"v3.17.0", GitCommit:"301108edc7ac2a8ba79e4ebf5701b0b6ce6a31e4", GitTreeState:"clean", GoVersion:"go1.23.4"}
 root@master:/usr/bin/helm-3.17.0/scripts#
+------------------ INSTLLATION COMPLETED -----------------------------
+
+### understanding artifacthub.io
+just like the dockerhub, we called our docker container images from the dockerhub repositories. 
+In Helm we have artifact, a artifactory reposit through which we can install and upload our charts in HELM .
+https://artifacthub.io/
+we can find different pre-created charts of your application that are available. 
+- search for 
+    mysql 
+      https://artifacthub.io/packages/helm/wso2/mysql
+- click on the install
+- you can also check the template, in this template it will be telling you what are all the values that can be passed to the object which is packaged in the chart.
+  you will have config maps, deployments, secrets, pods etc that you can pass
+
+default means: this is the values that are in the yaml file, how values are getting passed into those objects which is mentioned into the templates 
+
+
+### Checking repository
+root@master:~/app# mkdir helm
+root@master:~/app# cd helm
+root@master:~/app/helm# helm repo ls
+Error: no repositories to show
+
+### Adding Bitnami repoistory
+### go on the artifacthub.io --> click on any image that you want --> click on the install --> you will see the command to add the repoistory on your system:
+root@master:~/app/helm# helm repo add bitnami https://charts.bitnami.com/bitnami
+"bitnami" has been added to your repositories
+root@master:~/app/helm#
+
+root@master:~/app/helm#
+root@master:~/app/helm# helm repo list  <--------------------
+NAME    URL
+bitnami https://charts.bitnami.com/bitnami
+root@master:~/app/helm#
+
+### command to remove the repoitory from the repo list
+root@master:~/app/helm# helm repo rm <to remove the repositoies> 
+
+### How to search the packages through the terminal
+root@master:~/app/helm# helm search hub mysql
+URL                                                     CHART VERSION   APP VERSION             DESCRIPTION
+https://artifacthub.io/packages/helm/ygqygq2/mysql      9.5.0           8.0.32                  MySQL is a fast, reliable, scalable, and easy t...
+https://artifacthub.io/packages/helm/dify-tidb/...      11.1.17         8.4.2                   MySQL is a fast, reliable, scalable, and easy t...
+https://artifacthub.io/packages/helm/cloudnativ...      5.0.1           8.0.16                  Chart to create a Highly available MySQL cluster
+https://artifacthub.io/packages/helm/kubegems/m...      8.9.6           8.0.29                  MySQL is a fast, reliable, scalable, and easy t...
+https://artifacthub.io/packages/helm/stakater/m...      1.0.6                                   mysql chart that runs on kubernetes
+https://artifacthub.io/packages/helm/bitnami-ak...      9.4.3           8.0.31                  MySQL is a fast, reliable, scalable, and easy t...
+https://artifacthub.io/packages/helm/warjiang/m...      9.10.5          8.0.33                  MySQL is a fast, reliable, scalable, and easy t...
+https://artifacthub.io/packages/helm/kubesphere...      1.0.2           5.7.33                  High Availability MySQL Cluster, Open Source.
+https://artifacthub.io/packages/helm/choerodon/...      8.5.1           8.5.1                   Chart to create a Highly available MySQL cluster
+https://artifacthub.io/packages/helm/groundhog2...      3.0.1           8.4.3                   A Helm chart for MySQL on Kubernetes
+...
+
+### Older version of package in local repo and updating the repo to get the new package version
+"Whenever you add a new repository, it might be pointing to an older version of the package. To ensure you're getting the latest version, you need to update the repository.
+For example, if you're running an older version of SQL and want to upgrade to the latest version available in the Bitnami repository, you'll need to update your repository list.
+If you don't update the repository, you'll continue receiving the older version of SQL because the current repository in your list is linked to the older version."
+
+root@master:~/app/helm# helm repo list
+NAME    URL
+bitnami https://charts.bitnami.com/bitnami
+root@master:~/app/helm# helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "bitnami" chart repository
+Update Complete. ⎈Happy Helming!⎈
+root@master:~/app/helm#
+
+
+### instead of hub, if we want to search for the mysql throught the local bitnami repo 
+### this repo will be searching for the mysql through the local bitnami repo
+root@master:~/app/helm# helm search repo mysql
+NAME                    CHART VERSION   APP VERSION     DESCRIPTION
+bitnami/mysql           12.2.1          8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/phpmyadmin      18.1.1          5.2.1           phpMyAdmin is a free software tool written in P...
+bitnami/mariadb         20.2.1          11.4.4          MariaDB is an open source, community-developed ...
+bitnami/mariadb-galera  14.1.2          11.4.4          MariaDB Galera is a multi-primary database clus...
+root@master:~/app/helm#
+
+### through this command I can find more specific mysql version through the bitnami repository on artifacthub.io
+root@master:~/app/helm# helm search repo -l bitnami/mysql
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+bitnami/mysql   12.2.1          8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   12.2.0          8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   12.1.0          8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   12.0.1          8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   12.0.0          8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.20         8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.19         8.4.3           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.18         8.4.2           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.17         8.4.2           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.16         8.4.2           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.15         8.4.2           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.14         8.4.2           MySQL is a fast, reliable, scalable, and easy t...
+bitnami/mysql   11.1.13         8.4.2           MySQL is a fast, reliable, scalable, and easy t...
+...
+
+### we want to install 
+command action name repo
+root@master:~/app/helm# helm install myappdb bitnami/mysql
+NAME: myappdb
+LAST DEPLOYED: Mon Jan 20 17:44:31 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CHART NAME: mysql
+CHART VERSION: 12.2.1
+APP VERSION: 8.4.3
+
+Did you know there are enterprise versions of the Bitnami catalog? For enhanced secure software supply chain features, unlimited pulls from Docker, LTS support, or application customization, see Bitnami Premium or Tanzu Application Catalog. See https://www.arrow.com/globalecs/na/vendors/bitnami for more information.
+
+** Please be patient while the chart is being deployed **
+
+Tip:
+
+  Watch the deployment status using the command: kubectl get pods -w --namespace default
+
+Services:
+
+  echo Primary: myappdb-mysql.default.svc.cluster.local:3306
+
+Execute the following to get the administrator credentials:
+
+  echo Username: root
+  MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace default myappdb-mysql -o jsonpath="{.data.mysql-root-password}" | base64 -d)
+
+To connect to your database:
+
+  1. Run a pod that you can use as a client:
+
+      kubectl run myappdb-mysql-client --rm --tty -i --restart='Never' --image  docker.io/bitnami/mysql:8.4.3-debian-12-r5 --namespace default --env MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD --command -- bash
+
+  2. To connect to primary service (read/write):
+
+      mysql -h myappdb-mysql.default.svc.cluster.local -uroot -p"$MYSQL_ROOT_PASSWORD"
+
+
+
+
+
+
+WARNING: There are "resources" sections in the chart not set. Using "resourcesPreset" is not recommended for production. For production installations, please set the following values according to your workload needs:
+  - primary.resources
+  - secondary.resources
++info https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+root@master:~/app/helm#
+
+
+### This command will tell you, which helms packages currently are running on the k8s cluster
+root@master:~/app/helm# helm ls
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+myappdb default         1               2025-01-20 17:44:31.594200553 -0500 EST deployed        mysql-12.2.1    8.4.3
+root@master:~/app/helm#
+
+
+### whichever objects will be created by the helm, the naming conventions will be added 
+root@master:~/app/helm# kubectl get all
+NAME                        READY   STATUS    RESTARTS   AGE
+pod/mango-b74bdd8c5-4lv78   1/1     Running   1          28h
+pod/myappdb-mysql-0         0/1     Pending   0          3m52s
+
+NAME                             TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+service/kubernetes               ClusterIP   10.96.0.1     <none>        443/TCP    63d
+service/mango                    ClusterIP   10.102.76.4   <none>        80/TCP     28h
+service/myappdb-mysql            ClusterIP   10.99.5.133   <none>        3306/TCP   3m52s
+service/myappdb-mysql-headless   ClusterIP   None          <none>        3306/TCP   3m52s
+
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mango   1/1     1            1           28h
+
+NAME                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/mango-b74bdd8c5   1         1         1       28h
+
+NAME                             READY   AGE
+statefulset.apps/myappdb-mysql   0/1     3m52s
+
+NAME                                             REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/mydep        Deployment/mydep        <unknown>/75%   3         10        3          19d
+horizontalpodautoscaler.autoscaling/php-apache   Deployment/php-apache   0%/50%          1         10        1          19d
+root@master:~/app/helm#
+
+### it is currently in pending, need to define the storage class. Our storage class is local
+root@master:~/app/helm# kubectl describe pod myappdb-mysql-0
+Name:             myappdb-mysql-0
+Namespace:        default
+Priority:         0
+Service Account:  myappdb-mysql
+Node:             <none>
+Labels:           app.kubernetes.io/component=primary
+                  app.kubernetes.io/instance=myappdb
+                  app.kubernetes.io/managed-by=Helm
+                  app.kubernetes.io/name=mysql
+                  app.kubernetes.io/part-of=mysql
+                  app.kubernetes.io/version=8.4.3
+                  apps.kubernetes.io/pod-index=0
+                  controller-revision-hash=myappdb-mysql-6856c9496c
+                  helm.sh/chart=mysql-12.2.1
+                  statefulset.kubernetes.io/pod-name=myappdb-mysql-0
+Annotations:      checksum/configuration: d050cc8ccec3bcff73c598650429745bf4b8e0cfe8cc1fca2c2836756ee6c002
+Status:           Pending
+IP:
+IPs:              <none>
+Controlled By:    StatefulSet/myappdb-mysql
+Init Containers:
+  preserve-logs-symlinks:
+    Image:           docker.io/bitnami/mysql:8.4.3-debian-12-r5
+    Port:            <none>
+    Host Port:       <none>
+    SeccompProfile:  RuntimeDefault
+    Command:
+      /bin/bash
+    Args:
+      -ec
+      #!/bin/bash
+
+      . /opt/bitnami/scripts/libfs.sh
+      # We copy the logs folder because it has symlinks to stdout and stderr
+      if ! is_dir_empty /opt/bitnami/mysql/logs; then
+        cp -r /opt/bitnami/mysql/logs /emptydir/app-logs-dir
+      fi
+
+    Limits:
+      cpu:                750m
+      ephemeral-storage:  2Gi
+      memory:             768Mi
+    Requests:
+      cpu:                500m
+      ephemeral-storage:  50Mi
+      memory:             512Mi
+    Environment:          <none>
+    Mounts:
+      /emptydir from empty-dir (rw)
+Containers:
+  mysql:
+    Image:           docker.io/bitnami/mysql:8.4.3-debian-12-r5
+    Port:            3306/TCP
+    Host Port:       0/TCP
+    SeccompProfile:  RuntimeDefault
+    Limits:
+      cpu:                750m
+      ephemeral-storage:  2Gi
+      memory:             768Mi
+    Requests:
+      cpu:                500m
+      ephemeral-storage:  50Mi
+      memory:             512Mi
+    Liveness:             exec [/bin/bash -ec password_aux="${MYSQL_ROOT_PASSWORD:-}"
+if [[ -f "${MYSQL_ROOT_PASSWORD_FILE:-}" ]]; then
+    password_aux=$(cat "$MYSQL_ROOT_PASSWORD_FILE")
+fi
+mysqladmin status -uroot -p"${password_aux}"
+] delay=5s timeout=1s period=10s #success=1 #failure=3
+    Readiness:  exec [/bin/bash -ec password_aux="${MYSQL_ROOT_PASSWORD:-}"
+if [[ -f "${MYSQL_ROOT_PASSWORD_FILE:-}" ]]; then
+    password_aux=$(cat "$MYSQL_ROOT_PASSWORD_FILE")
+fi
+mysqladmin ping -uroot -p"${password_aux}" | grep "mysqld is alive"
+] delay=5s timeout=1s period=10s #success=1 #failure=3
+    Startup:  exec [/bin/bash -ec password_aux="${MYSQL_ROOT_PASSWORD:-}"
+if [[ -f "${MYSQL_ROOT_PASSWORD_FILE:-}" ]]; then
+    password_aux=$(cat "$MYSQL_ROOT_PASSWORD_FILE")
+fi
+mysqladmin ping -uroot -p"${password_aux}" | grep "mysqld is alive"
+] delay=15s timeout=1s period=10s #success=1 #failure=10
+    Environment:
+      BITNAMI_DEBUG:        false
+      MYSQL_ROOT_PASSWORD:  <set to the key 'mysql-root-password' in secret 'myappdb-mysql'>  Optional: false
+      MYSQL_ENABLE_SSL:     no
+      MYSQL_PORT:           3306
+      MYSQL_DATABASE:       my_database
+    Mounts:
+      /bitnami/mysql from data (rw)
+      /opt/bitnami/mysql/conf from empty-dir (rw,path="app-conf-dir")
+      /opt/bitnami/mysql/conf/my.cnf from config (rw,path="my.cnf")
+      /opt/bitnami/mysql/logs from empty-dir (rw,path="app-logs-dir")
+      /opt/bitnami/mysql/tmp from empty-dir (rw,path="app-tmp-dir")
+      /tmp from empty-dir (rw,path="tmp-dir")
+Conditions:
+  Type           Status
+  PodScheduled   False
+Volumes:
+  data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  data-myappdb-mysql-0
+    ReadOnly:   false
+  config:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      myappdb-mysql
+    Optional:  false
+  empty-dir:
+    Type:        EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:
+    SizeLimit:   <unset>
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age                  From               Message
+  ----     ------            ----                 ----               -------
+  Warning  FailedScheduling  48s (x2 over 5m53s)  default-scheduler  0/3 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling..
+root@master:~/app/helm#
