@@ -1,0 +1,42 @@
+###  how do you download the packages on linux? 
+through tar files
+through curl 
+through apt on debain or yum/dnf on the fedora based linux 
+
+apt-install apache2 -y 
+  if you are downloading through the tar file then you will be sorting everything. Example: 
+  you will be downloading the daemons and starting them and their services binaries and the dependencies, you will have to take care of all the steps 
+but with the apt install apache -y all the dependencies are already places in the repositories and are resolved with just one command to install the apache
+
+package installers makes the installation process easy. 
+Similarly in the k8s, to deploy our application we are making so many types of the yaml files to deploy the application. 
+You might be having 
+deployment.yaml
+config.yaml
+secret.yaml
+ingress.yaml 
+serviceclusterIp.yaml
+just few I am talking about for example, when you are talking about on the enterprise level there will be so many of the yaml files. 
+
+Now thing that you want to deploy an application in one of the environment. I want to install currently in UAT
+I already tested in Dev environment and I want to deploy into the UAT environment, I can keep this yaml file on the centralized repository on the github,
+I can just do the git clone, then I will do something like 
+
+kubectl create -f . 
+Now after sometime, I want to move it to the Prod or some other environment, I will be calling this from the centralized repository gitclone 
+and re-apply
+
+you know what happens is that, in different environments we might need different settings and the process above might not work. 
+example in DEV I have different requirements like different cpu memory replica environment in DEV and UAT I might have different requirements. 
+
+
+In Pre-Prod I might have different requirements that I will have to do. 
+If this is the case 
+
+It will be problamatic if I have different environments and each environment have different requirements,
+and for each environments I will have to keep seperate repositories and same file 
+in this case it will cause a lot of issues. And if there are secrets involved then I cant keep them on the repositories. I will have to dynamically define the values. 
+
+
+
+
