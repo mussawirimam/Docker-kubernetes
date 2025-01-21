@@ -592,4 +592,32 @@ root@master:~/app/helm# helm ls
 NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
 root@master:~/app/helm#
 
-### It's time to create the chart
+
+######### Chart STructure / Directory Tree
+### skeleton of the helm chart, 
+ChartStructure /Director Tree
+root@master:~/app/helm# helm create mychart
+Creating mychart
+root@master:~/app/helm# ls
+mychart
+root@master:~/app/helm# tree mychart/
+mychart/     ------------------- Top Level Dir.
+├── charts     ----------------- Chart dependendies
+├── Chart.yaml  ----------------- Meta information about Chart
+├── templates  ------------------ Actual deployment template
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt    ------------------ Notes is the message that it shows after installation 
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests      ------------------ testing you want performance, you can create it here.
+│       └── test-connection.yaml
+└── values.yaml    ----------------- Values for templates
+
+4 directories, 10 files
+root@master:~/app/helm#
+
+
+############It's time to create the chart
