@@ -252,6 +252,9 @@ root@manager:~#
 
 
 ===== APPLY POD NETWORK CNI =====
+### official documentation page: There are multiple ways the calico plugin can be install, we are using the on-premise calico plugin 
+### https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises
+
 ## Q which pod network we will be installing? 4
 ## Q what is Calico? A: Calico is an overlay network like flannel but comes with more features
 
