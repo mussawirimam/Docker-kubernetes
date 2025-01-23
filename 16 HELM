@@ -114,7 +114,7 @@ COMPONENT
 Helm Client/Binary----------------->Chart------------------------------------->Repositories----------------------->Release
 it will alow to communicate k8s      Collection of applciation YML files        To store and manage Charts            Deployment of charts in k8s cluster
 
-### HELM INSTALLATION: 
+============= HELM Installation =================
 https://helm.sh/docs/intro/install/
 ### we are going to install the helm through the TAR
 STEPS:
