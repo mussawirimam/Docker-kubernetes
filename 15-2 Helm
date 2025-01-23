@@ -1,7 +1,9 @@
+Helm create mychat
+
 ### we are deleting these charts because:
 
-root@master:~/app/helm# tree mychart/
-mychart/
+root@master:~/app/helm# tree mychat/
+mychat/
 ├── charts
 ├── Chart.yaml
 ├── templates
@@ -19,17 +21,46 @@ mychart/
 
 ### we are removing some of the files, because we will be creating our own chart.
 4 directories, 10 files
-root@master:~/app/helm# rm mychart/templates/_helpers.tpl
-root@master:~/app/helm# rm mychart/templates/service.yaml
-root@master:~/app/helm# rm mychart/templates/serviceaccount.yaml
-root@master:~/app/helm# rm mychart/templates/hpa.yaml
-root@master:~/app/helm# rm mychart/templates/tests/
-rm: cannot remove 'mychart/templates/tests/': Is a directory
+root@master:~/app/helm# rm mychat/templates/_helpers.tpl
+root@master:~/app/helm# rm mychat/templates/service.yaml
+root@master:~/app/helm# rm mychat/templates/serviceaccount.yaml
+root@master:~/app/helm# rm mychat/templates/hpa.yaml
+root@master:~/app/helm# rm mychat/templates/tests/
+rm: cannot remove 'mychat/templates/tests/': Is a directory
 root@master:~/app/helm# ls 
 
+### Copy the content of the deployment file and put it inside the deployment.yaml file within the mychart file
+remove everything from the file and paste below inside it.
+
+root@master:~/app/helm# vi mychat/templates/deployment.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydep
+spec:
+  replicas: 3
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
+
+
+
+
 ### we are left with these files, we are doing this so that we can create our own chart 
-root@master:~/app/helm# tree mychart/
-mychart/
+root@master:~/app/helm# tree mychat/
+mychat/
 ├── charts
 ├── Chart.yaml
 ├── templates
@@ -42,8 +73,11 @@ mychart/
 root@master:~/app/helm#
 
 
-### moved ingress to the / since I was having issues at the deployment
-root@master:~/app/helm/mychart# tree
+
+### moved ingress to the /tmp since I was having issues at the deployment
+root@master:~/app/helm/mychat/templates# mv ingress.yaml /tmp/
+
+root@master:~/app/helm/mychat# tree
 .
 ├── charts
 ├── Chart.yaml
@@ -54,11 +88,61 @@ root@master:~/app/helm/mychart# tree
 
 3 directories, 4 files
 
+### we modified the NOTES.text to:
+root@master:~/app/helm/mychat/templates# cat NOTES.txt
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm/mychat/templates#
 ### we want to keep the ingress, because we want to keep some of the things from the ingress.yaml file.
 
 
 ### if you want to do the quick deployment using helm and you dont have enough time to convert it into the template. 
 # Create a skeleton, place all those yaml files into template directory and you can install it. 
 # dont do the this in your project, if you are not converting yaml to the helm it can cause escalations. 
+
+root@master:~/app/helm# helm install myapp mychat/
+NAME: myapp
+LAST DEPLOYED: Wed Jan 22 22:18:18 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+
+
+root@master:~/app/helm# helm ls
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+myapp   default         1               2025-01-22 22:18:18.749870971 -0500 EST deployed        mychat-0.1.0    1.16.0
+root@master:~/app/helm#
+root@master:~/app/helm#
+
+### you cannnot relate name that your helm is having and the deployment is having a different name and similarly your pod which helm deployment is having is named diffrently
+root@master:~/app/helm# kubectl get deployment
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+mydep   3/3     3            3           60s
+root@master:~/app/helm#
+
+
+### Built-in Objects: https://helm.sh/docs/chart_template_guide/builtin_objects/
+If you open the deployment.yaml, file you will see that the the names are mentioned 
+Why this is happening is because we mentioned our plain deployment file. and in this in yaml file, we have mentioned the name of the deployment mydep
+We are having something in helm called builtin objects. These are the objects that can call the Release.Names. To use this Release.Name builtin object, what will happen
+is whatever name you are defining during the helm install that will be picked up there.
+
+
 
 
