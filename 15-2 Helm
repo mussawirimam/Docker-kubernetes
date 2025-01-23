@@ -1,0 +1,64 @@
+### we are deleting these charts because:
+
+root@master:~/app/helm# tree mychart/
+mychart/
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+
+
+### we are removing some of the files, because we will be creating our own chart.
+4 directories, 10 files
+root@master:~/app/helm# rm mychart/templates/_helpers.tpl
+root@master:~/app/helm# rm mychart/templates/service.yaml
+root@master:~/app/helm# rm mychart/templates/serviceaccount.yaml
+root@master:~/app/helm# rm mychart/templates/hpa.yaml
+root@master:~/app/helm# rm mychart/templates/tests/
+rm: cannot remove 'mychart/templates/tests/': Is a directory
+root@master:~/app/helm# ls 
+
+### we are left with these files, we are doing this so that we can create our own chart 
+root@master:~/app/helm# tree mychart/
+mychart/
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── ingress.yaml
+│   └── NOTES.txt
+└── values.yaml
+
+3 directories, 5 files
+root@master:~/app/helm#
+
+
+### moved ingress to the / since I was having issues at the deployment
+root@master:~/app/helm/mychart# tree
+.
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   └── NOTES.txt
+└── values.yaml
+
+3 directories, 4 files
+
+### we want to keep the ingress, because we want to keep some of the things from the ingress.yaml file.
+
+
+### if you want to do the quick deployment using helm and you dont have enough time to convert it into the template. 
+# Create a skeleton, place all those yaml files into template directory and you can install it. 
+# dont do the this in your project, if you are not converting yaml to the helm it can cause escalations. 
+
+
