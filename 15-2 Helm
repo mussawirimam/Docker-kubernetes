@@ -140,9 +140,314 @@ root@master:~/app/helm#
 ### Built-in Objects: https://helm.sh/docs/chart_template_guide/builtin_objects/
 If you open the deployment.yaml, file you will see that the the names are mentioned 
 Why this is happening is because we mentioned our plain deployment file. and in this in yaml file, we have mentioned the name of the deployment mydep
-We are having something in helm called builtin objects. These are the objects that can call the Release.Names. To use this Release.Name builtin object, what will happen
+We have something in helm called builtin objects. These are the objects that can call the Release.Names. To use this Release.Name builtin object, what will happen
 is whatever name you are defining during the helm install that will be picked up there.
 
+root@master:~# helm uninstall myapp
+release "myapp" uninstalled
+root@master:~#
+
+### before Release.Name builtin object added.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydep
+spec:
+  replicas: 3
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
 
 
 
+### After Release.Name builtin object added.
+root@master:~/app/helm# vi mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ Release.Name }}    <----------------- this is coming from the builtin objects mentioned in the docs. https://helm.sh/docs/chart_template_guide/builtin_objects/
+spec:
+  replicas: 3
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+root@master:~/app/helm# helm install myapp mychat/
+Error: INSTALLATION FAILED: parse error at (mychat/templates/deployment.yaml:4): function "Release" not defined
+root@master:~/app/helm#
+
+# i forgot to add the . infront of the release
+kind: Deployment
+metadata:
+  name: {{ [Release.Name }}  <----------- add the . before the Release.Name in the deployment.yaml file and then re-deploy the helm 
+root@master:~/app/helm# vi mychat/templates/deployment.yaml
+root@master:~/app/helm# helm install myapp mychat/
+NAME: myapp
+LAST DEPLOYED: Thu Jan 23 07:42:49 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm#
+
+root@master:~/app/helm# helm ls
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+myapp   default         1               2025-01-23 07:42:49.112027018 -0500 EST deployed        mychat-0.1.0    1.16.0
+root@master:~/app/helm#
+
+### Now if you see the deploymemt is having the similar name as the helm 
+root@master:~/app/helm# kubectl get deployments.apps
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+myapp   3/3     3            3           32s
+root@master:~/app/helm#
+
+### Look the pod is also having the similar naming convention as mentioned in our helm chart
+root@master:~/app/helm# kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+myapp-76449b474c-6ngfj   1/1     Running   0          3m7s
+myapp-76449b474c-gtfd6   1/1     Running   0          3m7s
+myapp-76449b474c-zthj9   1/1     Running   0          3m7s
+newpod                   1/1     Running   0          31h
+root@master:~/app/helm#
+
+
+======================= defining values in values.yaml file and calling it from the deployment.yaml file ==========================
+###
+root@master:~/app/helm#  helm uninstall myapp
+release "myapp" uninstalled
+root@master:~/app/helm#
+
+### Lets figure out the values.yaml file.
+root@master:~/app/helm# cat mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: 3  <----------- can be defined in the values.yaml 
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:    <------------- containers settings can be defined in the values.yaml file.
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+root@master:~/app/helm#
+
+### when it comes to label or some brutanic logic that you want to implement if else loop or something... that is something that you will define in the _helper.pel. That is a lesson for another day, 
+right now we are going to dive into the takes values from the deployment.yaml and put it inside the values.yaml file. 
+### I want o move the replicas from the deployment.yaml and put it inside the yaml file and call it the values from the values.yaml file into the deployment.yaml file.
+
+once the values have been defined in the values.yaml, then you should point the values inside the deployment.yaml file. 
+example:
+deployment.yaml file 
+replicas: {{ .Values.replica }}
+
+values.yaml
+replica: 4
+
+### you can also do the debug using the helm and dry run it if you dont want the chart to be installed before hand 
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-23 08:06:25.290955215 -0500 EST m=+0.150428752 [debug] Original chart version: ""
+install.go:242: 2025-01-23 08:06:25.293558103 -0500 EST m=+0.153031593 [debug] CHART PATH: /root/app/helm/mychat
+
+NAME: myapp
+LAST DEPLOYED: Thu Jan 23 08:06:25 2025
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+replicas: 4
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas:
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm#
+
+### I want to define the container name from the values.yaml file inside the deployment.yaml file 
+
+# before changes to the deployment.yaml file and values.yaml file
+root@master:~/app/helm# cat mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: con1
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+root@master:~/app/helm#
+
+root@master:~/app/helm# cat mychat/values.yaml
+replicas: 4
+
+root@master:~/app/helm#
+
+###after the changes to the deployment.yaml file and the values.yaml file 
+root@master:~/app/helm# vi mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+~               
+
+root@master:~/app/helm# vi mychat/values.yaml
+replicas: 4
+
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+~            
+
+### lets do the debug with dry run
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-23 08:16:47.963153973 -0500 EST m=+0.132803897 [debug] Original chart version: ""
+install.go:242: 2025-01-23 08:16:47.963753456 -0500 EST m=+0.133403368 [debug] CHART PATH: /root/app/helm/mychat
+
+NAME: myapp
+LAST DEPLOYED: Thu Jan 23 08:16:48 2025
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+replicas: 4
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas:
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp   #reason for that is that whenever your pod deployment is created, it creates the replicaSet in the background and this replicaset id xyz>
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: blacon
+        image: httpd:latest
+        ports:
+        - containerPort: 80
+
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm#
+
+
+=================== Calling the label with from _workers.tpl file inside the deployment.yaml file. ===========================
+### in deployment the labels should be added inside the _helper.tpl and should be added inside the deployment.yaml file as the call, label should be calling from the _helpers.tpl to deployment.yaml file.
