@@ -1,0 +1,10 @@
+root@master:~/app/helm# tree
+.
+└── mychat
+    ├── charts
+    ├── Chart.yaml
+    ├── templates
+    │   ├── deployment.yaml
+    │   ├── _helpers.tpl
+    │   └── NOTES.txt
+    └── values.yaml
