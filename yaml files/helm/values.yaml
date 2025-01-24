@@ -1,0 +1,7 @@
+### these are the values that gets called inside the deployment file
+replicas: 4
+
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
