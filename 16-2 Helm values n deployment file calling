@@ -451,3 +451,203 @@ root@master:~/app/helm#
 
 =================== Calling the label with from _workers.tpl file inside the deployment.yaml file. ===========================
 ### in deployment the labels should be added inside the _helper.tpl and should be added inside the deployment.yaml file as the call, label should be calling from the _helpers.tpl to deployment.yaml file.
+### we will take the file deployment file and call the label from the _helpers.tpl file
+# before calling the label from the _helpers.tpl 
+root@master:~/app/helm# vi mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels: #in deployment you will not see problems in replicaset or replicationcontroller
+      app: myapp <--------------- we will be adding this in the _helpers.tpl file and calling it from there   
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+
+### Adding the content of the _helpers.tpl file to call it from the deployment.yaml file
+root@master:~/app/helm# vi mychat/templates/_helpers.tpl
+{{- define "appdep.labels" -}}
+app: myapp
+{{- end }}     
+
+### calling the label inside the deployment file 
+root@master:~/app/helm# vi mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels: 
+      {{ include "appdep.labels"}}    <---------------- this is how we call the labels from the _helpers.tpl file 
+      app: myapp <--------------- we will be adding this in the _helpers.tpl file and calling it from there   
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+
+root@master:~/app/helm# helm install --debug --dry-run
+Error: "helm install" requires at least 1 argument
+
+Usage:  helm install [NAME] [CHART] [flags]
+helm.go:86: 2025-01-23 18:51:54.961906117 -0500 EST m=+0.160951397 [debug] "helm install" requires at least 1 argument
+
+Usage:  helm install [NAME] [CHART] [flags]
+main.newInstallCmd.MinimumNArgs.func3
+        helm.sh/helm/v3/cmd/helm/require/args.go:71
+github.com/spf13/cobra.(*Command).ValidateArgs
+        github.com/spf13/cobra@v1.8.1/command.go:1145
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.8.1/command.go:938
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.8.1/command.go:1117
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.8.1/command.go:1041
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:85
+runtime.main
+        runtime/proc.go:272
+runtime.goexit
+        runtime/asm_amd64.s:1700
+root@master:~/app/helm#
+
+### we are missing an argument in deployment.yaml file... the (.) means the present working directory location
+root@master:~/app/helm# vi mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels: 
+      {{ include "appdep.labels" . }}    <---------------- this is how we call the labels from the _helpers.tpl file # the dot before the end bracket is to specify in whcih location 
+      app: myapp <--------------- we will be adding this in the _helpers.tpl file and calling it from there   
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+
+
+root@master:~/app/helm# helm install --debug --dry-run
+Error: "helm install" requires at least 1 argument
+
+Usage:  helm install [NAME] [CHART] [flags]
+helm.go:86: 2025-01-23 18:59:15.940880449 -0500 EST m=+0.148088852 [debug] "helm install" requires at least 1 argument
+
+Usage:  helm install [NAME] [CHART] [flags]
+main.newInstallCmd.MinimumNArgs.func3
+        helm.sh/helm/v3/cmd/helm/require/args.go:71
+github.com/spf13/cobra.(*Command).ValidateArgs
+        github.com/spf13/cobra@v1.8.1/command.go:1145
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.8.1/command.go:938
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.8.1/command.go:1117
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.8.1/command.go:1041
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:85
+runtime.main
+        runtime/proc.go:272
+runtime.goexit
+        runtime/asm_amd64.s:1700
+
+### So the issue is since I am calling the label from the _helpers.tpl file, I removed the labels from the deployment file check the above files for the comparison
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels:
+      {{ include "appdep.labels" . }}
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+
+
+### Now this worked because the syntax is properly mentioned and calling is being done properly from the two files'
+### which is your values.yaml file and _helpers.tpl file
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-23 19:12:58.06806059 -0500 EST m=+0.122057084 [debug] Original chart version: ""
+install.go:242: 2025-01-23 19:12:58.06854299 -0500 EST m=+0.122539451 [debug] CHART PATH: /root/app/helm/mychat
+
+NAME: myapp
+LAST DEPLOYED: Thu Jan 23 19:12:58 2025
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+replicas: 4
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: blacon
+        image: httpd:latest
+        ports:
+        - containerPort: 80
+
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm#
