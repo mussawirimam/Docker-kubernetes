@@ -489,7 +489,7 @@ spec:
   replicas: {{ .Values.replica }}
   selector:
     matchLabels: 
-      {{ include "appdep.labels"}}    <---------------- this is how we call the labels from the _helpers.tpl file 
+      {{- include "appdep.labels" . | nindent 8 }} ## indent is 8, because if you count the white spaces before the brackets it will be 8 whitescpaces   <---------------- this is how we call the labels from the _helpers.tpl file 
       app: myapp <--------------- we will be adding this in the _helpers.tpl file and calling it from there   
     metadata:
       labels:
@@ -536,7 +536,7 @@ spec:
   replicas: {{ .Values.replica }}
   selector:
     matchLabels: 
-      {{ include "appdep.labels" . }}    <---------------- this is how we call the labels from the _helpers.tpl file # the dot before the end bracket is to specify in whcih location 
+      {{- include "appdep.labels" . | nindent 8 }} ## indent is 8, because if you count the white spaces before the brackets it will be 8 whitescpaces    <---------------- this is how we call the labels from the _helpers.tpl file # the dot before the end bracket is to specify in whcih location 
       app: myapp <--------------- we will be adding this in the _helpers.tpl file and calling it from there   
     metadata:
       labels:
@@ -574,6 +574,7 @@ runtime.goexit
         runtime/asm_amd64.s:1700
 
 ### So the issue is since I am calling the label from the _helpers.tpl file, I removed the labels from the deployment file check the above files for the comparison
+root@master:~/app/helm# cat mychat/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -582,7 +583,7 @@ spec:
   replicas: {{ .Values.replica }}
   selector:
     matchLabels:
-      {{ include "appdep.labels" . }}
+      {{- include "appdep.labels" . | nindent 8 }} ## indent is 8, because if you count the white spaces before the brackets it will be 8 whitescpaces
   template:
     metadata:
       labels:
@@ -593,6 +594,7 @@ spec:
         image: {{ .Values.app.image }}
         ports:
         - containerPort: {{ .Values.app.port }}
+root@master:~/app/helm#
 
 
 ### Now this worked because the syntax is properly mentioned and calling is being done properly from the two files'
@@ -601,56 +603,5 @@ root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
 install.go:225: 2025-01-23 19:12:58.06806059 -0500 EST m=+0.122057084 [debug] Original chart version: ""
 install.go:242: 2025-01-23 19:12:58.06854299 -0500 EST m=+0.122539451 [debug] CHART PATH: /root/app/helm/mychat
 
-NAME: myapp
-LAST DEPLOYED: Thu Jan 23 19:12:58 2025
-NAMESPACE: default
-STATUS: pending-install
-REVISION: 1
-TEST SUITE: None
-USER-SUPPLIED VALUES:
-{}
-
-COMPUTED VALUES:
-app:
-  con1: blacon
-  image: httpd:latest
-  port: 80
-replicas: 4
-
-HOOKS:
-MANIFEST:
----
-# Source: mychat/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-spec:
-  replicas:
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-    spec:
-      containers:
-      - name: blacon
-        image: httpd:latest
-        ports:
-        - containerPort: 80
-
-NOTES:
-Thank you for using our application
-for technical support visist http://www.google.com/blog
-
-To list application pods run following
-
-kubectl get pods
-
-kubectl get pods
-root@master:~/app/helm#
 
 
-### if you install it without the dry run, it will install the helm through the chart 
