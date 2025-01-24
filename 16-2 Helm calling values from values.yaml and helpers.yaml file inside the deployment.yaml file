@@ -651,3 +651,6 @@ kubectl get pods
 
 kubectl get pods
 root@master:~/app/helm#
+
+
+### if you install it without the dry run, it will install the helm through the chart 
