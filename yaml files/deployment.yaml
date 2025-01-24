@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels:
+      {{- include "appdep.labels" . | nindent 8 }} ## indent is 8, because if you count the white spaces before the brackets it will be 8 whitescpaces
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
