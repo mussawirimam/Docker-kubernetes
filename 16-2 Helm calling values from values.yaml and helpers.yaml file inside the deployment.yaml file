@@ -604,4 +604,438 @@ install.go:225: 2025-01-23 19:12:58.06806059 -0500 EST m=+0.122057084 [debug] Or
 install.go:242: 2025-01-23 19:12:58.06854299 -0500 EST m=+0.122539451 [debug] CHART PATH: /root/app/helm/mychat
 
 
+================ we are going to turn the service into the helm take an example of the if else ================ 
+# what I will do is create a service.
+### you can covert this file below from service to the template 
+root@master:~/app/helm# vi mychat/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: newpod-svc
+spec:
+  type: NodePort
+  selector:
+    app: myapp  ### <---------------- we will change this so that values.yaml so that,  _helpers.tpl can provide the parameter and service.yaml file can call it from _helpers.tpl
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30123
+
+### you can parse the name, type, and selector from service.yaml into deployment.yaml and _helpers.tpl
+root@master:~/app/helm# vi mychat/templates/deployment.yaml  ### this file has nothing to do at this point with the service file, we are just copying the syntax from here.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replica }}
+  selector:
+    matchLabels:
+      {{- include "appdep.labels" . | nindent 8 }} ### <------ we will copy this and put it inside the service file 
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: {{ .Values.app.con1 }}
+        image: {{ .Values.app.image }}
+        ports:
+        - containerPort: {{ .Values.app.port }}
+
+
+### after the changes the service file should look like this and now we will plug the appdep.labels inside the _helpers.tpl
+root@master:~/app/helm# vi mychat/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: newpod-svc
+spec:
+  type: NodePort
+  selector:
+    {{- include "appdep.labels" . | nindent 5 }} ### 5 indentations, because we have 5 white spaces
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30123
+
+
+### if this service is enabled from the values.yaml, only then it should be deployed
+### we are going to give the if statement inside the service.yaml file. And I am getting this from the ingress.yaml file which I moved it to the /tmp folder
+### for now we are going to copy the syntax from the ingress file 
+root@master:~/app/helm# ls /tmp
+dbus-TQv2N5FoXn
+ingress.yaml
+nvim.root
+snap-private-tmp
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-bluetooth.service-0nSDTA
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-colord.service-pCQOtu
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-fwupd.service-Ify0vW
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-ModemManager.service-wb1P0B
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-polkit.service-IvSvay
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-power-profiles-daemon.service-rE3dBo
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-switcheroo-control.service-aDNWb8
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-systemd-logind.service-bOiiV0
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-systemd-oomd.service-iOGPi9
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-systemd-resolved.service-07y2o7
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-systemd-timesyncd.service-n8S1Te
+systemd-private-929cfcd4beff4fff808b8b6b256e5b53-upower.service-aQmq1x
+root@master:~/app/helm# cat /tmp/
+cat: /tmp/: Is a directory
+root@master:~/app/helm# cat /tmp/ingress.yaml
+{{- if .Values.ingress.enabled -}}      ### <----------------- we are going to copy this if statement syntax and plug it inside the service.yaml file 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "mychat.fullname" . }}
+  labels:
+    {{- include "mychat.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}                          ### and we are going to copy this statement to end, put it inside the service.yaml file. 
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- with .pathType }}
+            pathType: {{ . }}
+            {{- end }}
+            backend:
+              service:
+                name: {{ include "mychat.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+root@master:~/app/helm#
+
+### {{- if .Values.app.service.enabled -}} ### after copying the syntax from ingress.yaml, we changed it to app.service. We are going to copy this and save it in the value.yaml file.
+root@master:~/app/helm# vi mychat/templates/service.yaml
+{{- if .Values.app.service.enabled -}} ### after copying the syntax from ingress.yaml, we changed it to app.service. We are going to copy this and save it in the value.yaml file.
+apiVersion: v1
+kind: Service
+metadata:
+  name: newpod-svc
+spec:
+  type: NodePort
+  selector:
+    {{- include "appdep.labels" . | nindent 5 }} ### 5 indentations, because we have 5 white spaces
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30123
+{{-end }}
+
+root@master:~/app/helm# vi mychat/templates/service.yaml
+root@master:~/app/helm# vi mychat/
+charts/      Chart.yaml   .helmignore  templates/   values.yaml
+### we added the if statement inside the service.yaml file which is stating that if the service is enabled then only deploy the file; else there will be an error. 
+root@master:~/app/helm# vi mychat/values.yaml
+replicas: 4
+
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+  service: enabled ### this is the part which is service.yaml is calling 
+
+### lets do the dry run and see what is the output we see.
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-25 21:13:00.675892572 -0500 EST m=+0.321716553 [debug] Original chart version: ""
+install.go:242: 2025-01-25 21:13:00.676679357 -0500 EST m=+0.322503291 [debug] CHART PATH: /root/app/helm/mychat
+
+Error: INSTALLATION FAILED: parse error at (mychat/templates/service.yaml:15): "-en"
+helm.go:86: 2025-01-25 21:13:00.8006113 -0500 EST m=+0.446435274 [debug] parse error at (mychat/templates/service.yaml:15): "-en"
+INSTALLATION FAILED
+main.newInstallCmd.func2
+        helm.sh/helm/v3/cmd/helm/install.go:158
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.8.1/command.go:985
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.8.1/command.go:1117
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.8.1/command.go:1041
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:85
+runtime.main
+        runtime/proc.go:272
+runtime.goexit
+        runtime/asm_amd64.s:1700
+root@master:~/app/helm#
+
+### fixing the file 
+root@master:~/app/helm# vi mychat/templates/service.yaml
+:set number
+  1 {{- if .Values.app.service.enabled -}} ### after copying the syntax from ingress.yaml, we changed it to app.service and we are going to copy this and sa    ve it in the value.yaml file.
+  2 apiVersion: v1
+  3 kind: Service
+  4 metadata:
+  5   name: newpod-svc
+  6 spec:
+  7   type: NodePort
+  8   selector:
+  9     {{- include "appdep.labels" . | nindent 5 }} ### 5 indentations, because we have 5 white spaces
+ 10   ports:
+ 11   - port: 80
+ 12     protocol: TCP
+ 13     targetPort: 80
+ 14     nodePort: 30123
+ 15 {{- end }} # <--------------- this was the issue
+
+### dry run again, we got another issue 
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-25 21:16:12.310900905 -0500 EST m=+0.264693237 [debug] Original chart version: ""
+install.go:242: 2025-01-25 21:16:12.311666044 -0500 EST m=+0.265458379 [debug] CHART PATH: /root/app/helm/mychat
+
+Error: INSTALLATION FAILED: template: mychat/templates/service.yaml:1:14: executing "mychat/templates/service.yaml" at <.Values.app.service.enabled>: can't evaluate field enabled in type interface {}
+helm.go:86: 2025-01-25 21:16:12.443621835 -0500 EST m=+0.397414140 [debug] template: mychat/templates/service.yaml:1:14: executing "mychat/templates/service.yaml" at <.Values.app.service.enabled>: can't evaluate field enabled in type interface {}
+INSTALLATION FAILED
+main.newInstallCmd.func2
+        helm.sh/helm/v3/cmd/helm/install.go:158
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.8.1/command.go:985
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.8.1/command.go:1117
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.8.1/command.go:1041
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:85
+runtime.main
+        runtime/proc.go:272
+runtime.goexit
+        runtime/asm_amd64.s:1700
+root@master:~/app/helm#
+
+### fixing the values.yaml file 
+root@master:~/app/helm# cat mychat/values.yaml
+replicas: 4
+
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+  service:
+    enabled ### I had syntax error, so I have put this in a new line ### this is the part which is service.yaml is calling
+
+### lets do the dry run again, got an error
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-25 21:19:14.534585722 -0500 EST m=+0.181918804 [debug] Original chart version: ""
+install.go:242: 2025-01-25 21:19:14.535478552 -0500 EST m=+0.182811625 [debug] CHART PATH: /root/app/helm/mychat
+
+Error: INSTALLATION FAILED: template: mychat/templates/service.yaml:1:14: executing "mychat/templates/service.yaml" at <.Values.app.service.enabled>: can't evaluate field enabled in type interface {}
+helm.go:86: 2025-01-25 21:19:14.637731769 -0500 EST m=+0.285064840 [debug] template: mychat/templates/service.yaml:1:14: executing "mychat/templates/service.yaml" at <.Values.app.service.enabled>: can't evaluate field enabled in type interface {}
+INSTALLATION FAILED
+main.newInstallCmd.func2
+        helm.sh/helm/v3/cmd/helm/install.go:158
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.8.1/command.go:985
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.8.1/command.go:1117
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.8.1/command.go:1041
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:85
+runtime.main
+        runtime/proc.go:272
+runtime.goexit
+        runtime/asm_amd64.s:1700
+root@master:~/app/helm#
+
+### fixing step: going to create another helm charter to cross verify and find out quickly what is the issue with our files. 
+### I found the cross verification file of the values from the test2 chart that the enabled should have boolean values; meaning true or false. 
+root@master:~/app# helm create test2
+Creating test2
+root@master:~/app# cd test2/
+root@master:~/app/test2# cd ..
+root@master:~/app# vi test2/values.yaml
+...
+ingress:
+  enabled: false
+...
+
+### So I have to define boolean in my values.yaml file instead of enabled 
+root@master:~/app/test2# cd ..
+root@master:~/app# cd helm/
+root@master:~/app/helm# vi mychat/values.yaml
+replicas: 4
+
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+  service:
+    enabled: true ### Boolean statement  ### I had syntax error, so I have put this in a new line ### this is the part which is service.yaml is calling
+
+### finally it worked and file is fixed and dry run shows it is deployable
+IMPORTANT:
+### Since we have defined in our values.yaml file service enabled as true... The file will be show the output in the dry run
+    ### scroll below and you will the service.yaml below and if you turn the statement into false in the values.yaml file; next time when you will do the dry run, it will not show. 
+
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-25 21:36:41.964875021 -0500 EST m=+0.190144029 [debug] Original chart version: ""
+install.go:242: 2025-01-25 21:36:41.965196646 -0500 EST m=+0.190465661 [debug] CHART PATH: /root/app/helm/mychat
+
+NAME: myapp
+LAST DEPLOYED: Sat Jan 25 21:36:42 2025
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+  service:
+    enabled: true
+replicas: 4
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychat/templates/service.yaml
+### after copying the syntax from ingress.yaml, we changed it to app.service and we are going to copy this and save it in the value.yaml file.
+apiVersion: v1
+kind: Service      <-------------------------------------------------------- this is showing right now, it will vanish from here if you turn it false
+metadata:
+  name: newpod-svc
+spec:
+  type: NodePort
+  selector:
+     app: myapp ### 5 indentations, because we have 5 white spaces
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30123
+---
+# Source: mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas:
+  selector:
+    matchLabels:
+        app: myapp ## indent is 8, because if you count the white spaces before the brackets it will be 8 whitescpaces
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: blacon
+        image: httpd:latest
+        ports:
+        - containerPort: 80
+
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm#
+
+
+### dry run again to demonstrate if you turn the service enabled false from the values.yaml file, it will not be showing during deployment which means service will not be deployed
+### adding false statement to demonstrate how it will how the chart will not deploy the service if the service enabled is false in the values.yaml file 
+### service will not be picked up during the deployment of the chart. 
+root@master:~/app/helm# vi mychat/values.yaml
+replicas: 4
+
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+  service:
+    enabled: false ### Boolean statement  ### I had syntax error, so I have put this in a new line ### this is the part which is service.yaml is calling
+
+
+### you can see now that If we do the dry run the service is not showing up in the dry run, please scroll below to see the difference. 
+root@master:~/app/helm# helm install myapp mychat/ --debug --dry-run
+install.go:225: 2025-01-25 21:47:33.913386499 -0500 EST m=+0.139370226 [debug] Original chart version: ""
+install.go:242: 2025-01-25 21:47:33.913485687 -0500 EST m=+0.139469368 [debug] CHART PATH: /root/app/helm/mychat
+
+NAME: myapp
+LAST DEPLOYED: Sat Jan 25 21:47:34 2025
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+app:
+  con1: blacon
+  image: httpd:latest
+  port: 80
+  service:
+    enabled: false
+replicas: 4
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychat/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas:
+  selector:
+    matchLabels:
+        app: myapp ## indent is 8, because if you count the white spaces before the brackets it will be 8 whitescpaces
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: blacon
+        image: httpd:latest
+        ports:
+        - containerPort: 80
+
+NOTES:
+Thank you for using our application
+for technical support visist http://www.google.com/blog
+
+To list application pods run following
+
+kubectl get pods
+
+kubectl get pods
+root@master:~/app/helm#
 
