@@ -1039,3 +1039,25 @@ kubectl get pods
 kubectl get pods
 root@master:~/app/helm#
 
+### you can go over other concepts through the helm and helm chart and helm programming through the helm docs 
+https://helm.sh/docs/chart_template_guide/getting_started/
+### this is the research you have to do on your own!!! 
+### work on the projects to get to know more.
+
+### remember these skeleton that you create with the helm create command will help you a lot 
+helm create <chartname>
+
+### how I enabled the helm auto-completion STEPS:
+root@master:~/app/helm# vi ~/.bashrc
+# autocompletion kubernetes
+source <(kubectl completion bash)
+# this will add the autocompletion to the letter k and once you press tab it will write kubectl
+alias k=kubectl
+complete -o default -F __start_kubectl k
+# autocompletion helm     ### <------------ add this line in your .bashrc file
+source <(helm completion bash)
+
+
+### then re-load with source command 
+root@master:~/app/helm# source ~/.bashrc
+root@master:~/app/helm#
