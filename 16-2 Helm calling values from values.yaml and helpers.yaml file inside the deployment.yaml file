@@ -1061,3 +1061,46 @@ source <(helm completion bash)
 ### then re-load with source command 
 root@master:~/app/helm# source ~/.bashrc
 root@master:~/app/helm#
+
+
+### I want to create a package out of this..
+### how to package our chart?
+root@master:~/app/helm# helm package mychat/
+Successfully packaged chart and saved it to: /root/app/helm/mychat-0.1.0.tgz
+root@master:~/app/helm# ls
+mychat  mychat-0.1.0.tgz
+root@master:~/app/helm# mkdir package
+root@master:~/app/helm# mv mychat-0.1.0.tgz package/
+root@master:~/app/helm#
+
+
+### whenever we are keeping the package mayebe in our github repository as our helmchart repository.
+### we should keep our index file in that, wihtout the index file it will not work be working at all. 
+### generate the index file 
+root@master:~/app/helm/package# helm repo index .
+root@master:~/app/helm/package# ls
+index.yaml  mychat-0.1.0.tgz
+root@master:~/app/helm/package#
+
+### this index file keeps the information/metadata of your chart
+root@master:~/app/helm/package# cat index.yaml
+apiVersion: v1
+entries:
+  mychat:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-01-26T15:22:37.170234356-05:00"
+    description: A Helm chart for Kubernetes
+    digest: bc401d38bb2c94999e8c4bc46bfb4114a37d26a22010ed8b8df043cc138193a7
+    name: mychat
+    type: application
+    urls:
+    - mychat-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-01-26T15:22:37.164825491-05:00"
+root@master:~/app/helm/package#
+
+### whenever you are updating or recreating the chart or package, you need to regenerate the index to keep 
+### post it to github
+
+
