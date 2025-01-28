@@ -1083,6 +1083,8 @@ index.yaml  mychat-0.1.0.tgz
 root@master:~/app/helm/package#
 
 ### this index file keeps the information/metadata of your chart
+### if you have hundreds of charts, it will be mentioned in this file
+### whenever you are updating anything on chart or package, you need to regenerate this repo index. (YOU ALWAYS HAVE TO DO THAT)
 root@master:~/app/helm/package# cat index.yaml
 apiVersion: v1
 entries:
@@ -1103,4 +1105,86 @@ root@master:~/app/helm/package#
 ### whenever you are updating or recreating the chart or package, you need to regenerate the index to keep 
 ### post it to github
 
+root@master:~/app/helm# ls
+mychat  package
+root@master:~/app/helm# cd package/
+root@master:~/app/helm/package#
 
+
+root@master:~/app/helm/package# git config user.name
+mussawirimam
+root@master:~/app/helm/package#
+
+root@master:~/app/helm/package# git init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint:
+hint:   git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint:   git branch -m <name>
+Initialized empty Git repository in /root/app/helm/package/.git/
+root@master:~/app/helm/package# git branch -l
+root@master:~/app/helm/package#
+
+
+
+root@master:~/app/helm/package# git branch --list
+* master
+root@master:~/app/helm/package# git push origin main
+error: src refspec main does not match any
+error: failed to push some refs to 'github.com:mussawirimam/gittestdelete.git'
+root@master:~/app/helm/package# git push origin master
+Enumerating objects: 4, done.
+Counting objects: 100% (4/4), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 1.78 KiB | 911.00 KiB/s, done.
+Total 4 (delta 0), reused 0 (delta 0), pack-reused 0
+remote:
+remote: Create a pull request for 'master' on GitHub by visiting:
+remote:      https://github.com/mussawirimam/gittestdelete/pull/new/master
+remote:
+To github.com:mussawirimam/gittestdelete.git
+ * [new branch]      master -> master
+root@master:~/app/helm/package#
+
+
+### you need to get the url of the chart you have pushed to the Github
+### go to the file that you need from github repo > click on the raw > copy the url:
+e.g (it might be different in your case
+https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml
+
+### do helm repo l
+root@master:~/app/helm/package# helm repo ls
+NAME                    URL
+bitnami                 https://charts.bitnami.com/bitnami
+inseefrlab              https://inseefrlab.github.io/helm-charts-datascience
+shubhamtatvamasi        https://shubhamtatvamasi.github.io/helm
+root@master:~/app/helm/package# helm repo
+add     (add a chart repository)
+index   (generate an index file given a directory containing packaged charts)
+list    (list chart repositories)
+remove  (remove one or more chart repositories)
+update  (update information of available charts locally from chart repositories)
+root@master:~/app/helm/package# helm repo remove inseefrlab
+"inseefrlab" has been removed from your repositories
+root@master:~/app/helm/package# helm repo remove shubhamtatvamasi
+"shubhamtatvamasi" has been removed from your repositories
+root@master:~/app/helm/package#
+root@master:~/app/helm/package#
+root@master:~/app/helm/package# helm repo ls
+NAME    URL
+bitnami https://charts.bitnami.com/bitnami
+root@master:~/app/helm/package#
+root@master:~/app/helm/package#
+root@master:~/app/helm/package# helm repo add hrepo https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml
+Error: looks like "https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml" is not a valid chart repository or cannot be reached: failed to fetch https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml/index.yaml : 404 Not Found
+root@master:~/app/helm/package# helm repo add hrepo 'https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml'
+Error: looks like "https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml" is not a valid chart repository or cannot be reached: failed to fetch https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml/index.yaml : 404 Not Found
+root@master:~/app/helm/package# helm repo add hrepo 'https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml'
+Error: looks like "https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml" is not a valid chart repository or cannot be reached: failed to fetch https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml/index.yaml : 404 Not Found
+root@master:~/app/helm/package#
