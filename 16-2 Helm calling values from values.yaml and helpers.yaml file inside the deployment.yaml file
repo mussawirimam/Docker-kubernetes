@@ -1188,3 +1188,8 @@ Error: looks like "https://raw.githubusercontent.com/mussawirimam/gittestdelete/
 root@master:~/app/helm/package# helm repo add hrepo 'https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml'
 Error: looks like "https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml" is not a valid chart repository or cannot be reached: failed to fetch https://raw.githubusercontent.com/mussawirimam/gittestdelete/refs/heads/master/index.yaml/index.yaml : 404 Not Found
 root@master:~/app/helm/package#
+
+### trouble shoot
+so the issue was that I was adding the index.yaml raw file link and that is not how we do it.
+we need to add the repo link only
+
