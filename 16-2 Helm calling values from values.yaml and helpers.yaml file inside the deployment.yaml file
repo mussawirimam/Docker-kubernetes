@@ -1220,3 +1220,34 @@ NAME    URL
 bitnami https://charts.bitnami.com/bitnami
 hrepo   https://raw.githubusercontent.com/mussawirimam/hrepo/refs/heads/main
 root@master:~/app/helm/package#
+
+
+### I want to do the installation of my application from the hrepo 
+root@master:~/app/helm# helm repo update hrepo
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "hrepo" chart repository
+Update Complete. ⎈Happy Helming!⎈
+root@master:~/app/helm#
+root@master:~/app/helm#
+# available repos in our repo 
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm#
+
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm# helm search repo hrepo
+^C
+root@master:~/app/helm# helm search repo -l hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm# helm install myapp hrepo/mychat
+NAME: myapp
+LAST DEPLOYED: Thu Jan 30 19:01:06 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+root@master:~/app/helm# 
