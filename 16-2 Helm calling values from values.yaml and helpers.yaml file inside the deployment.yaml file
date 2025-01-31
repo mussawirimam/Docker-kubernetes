@@ -1668,3 +1668,78 @@ app:
   service:
     enabled: false ### Boolean statement  ### I had
 root@master:~/app/helm#
+
+
+### Updating the index and Upgrading the version
+# I didnt get the upgrade version, because I had deleted the index.yaml and tar.package from the package directory
+root@master:~/app/helm# ls
+mychat  package  values.yaml
+root@master:~/app/helm# helm package mychat/
+Successfully packaged chart and saved it to: /root/app/helm/mychat-0.1.0.tgz
+root@master:~/app/helm# mv mychat
+mychat/           mychat-0.1.0.tgz
+root@master:~/app/helm# mv mychat-0.1.0.tgz package/
+root@master:~/app/helm# cd package/
+root@master:~/app/helm/package# helm repo index .
+root@master:~/app/helm/package# ls
+index.yaml  mychat-0.1.0.tgz
+root@master:~/app/helm/package# git add *
+root@master:~/app/helm/package# git commit -m ' I deleted the previous file and uploaded the new files '
+[main 3e680f5]  I deleted the previous file and uploaded the new files
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+root@master:~/app/helm/package# git push origin main
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 1.44 KiB | 369.00 KiB/s, done.
+Total 4 (delta 1), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To github.com:mussawirimam/hrepo.git
+   5d849c5..3e680f5  main -> main
+root@master:~/app/helm/package#
+
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm#
+
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm# helm repo update hrepo
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "hrepo" chart repository
+Update Complete. ⎈Happy Helming!⎈
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm#
+
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm# helm repo update hrepo
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "hrepo" chart repository
+Update Complete. ⎈Happy Helming!⎈
+root@master:~/app/helm# helm search repo hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm# helm search repo -l hrepo
+NAME            CHART VERSION   APP VERSION     DESCRIPTION
+hrepo/mychat    0.1.0           1.16.0          A Helm chart for Kubernetes
+root@master:~/app/helm# helm ls
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+myapp   default         1               2025-01-31 14:40:00.519074102 -0500 EST deployed        mychat-0.1.0    1.16.0
+root@master:~/app/helm# helm upgrade myapp hrepo/mychat
+
+### upgrading is pending please do it again, the cause can be because I added the different names and theres a mismatch in the files. 
+root@master:~/app/helm# helm upgrade myapp hrepo/mychat
+Error: UPGRADE FAILED: failed to create resource: Service "myapp-svc" is invalid: spec.ports[0].nodePort: Invalid value: 30123: provided port is already allocated
+############# TROUBLE SHOOT BELOW 
+
+
+
+
+### Helm rollback
