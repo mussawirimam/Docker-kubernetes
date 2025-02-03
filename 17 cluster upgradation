@@ -1,1 +1,38 @@
 ### we will use aws for this one, not our own virtual environment. 
+### we created the k8s cluster on aws, follow the kubernetes begin notes
+this time im using cilium instead of calico
+
+root@master:~# kubectl get pod -n kube-system
+NAME                               READY   STATUS    RESTARTS   AGE
+cilium-c9cd2                       1/1     Running   0          9m27s
+cilium-envoy-8z49b                 1/1     Running   0          9m26s
+cilium-envoy-t26zh                 1/1     Running   0          9m27s
+cilium-operator-7b48f9fd58-h52sh   1/1     Running   0          9m27s
+cilium-rj2kl                       1/1     Running   0          9m26s
+coredns-5dd5756b68-9l76w           1/1     Running   0          4m29s
+coredns-5dd5756b68-qqprq           1/1     Running   0          4m29s
+etcd-master                        1/1     Running   1          2d1h
+kube-apiserver-master              1/1     Running   1          2d1h
+kube-controller-manager-master     1/1     Running   1          2d1h
+kube-proxy-8v52q                   1/1     Running   1          2d1h
+kube-proxy-f4xgc                   1/1     Running   1          2d1h
+kube-scheduler-master              1/1     Running   1          2d1h
+root@master:~#
+root@master:~#
+
+
+root@master:~# kubectl create deployment mango --image nginx --port 80
+deployment.apps/mango created
+root@master:~# kubectl expose deployment mango --type NodePort
+service/mango exposed
+root@master:~# kubectl get deployments.apps,svc
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mango   1/1     1            1           15s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        2d1h
+service/mango        NodePort    10.100.248.117   <none>        80:32257/TCP   11s
+root@master:~#
+
+### im using a securitygroup which I created mykube on aws. Which is having inbound rule which is pointing the to security group with 
+
