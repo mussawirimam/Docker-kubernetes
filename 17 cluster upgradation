@@ -34,5 +34,194 @@ service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        2
 service/mango        NodePort    10.100.248.117   <none>        80:32257/TCP   11s
 root@master:~#
 
-### im using a securitygroup which I created mykube on aws. Which is having inbound rule which is pointing the to security group with 
+### allow the port ranges between 30000 - 32767 on aws security group 
+=== on browser ===
+http://34.227.193.217:32257/
+Welcome to nginx!
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+### at the time of installation, I didnt define our version at the command level but in repository we have defined it. 
+### I want to update my cluster to higher version of kubernetes
+NAME     STATUS   ROLES           AGE     VERSION
+master   Ready    control-plane   3d19h   v1.28.15
+node1    Ready    <none>          3d19h   v1.28.15
+root@master:~#
+
+### cluster upgrade to 
+https://kubernetes.io/releases/
+if your version is v1.28.15, you cannot jump to the version v1.30. You will have to do incremental jumps example 1.29. only then you can upgrade the version to 1.30.
+right now our cluster is 1.28.15 
+
+1.28.10 --> 1.29.4 ---> 1.30.2
+scenerio, if your version is of kubernetes is on minor version .10 and kubernetes have released .15, first you will update it to the minor version and then 
+you will have to update it to the major version
+
+1 Major version
+28 Minor verison
+10 path
+
+### To find our last version of kubernetes release
+apt update 
+root@master:~# apt-cache madison kubeadm
+   kubeadm | 1.28.15-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages    <------------ so we are on the minor version .15
+   kubeadm | 1.28.14-2.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.13-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.12-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.11-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.10-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.9-2.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.8-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.7-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.6-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.5-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.4-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.3-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.2-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.1-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+   kubeadm | 1.28.0-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb  Packages
+root@master:~#
+
+### finding versions for kubernetes architecture
+root@master:~# kubectl get node
+NAME     STATUS   ROLES           AGE     VERSION
+master   Ready    control-plane   3d19h   v1.28.15  <----------------- this information is coming from the kubelet
+node1    Ready    <none>          3d19h   v1.28.15
+
+root@master:~# kubectl version
+Client Version: v1.28.15
+Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+Server Version: v1.28.15
+root@master:~#
+
+root@master:~# kubeadm version
+kubeadm version: &version.Info{Major:"1", Minor:"28", GitVersion:"v1.28.15", GitCommit:"841856557ef0f6a399096c42635d114d6f2cf7f4", GitTreeState:"clean", BuildDate:"2024-10-22T20:33:16Z", GoVersion:"go1.22.8", Compiler:"gc", Platform:"linux/amd64"}
+root@master:~#
+
+root@master:~# systemctl status kubelet
+● kubelet.service - kubelet: The Kubernetes Node Agent
+     Loaded: loaded (/usr/lib/systemd/system/kubelet.service; enabled; preset: enabled)       <-------------- daemon configuration file
+    Drop-In: /usr/lib/systemd/system/kubelet.service.d    <------------------------------------------- you can check the kubelet version from this file
+             └─10-kubeadm.conf
+     Active: active (running) since Wed 2025-02-05 12:57:48 UTC; 34s ago
+       Docs: https://kubernetes.io/docs/
+   Main PID: 3063 (kubelet)
+      Tasks: 11 (limit: 4676)
+     Memory: 30.8M (peak: 31.3M)
+        CPU: 781ms
+     CGroup: /system.slice/kubelet.service
+             └─3063 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --config=/var/>
+
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209811    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209824    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209844    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209861    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209874    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209905    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209935    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:57:49 master kubelet[3063]: I0205 12:57:49.209956    3063 reconciler_common.go:258] "operationExecutor.VerifyControllerAttachedVolume started for>
+Feb 05 12:58:09 master kubelet[3063]: I0205 12:58:09.256523    3063 prober_manager.go:312] "Failed to trigger a manual run" probe="Readiness"
+Feb 05 12:58:15 master kubelet[3063]: I0205 12:58:15.859628    3063 prober_manager.go:312] "Failed to trigger a manual run" probe="Readiness"
+lines 1-23/23 (END)
+
+root@master:~# whereis kubelet
+kubelet: /usr/bin/kubelet
+root@master:~# ll /usr/bin/kubelet
+-rwxr-xr-x 1 root root 110649604 Oct 22 21:26 /usr/bin/kubelet*
+root@master:~# cd /usr/bin/
+root@master:/usr/bin# ./kubelet
+I0205 13:01:33.420376    3250 server.go:467] "Kubelet version" kubeletVersion="v1.28.15"  <-------------- version of kubelet
+I0205 13:01:33.420465    3250 server.go:469] "Golang settings" GOGC="" GOMAXPROCS="" GOTRACEBACK=""
+I0205 13:01:33.420730    3250 server.go:630] "Standalone mode, no API client"
+W0205 13:01:33.421151    3250 logging.go:59] [core] [Channel #1 SubChannel #2] grpc: addrConn.createTransport failed to connect to {Addr: "/run/containerd/containerd.sock", ServerName: "/run/containerd/containerd.sock", }. Err: connection error: desc = "transport: Error while dialing: dial unix /run/containerd/containerd.sock: connect: no such file or directory"
+E0205 13:01:33.421778    3250 run.go:74] "command failed" err="failed to run Kubelet: validate service connection: validate CRI v1 runtime API for endpoint \"unix:///run/containerd/containerd.sock\": rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing: dial unix /run/containerd/containerd.sock: connect: no such file or directory\""
+root@master:/usr/bin#
+
+### TIME TO UPGRADE THE VERSION
+root@master:/usr/bin# kubeadm upgrade plan
+[upgrade/config] Making sure the configuration is correct:
+[upgrade/config] Reading configuration from the cluster...
+[upgrade/config] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+[preflight] Running pre-flight checks.
+[upgrade] Running cluster health checks
+[upgrade] Fetching available versions to upgrade to
+[upgrade/versions] Cluster version: v1.28.15
+[upgrade/versions] kubeadm version: v1.28.15
+I0205 13:03:38.485718    3270 version.go:256] remote version is much newer: v1.32.1; falling back to: stable-1.28
+[upgrade/versions] Target version: v1.28.15
+[upgrade/versions] Latest version in the v1.28 series: v1.28.15
+
+### we will need to update our remote repository and version from 1.28 to 1.29. See below :
+#sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+#sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+### add latest repo, we will update to the version v1.29 
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+root@master:/usr/bin# sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+File '/etc/apt/keyrings/kubernetes-apt-keyring.gpg' exists. Overwrite? (y/N) y
+
+root@master:/usr/bin# sudo echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+root@master:/usr/bin#
+
+root@master:/usr/bin# apt update
+Hit:1 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble InRelease
+Get:2 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:3 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:5 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.29/deb  InRelease [1192 B]
+Get:6 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [838 kB]
+Get:7 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [191 kB]
+Get:8 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [151 kB]
+Get:9 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1005 kB]
+Get:10 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [251 kB]
+Get:11 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [315 kB]
+Get:12 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+Get:13 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [16.3 kB]
+Get:14 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+Get:15 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [208 B]
+Get:16 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [17.6 kB]
+Get:17 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [216 B]
+Get:18 http://us-east-1.ec2.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+Get:19 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.29/deb  Packages [18.8 kB]
+Hit:20 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04  InRelease
+Get:21 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [616 kB]
+Hit:22 https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.28/xUbuntu_22.04  InRelease
+Get:23 http://security.ubuntu.com/ubuntu noble-security/main amd64 Components [8948 B]
+Get:24 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [803 kB]
+Get:25 http://security.ubuntu.com/ubuntu noble-security/universe Translation-en [171 kB]
+Get:26 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Components [52.0 kB]
+Get:27 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Components [208 B]
+Get:28 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [208 B]
+Fetched 4836 kB in 4s (1155 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+71 packages can be upgraded. Run 'apt list --upgradable' to see them.
+root@master:/usr/bin#
+
+### now you can see thhrough your that the cache version for kubeadm is updated since you updated the apt package repository to get the v1.29
+root@master:/usr/bin# apt-cache madison kubeadm
+   kubeadm | 1.29.13-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.12-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.11-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.10-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.9-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.8-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.7-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.6-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.5-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.4-2.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.3-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.2-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.1-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+   kubeadm | 1.29.0-1.1 | https://pkgs.k8s.io/core:/stable:/v1.29/deb  Packages
+root@master:/usr/bin#
+
+# first step is to update the kubeadm and then you can update the kubernetes
+# we dont need the hold
+apt-mark unhold kubeadm && \
+apt-get update && apt-get install -y kubeadm=1.29.0-1.1 && \
+apt-mark hold kubeadm
+
 
