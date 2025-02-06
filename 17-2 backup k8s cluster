@@ -311,16 +311,172 @@ fe2077dbe6d28       42b8a40668702c6f34141af8c536b486852dd3b2483c9b50a608d2377da8
 81e06bf8deb71       b38a7071cbb74b7dac0cc0d2538c3e57493271b35cd77ff3cc80e301a34ce51a   6 hours ago         Running             cilium-envoy              2                   4147f04ec5977       cilium-envoy-t26zh
 root@master:~#
 
-### TROUBLE SHOOT TIME: after crictl ps containers are not recreating and the backup didnt restored
+#################### TROUBLE SHOOT TIME: after crictl ps containers are not recreating and the backup didnt restored
 
+root@master:~# kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+apple-86876d998f-68gp7   0/1     Pending   0          71s
+apple-86876d998f-cczgv   0/1     Pending   0          71s
+apple-86876d998f-jcjw6   0/1     Pending   0          71s
+root@master:~#
 
+root@master:~# kubectl describe pods apple
+...
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age                 From               Message
+  ----     ------            ----                ----               -------
+  Warning  FailedScheduling  4s (x13 over 100s)  default-scheduler  no nodes available to schedule pods
 
+root@master:~#
+...
 
+root@master:~# kubectl get nodes -o wide
+No resources found
+root@master:~#
 
+root@master:~# kubeadm reset
+[reset] Reading configuration from the cluster...
+[reset] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+W0206 21:09:25.270227   11841 reset.go:124] [reset] Unable to fetch the kubeadm-config ConfigMap from cluster: failed to get config map: configmaps "kubeadm-config" is forbidden: User "kubernetes-admin" cannot get resource "configmaps" in API group "" in the namespace "kube-system"
+W0206 21:09:25.270308   11841 preflight.go:56] [reset] WARNING: Changes made to this host by 'kubeadm init' or 'kubeadm join' will be reverted.
+[reset] Are you sure you want to proceed? [y/N]: y
+[preflight] Running pre-flight checks
+W0206 21:09:27.109962   11841 removeetcdmember.go:106] [reset] No kubeadm config, using etcd pod spec to get data directory
+[reset] Deleted contents of the etcd data directory: /var/lib/etcd-1
+[reset] Stopping the kubelet service
+[reset] Unmounting mounted directories in "/var/lib/kubelet"
+W0206 21:09:58.268035   11841 cleanupnode.go:99] [reset] Failed to remove containers: failed to stop running pod ca90902698725c064b539dad551b74ab4df04092af9e418d924608cb7f83ede5: output: E0206 21:09:37.495902   11928 remote_runtime.go:222] "StopPodSandbox from runtime service failed" err="rpc error: code = DeadlineExceeded desc = context deadline exceeded" podSandboxID="ca90902698725c064b539dad551b74ab4df04092af9e418d924608cb7f83ede5"
+time="2025-02-06T21:09:37Z" level=fatal msg="stopping the pod sandbox \"ca90902698725c064b539dad551b74ab4df04092af9e418d924608cb7f83ede5\": rpc error: code = DeadlineExceeded desc = context deadline exceeded"
+: exit status 1
+[reset] Deleting contents of directories: [/etc/kubernetes/manifests /var/lib/kubelet /etc/kubernetes/pki]
+[reset] Deleting files: [/etc/kubernetes/admin.conf /etc/kubernetes/super-admin.conf /etc/kubernetes/kubelet.conf /etc/kubernetes/bootstrap-kubelet.conf /etc/kubernetes/controller-manager.conf /etc/kubernetes/scheduler.conf]
 
+The reset process does not clean CNI configuration. To do so, you must remove /etc/cni/net.d
 
+The reset process does not reset or clean up iptables rules or IPVS tables.
+If you wish to reset iptables, you must do so manually by using the "iptables" command.
 
+If your cluster was setup to utilize IPVS, run ipvsadm --clear (or similar)
+to reset your system's IPVS tables.
 
+The reset process does not clean your kubeconfig files and you must remove them manually.
+Please, check the contents of the $HOME/.kube/config file.
+root@master:~#
+
+root@master:~# kubectl get nodes
+The connection to the server 172.31.29.34:6443 was refused - did you specify the right host or port?
+root@master:~#   mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+cp: cannot stat '/etc/kubernetes/admin.conf': No such file or directory
+root@master:~# mkdir -p $HOME/.kube
+root@master:~# sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+cp: cannot stat '/etc/kubernetes/admin.conf': No such file or directory
+root@master:~# sudo chown $(id -u):$(id -g) $HOME/.kube/config
+root@master:~# kubeadm init
+I0206 21:11:49.853100   12245 version.go:256] remote version is much newer: v1.32.1; falling back to: stable-1.29
+[init] Using Kubernetes version: v1.29.13
+[preflight] Running pre-flight checks
+error execution phase preflight: [preflight] Some fatal errors occurred:
+        [ERROR DirAvailable--var-lib-etcd]: /var/lib/etcd is not empty
+[preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`
+To see the stack trace of this error execute with --v=5 or higher
+root@master:~# rm -rf /var/lib/etcd/
+root@master:~# kubeadm init
+I0206 21:12:06.727276   12276 version.go:256] remote version is much newer: v1.32.1; falling back to: stable-1.29
+[init] Using Kubernetes version: v1.29.13
+[preflight] Running pre-flight checks
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
+[certs] Using certificateDir folder "/etc/kubernetes/pki"
+[certs] Generating "ca" certificate and key
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local master] and IPs [10.96.0.1 172.31.29.34]
+[certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] Generating "front-proxy-ca" certificate and key
+[certs] Generating "front-proxy-client" certificate and key
+[certs] Generating "etcd/ca" certificate and key
+[certs] Generating "etcd/server" certificate and key
+[certs] etcd/server serving cert is signed for DNS names [localhost master] and IPs [172.31.29.34 127.0.0.1 ::1]
+[certs] Generating "etcd/peer" certificate and key
+[certs] etcd/peer serving cert is signed for DNS names [localhost master] and IPs [172.31.29.34 127.0.0.1 ::1]
+[certs] Generating "etcd/healthcheck-client" certificate and key
+[certs] Generating "apiserver-etcd-client" certificate and key
+[certs] Generating "sa" key and public key
+[kubeconfig] Using kubeconfig folder "/etc/kubernetes"
+[kubeconfig] Writing "admin.conf" kubeconfig file
+[kubeconfig] Writing "super-admin.conf" kubeconfig file
+[kubeconfig] Writing "kubelet.conf" kubeconfig file
+[kubeconfig] Writing "controller-manager.conf" kubeconfig file
+[kubeconfig] Writing "scheduler.conf" kubeconfig file
+[etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
+[control-plane] Using manifest folder "/etc/kubernetes/manifests"
+[control-plane] Creating static Pod manifest for "kube-apiserver"
+[control-plane] Creating static Pod manifest for "kube-controller-manager"
+[control-plane] Creating static Pod manifest for "kube-scheduler"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Starting the kubelet
+[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
+[apiclient] All control plane components are healthy after 5.504068 seconds
+[upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
+[kubelet] Creating a ConfigMap "kubelet-config" in namespace kube-system with the configuration for the kubelets in the cluster
+[upload-certs] Skipping phase. Please see --upload-certs
+[mark-control-plane] Marking the node master as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
+[mark-control-plane] Marking the node master as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
+[bootstrap-token] Using token: fv3pf4.f2kj93fvn6owg7mc
+[bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
+[bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to get nodes
+[bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
+[bootstrap-token] Configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+[bootstrap-token] Configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
+[bootstrap-token] Creating the "cluster-info" ConfigMap in the "kube-public" namespace
+[kubelet-finalize] Updating "/etc/kubernetes/kubelet.conf" to point to a rotatable kubelet client certificate and key
+[addons] Applied essential addon: CoreDNS
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 172.31.29.34:6443 --token fv3pf4.f2kj93fvn6owg7mc \
+        --discovery-token-ca-cert-hash sha256:5142d1dbd6b55117cb18c5591cb30dbb089749ebf5bf42f3338b20719e0ef04e
+root@master:~#
+
+# join the worker node
+root@node1:~# kubeadm join 172.31.29.34:6443 --token fv3pf4.f2kj93fvn6owg7mc         --discovery-token-ca-cert-hash sha256:5142d1dbd6b55117cb18c5591cb30dbb089749ebf5bf42f3338b20719e0ef04e
+[preflight] Running pre-flight checks
+error execution phase preflight: [preflight] Some fatal errors occurred:
+        [ERROR Port-10250]: Port 10250 is in use
+[preflight] If you know what you are doing, you can make a check 
+
+root@node1:~# lsof -i :10250
+COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+kubelet 1005 root   17u  IPv6   8027      0t0  TCP *:10250 (LISTEN)
+root@node1:~#
+
+root@node1:~# netstat -tuln | grep :10250
+tcp6       0      0 :::10250                :::*                    LISTEN
+root@node1:~#
+
+# or if this still is bothering you, on worker node do the kubeadm reset. 
+# and then join the worker node to the master node through the join command. 
 
 
 
