@@ -478,7 +478,34 @@ root@node1:~#
 # or if this still is bothering you, on worker node do the kubeadm reset. 
 # and then join the worker node to the master node through the join command. 
 
-
+############## FIX: I just repeated the steps, instead of deleting the etcd-1, vi /etc/kubernetes/manifest/etcd.yaml file and change the path to etcd-2 or 3 or 4 etc and keep on rebuilding it. 
+  453  vi /etc/kubernetes/manifests/etcd.yaml
+  454  ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-3
+  455  kubectl get pods
+  456  clear
+  457  history
+  458  kubectl get rolebindings --all-namespaces kubectl create clusterrolebinding kubernetes-admin-binding --clusterrole=cluster-admin --user=kubernetes-admin
+  459  kubectl get pods
+  460  kubectl delete deployments.apps apple
+  461  history
+root@master:~# !454
+ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-3
+Error: data-dir "/var/lib/etcd-3" exists
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-^C
+root@master:~# ^C
+root@master:~# ^C
+root@master:~# !443
+vi /etc/kubernetes/manifests/etcd.yaml
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-4
+Error: data-dir "/var/lib/etcd-4" exists
+root@master:~# kubectl get pods
+^C
+root@master:~# vi /etc/kubernetes/manifests/etcd.yaml
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-5
+{"level":"info","ts":1738879682.4637136,"caller":"snapshot/v3_snapshot.go:306","msg":"restoring snapshot","path":"snapshotdb","wal-dir":"/var/lib/etcd-5/member/wal","data-dir":"/var/lib/etcd-5","snap-dir":"/var/lib/etcd-5/member/snap"}
+{"level":"info","ts":1738879682.5185933,"caller":"mvcc/kvstore.go:388","msg":"restored last compact revision","meta-bucket-name":"meta","meta-bucket-name-key":"finishedCompactRev","restored-compact-revision":2545}
+{"level":"info","ts":1738879682.5281403,"caller":"membership/cluster.go:392","msg":"added member","cluster-id":"8d7e874a26730a46","local-member-id":"0","added-peer-id":"4fbad6725f6738fd","added-peer-peer-urls":["https://172.31.29.34:2380"]}
+{"level":"info","ts":1738879682.5438771,"caller":"snapshot/v3_snapshot.go:326","msg":"restored snapshot","path":"snapshotdb","wal-dir":"/var/lib/etcd-5/member/wal","data-dir":"/var/lib/etcd-5","snap-dir":"/var/lib/etcd-5/member/snap"}
 
 
 # ETCDCTL_API=3 etcdctl get /registry/secrets/default/testing-two --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
