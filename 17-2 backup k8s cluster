@@ -1,0 +1,39 @@
+### taking the backup of the k8s cluster 
+root@master:~# kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+mango-57b59fd44-ps8ms   1/1     Running   2          2d19h
+root@master:~# kubectl deployment apple --image httpd:latest --port 80 --replicas 3
+error: unknown command "deployment" for "kubectl"
+root@master:~# kubectl create deployment apple --image httpd:latest --port 80 --replicas 3
+deployment.apps/apple created
+root@master:~# kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+apple-86876d998f-48jc9   1/1     Running   0          10s
+apple-86876d998f-m8tzv   1/1     Running   0          10s
+apple-86876d998f-t298d   1/1     Running   0          10s
+mango-57b59fd44-ps8ms    1/1     Running   2          2d19h
+root@master:~# kubectl scale deployment apple -- replicas 2
+error: required flag(s) "replicas" not set
+root@master:~# kubectl scale deployment apple --replicas 2
+deployment.apps/apple scaled
+root@master:~# kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+apple-86876d998f-48jc9   1/1     Running   0          2m14s
+apple-86876d998f-m8tzv   1/1     Running   0          2m14s
+mango-57b59fd44-ps8ms    1/1     Running   2          2d19h
+root@master:~#
+
+### create backup etcd
+# if the etcdctl command is not available on the server, it will throw an error. 
+example:
+ETCDCTL_API=3 etcdctl snnapshot save snapshotdb --endpoints=http://192.168.1.20:2379 --cacert=/etc/Kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/Kubernetes/pki/etcd/server.key
+
+in our case, it should be a private ip address of the master node. Copy it from the aws console. 
+ETCDCTL_API=3 etcdctl snnapshot save snapshotdb --endpoints=http://172.31.29.34:2379 --cacert=/etc/Kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/Kubernetes/pki/etcd/server.key
+
+
+# this is the certificate location and key location which is available on my master node 
+# it is needed to authenticate and allow the backup 
+--cacert=/etc/Kubernetes/pki/etcd/ca.crt 
+--key=/etc/Kubernetes/pki/etcd/server.key
+
