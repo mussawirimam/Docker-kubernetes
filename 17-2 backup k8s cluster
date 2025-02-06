@@ -299,7 +299,7 @@ root@master:~#
 
 ### apply the command to restore your cluster.
 
-### see the etcd is restarted about 17 second and now if you do the kubectl get pods, you will get the pods back. 
+### see the kube-api etcd is restarted about 17 second and now if you do the kubectl get pods, you will get the pods back. 
 CONTAINER           IMAGE                                                              CREATED             STATE               NAME                      ATTEMPT             POD ID              POD
 3fe75e8cd1ba2       d781bfd0e519b886e895b2253f23aaa958fd0fddb2e6013cabbec79ee3cf775d   17 seconds ago      Running             cilium-agent              18                  449015c8787cf       cilium-c9cd2
 463619bd87574       a9e7e6b294baf1695fccb862d956c5d3ad8510e1e4ca1535f35dc09f247abbfc   About an hour ago   Running             etcd                      0                   a07004618791b       etcd-master
@@ -311,7 +311,7 @@ fe2077dbe6d28       42b8a40668702c6f34141af8c536b486852dd3b2483c9b50a608d2377da8
 81e06bf8deb71       b38a7071cbb74b7dac0cc0d2538c3e57493271b35cd77ff3cc80e301a34ce51a   6 hours ago         Running             cilium-envoy              2                   4147f04ec5977       cilium-envoy-t26zh
 root@master:~#
 
-
+### TROUBLE SHOOT TIME: after crictl ps containers are not recreating and the backup didnt restored
 
 
 
