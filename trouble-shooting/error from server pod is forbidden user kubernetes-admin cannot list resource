@@ -1,0 +1,35 @@
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster server=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-1
+Error: couldn't find local name "master" in the initial cluster configuration
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-u
+rls https://172.31.29.34:2380 --data-dir /var/lib/etcd-1
+Error: data-dir "/var/lib/etcd-1" exists
+root@master:~# !412
+vi /etc/kubernetes/manifests/etcd.yaml
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-2
+{"level":"info","ts":1738878763.7529383,"caller":"snapshot/v3_snapshot.go:306","msg":"restoring snapshot","path":"snapshotdb","wal-dir":"/var/lib/etcd-2/member/wal","data-dir":"/var/lib/etcd-2","snap-dir":"/var/lib/etcd-2/member/snap"}
+{"level":"info","ts":1738878763.809646,"caller":"mvcc/kvstore.go:388","msg":"restored last compact revision","meta-bucket-name":"meta","meta-bucket-name-key":"finishedCompactRev","restored-compact-revision":2545}
+{"level":"info","ts":1738878763.8213472,"caller":"membership/cluster.go:392","msg":"added member","cluster-id":"8d7e874a26730a46","local-member-id":"0","added-peer-id":"4fbad6725f6738fd","added-peer-peer-urls":["https://172.31.29.34:2380"]}
+{"level":"info","ts":1738878763.8320847,"caller":"snapshot/v3_snapshot.go:326","msg":"restored snapshot","path":"snapshotdb","wal-dir":"/var/lib/etcd-2/member/wal","data-dir":"/var/lib/etcd-2","snap-dir":"/var/lib/etcd-2/member/snap"}
+root@master:~# ls
+cilium.sh  csr.yaml  history.txt  root.csr  root.key  snap  snapshotdb
+root@master:~# kubectl get pods
+Error from server (Forbidden): pods is forbidden: User "kubernetes-admin" cannot list resource "pods" in API group "" in the namespace "default"
+root@master:~# less history.txt
+root@master:~# export KUBECONFIG=/etc/kubernetes/admin.conf
+root@master:~# kubectl get pods
+Error from server (Forbidden): pods is forbidden: User "kubernetes-admin" cannot list resource "pods" in API group "" in the namespace "default"
+root@master:~# kubectl get pod -n kube-system
+Error from server (Forbidden): pods is forbidden: User "kubernetes-admin" cannot list resource "pods" in API group "" in the namespace "kube-system"
+root@master:~# kubectl get ns
+Error from server (Forbidden): namespaces is forbidden: User "kubernetes-admin" cannot list resource "namespaces" in API group "" at the cluster scope
+root@master:~# kubectl get rolebindings --all-namespaces
+Error from server (Forbidden): rolebindings.rbac.authorization.k8s.io is forbidden: User "kubernetes-admin" cannot list resource "rolebindings" in API group "rbac.authorization.k8s.io" at the cluster scope
+root@master:~# kubectl create clusterrolebinding kubernetes-admin-binding --clusterrole=cluster-admin --user=kubernetes-admin
+error: failed to create clusterrolebinding: clusterrolebindings.rbac.authorization.k8s.io is forbidden: User "kubernetes-admin" cannot create resource "clusterrolebindings" in API group "rbac.authorization.k8s.io" at the cluster scope
+root@master:~# kubectl get ns
+NAME              STATUS   AGE
+default           Active   42m
+kube-node-lease   Active   42m
+kube-public       Active   42m
+kube-system       Active   42m
+root@master:~#
