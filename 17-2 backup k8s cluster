@@ -34,8 +34,10 @@ ETCDCTL_API=3 etcdctl snnapshot save snapshotdb --endpoints=http://172.31.29.34:
 
 # this is the certificate location and key location which is available on my master node 
 # it is needed to authenticate and allow the backup 
---cacert=/etc/Kubernetes/pki/etcd/ca.crt 
---key=/etc/Kubernetes/pki/etcd/server.key
+--cacert=/etc/kubernetes/pki/etcd/ca.crt 
+--key=/etc/kubernetes/pki/etcd/server.key
+
+# to interact with etcd, you have to define the cluster certificate. Because it will be authenticating it and only then it will allow the backup
 
 ###Installing ETCDCTL
  root@master:~# apt install etcd-client
@@ -71,7 +73,8 @@ User sessions running outdated binaries:
 No VM guests are running outdated hypervisor (qemu) binaries on this host.
 root@master:~#
 
-### Trouble-shooting time. 
+### TROUBLE-SHOOT TIME
+#private ip address of the master node in the end point
 
 root@master:~# ETCDCTL_API=3 etcdctl --debug snapshot save snapshotdb --endpoints=http://172.31.29.34:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
 ETCDCTL_CACERT=/etc/kubernetes/pki/etcd/ca.crt
@@ -126,3 +129,203 @@ INFO: 2025/02/06 16:45:46 [balancer]base.baseBalancer: handle SubConn state chan
 INFO: 2025/02/06 16:45:46 [core]Subchannel Connectivity change to TRANSIENT_FAILURE
 INFO: 2025/02/06 16:45:46 [balancer]base.baseBalancer: handle SubConn state change: 0xc0002a42b0, TRANSIENT_FAILURE
 INFO: 2025/02/06 16:45:46 [transport]transport: loopyWriter.run returning. connection error: desc = "transport is closing"
+
+
+################ FIX: instead of the https, I had http in the command:
+root@master:~# ETCDCTL_API=3 etcdctl snapshot save snapshotdb --endpoints=https://172.31.29.34:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
+{"level":"info","ts":1738867319.6600091,"caller":"snapshot/v3_snapshot.go:119","msg":"created temporary db file","path":"snapshotdb.part"}
+{"level":"info","ts":"2025-02-06T18:41:59.666017Z","caller":"clientv3/maintenance.go:212","msg":"opened snapshot stream; downloading"}
+{"level":"info","ts":1738867319.6660562,"caller":"snapshot/v3_snapshot.go:127","msg":"fetching snapshot","endpoint":"https://172.31.29.34:2379"}
+{"level":"info","ts":"2025-02-06T18:41:59.766545Z","caller":"clientv3/maintenance.go:220","msg":"completed snapshot read; closing"}
+{"level":"info","ts":1738867319.785996,"caller":"snapshot/v3_snapshot.go:142","msg":"fetched snapshot","endpoint":"https://172.31.29.34:2379","size":"7.8 MB","took":0.125918941}
+{"level":"info","ts":1738867319.7861328,"caller":"snapshot/v3_snapshot.go:152","msg":"saved","path":"snapshotdb"}
+Snapshot saved at snapshotdb
+root@master:~# ls
+cilium.sh  csr.yaml  history.txt  root.csr  root.key  snap  snapshotdb
+root@master:~#
+
+####### i removed the snapshotdb and then did again in the with debug option 
+root@master:~# ETCDCTL_API=3 etcdctl --debug snapshot save snapshotdb --endpoints=https://172.31.29.34:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
+ETCDCTL_CACERT=/etc/kubernetes/pki/etcd/ca.crt
+ETCDCTL_CERT=/etc/kubernetes/pki/etcd/server.crt
+ETCDCTL_COMMAND_TIMEOUT=5s
+ETCDCTL_DEBUG=true
+ETCDCTL_DIAL_TIMEOUT=2s
+ETCDCTL_DISCOVERY_SRV=
+ETCDCTL_DISCOVERY_SRV_NAME=
+ETCDCTL_ENDPOINTS=[https://172.31.29.34:2379]
+ETCDCTL_HEX=false
+ETCDCTL_INSECURE_DISCOVERY=true
+ETCDCTL_INSECURE_SKIP_TLS_VERIFY=false
+ETCDCTL_INSECURE_TRANSPORT=true
+ETCDCTL_KEEPALIVE_TIME=2s
+ETCDCTL_KEEPALIVE_TIMEOUT=6s
+ETCDCTL_KEY=/etc/kubernetes/pki/etcd/server.key
+ETCDCTL_PASSWORD=
+ETCDCTL_USER=
+ETCDCTL_WRITE_OUT=simple
+WARNING: 2025/02/06 18:50:53 [core]Adjusting keepalive ping interval to minimum period of 10s
+WARNING: 2025/02/06 18:50:53 [core]Adjusting keepalive ping interval to minimum period of 10s
+INFO: 2025/02/06 18:50:53 [core]parsed scheme: "etcd-endpoints"
+INFO: 2025/02/06 18:50:53 [core]ccResolverWrapper: sending update to cc: {[{172.31.29.34:2379 172.31.29.34:2379 <nil> 0 <nil>}] 0xc00020fee0 <nil>}
+INFO: 2025/02/06 18:50:53 [core]ClientConn switching balancer to "round_robin"
+INFO: 2025/02/06 18:50:53 [core]Channel switches to new LB policy "round_robin"
+INFO: 2025/02/06 18:50:53 [balancer]base.baseBalancer: got new ClientConn state: {{[{172.31.29.34:2379 172.31.29.34:2379 <nil> 0 <nil>}] 0xc00020fee0 <nil>} <nil>}
+INFO: 2025/02/06 18:50:53 [core]Subchannel Connectivity change to CONNECTING
+{"level":"info","ts":1738867853.8474095,"caller":"snapshot/v3_snapshot.go:119","msg":"created temporary db file","path":"snapshotdb.part"}
+INFO: 2025/02/06 18:50:53 [balancer]base.baseBalancer: handle SubConn state change: 0xc000213830, CONNECTING
+INFO: 2025/02/06 18:50:53 [core]Subchannel picks a new address "172.31.29.34:2379" to connect
+INFO: 2025/02/06 18:50:53 [core]Channel Connectivity change to CONNECTING
+INFO: 2025/02/06 18:50:53 [core]Subchannel Connectivity change to READY
+INFO: 2025/02/06 18:50:53 [balancer]base.baseBalancer: handle SubConn state change: 0xc000213830, READY
+INFO: 2025/02/06 18:50:53 [roundrobin]roundrobinPicker: newPicker called with info: {map[0xc000213830:{{172.31.29.34:2379 172.31.29.34:2379 <nil> 0 <nil>}}]}
+INFO: 2025/02/06 18:50:53 [core]Channel Connectivity change to READY
+{"level":"info","ts":"2025-02-06T18:50:53.853036Z","caller":"clientv3/maintenance.go:212","msg":"opened snapshot stream; downloading"}
+{"level":"info","ts":1738867853.8531032,"caller":"snapshot/v3_snapshot.go:127","msg":"fetching snapshot","endpoint":"https://172.31.29.34:2379"}
+{"level":"info","ts":"2025-02-06T18:50:53.946635Z","caller":"clientv3/maintenance.go:220","msg":"completed snapshot read; closing"}
+{"level":"info","ts":1738867853.96987,"caller":"snapshot/v3_snapshot.go:142","msg":"fetched snapshot","endpoint":"https://172.31.29.34:2379","size":"7.8 MB","took":0.122379499}
+{"level":"info","ts":1738867853.969943,"caller":"snapshot/v3_snapshot.go:152","msg":"saved","path":"snapshotdb"}
+INFO: 2025/02/06 18:50:53 [core]Channel Connectivity change to SHUTDOWN
+INFO: 2025/02/06 18:50:53 [core]Subchannel Connectivity change to SHUTDOWN
+Snapshot saved at snapshotdb
+root@master:~# ls
+cilium.sh  csr.yaml  history.txt  root.csr  root.key  snap  snapshotdb
+root@master:~# ^C
+root@master:~#
+####################### FIX/DEBUG ENDS
+
+### lets see the running pods and delete then and we will recover it back from the etcd cluster back that we have created.
+root@master:~# kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+apple-86876d998f-48jc9   1/1     Running   0          4h45m
+apple-86876d998f-m8tzv   1/1     Running   0          4h45m
+mango-57b59fd44-ps8ms    1/1     Running   2          3d
+root@master:~#
+root@master:~#
+root@master:~# kubectl delete deployments.apps apple mango
+deployment.apps "apple" deleted
+deployment.apps "mango" deleted
+root@master:~# kubectl get pods
+No resources found in default namespace.
+
+### I have the backup with me and I want to restore our environment
+
+root@master:~# ls
+cilium.sh  csr.yaml  history.txt  root.csr  root.key  snap  snapshotdb
+root@master:~#
+
+
+# command below is how we are going to use to restore the cluster
+# ETCDCTL_API=3 etcdctl restore snapshot --name server --initial-cluster server --endpoints=https://172.31.29.34:2380 --initial-advertise-peers-urls https://https://172.31.29.34:2380 --data-dir /var/lib/etcd-5
+
+# how we know the name of the server? it is defined in the /etc/kubernetes/manifests/etcd.yaml
+# you will find this --> --initial-advertise-peers-urls https://https://172.31.29.34:2380 in /etc/kubernetes/manifests/etcd.yaml file
+# in our case the name is not server, it is master
+root@master:~# vi /etc/kubernetes/manifests/etcd.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubeadm.kubernetes.io/etcd.advertise-client-urls: https://172.31.29.34:2379
+  creationTimestamp: null
+  labels:
+    component: etcd
+    tier: control-plane
+  name: etcd
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - etcd
+    - --advertise-client-urls=https://172.31.29.34:2379
+    - --cert-file=/etc/kubernetes/pki/etcd/server.crt
+    - --client-cert-auth=true
+    - --data-dir=/var/lib/etcd
+    - --experimental-initial-corrupt-check=true
+    - --experimental-watch-progress-notify-interval=5s
+    - --initial-advertise-peer-urls=https://172.31.29.34:2380
+    - --initial-cluster=master=https://172.31.29.34:2380    <--------------------------------------------------
+    - --key-file=/etc/kubernetes/pki/etcd/server.key
+    - --listen-client-urls=https://127.0.0.1:2379,https://172.31.29.34:2379
+    - --listen-metrics-urls=http://127.0.0.1:2381
+    - --listen-peer-urls=https://172.31.29.34:2380
+    - --name=master                                          <------------------------------------------------------- this is the name defined in the yaml file, so change your command according to what is the server name defined in the yaml file. 
+    - --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
+    - --peer-client-cert-auth=true
+    - --peer-key-file=/etc/kubernetes/pki/etcd/peer.key
+    - --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+    - --snapshot-count=10000
+    - --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+....
+  - hostPath:
+      path: /var/lib/etcd                                 <------------------------------------- etcd-5 is for this where the data is store kept on machine... if you change it to etcd-1, it will create the file and extract the file from that location.
+...
+### we are changing the -hostPath in the etcd.yaml file 
+...
+    name: etcd-certs
+  - hostPath:
+      path: /var/lib/etcd-1
+      type: DirectoryOrCreate
+...
+
+### modify the restore command accordingly
+ETCDCTL_API=3 etcdctl restore snapshot --name master --initial-cluster server --endpoints=https://172.31.29.34:2380 --initial-advertise-peers-urls https://https://172.31.29.34:2380 --data-dir /var/lib/etcd-1
+root@master:~# ETCDCTL_API=3 etcdctl snapshot restore snapshotdb --name master --initial-cluster master=https://172.31.29.34:2380 --initial-advertise-peer-urls https://172.31.29.34:2380 --data-dir /var/lib/etcd-1
+{"level":"info","ts":1738873748.2377806,"caller":"snapshot/v3_snapshot.go:306","msg":"restoring snapshot","path":"snapshotdb","wal-dir":"/var/lib/etcd-1/member/wal","data-dir":"/var/lib/etcd-1","snap-dir":"/var/lib/etcd-1/member/snap"}
+{"level":"info","ts":1738873748.296419,"caller":"mvcc/kvstore.go:388","msg":"restored last compact revision","meta-bucket-name":"meta","meta-bucket-name-key":"finishedCompactRev","restored-compact-revision":154122}
+{"level":"info","ts":1738873748.3082893,"caller":"membership/cluster.go:392","msg":"added member","cluster-id":"8d7e874a26730a46","local-member-id":"0","added-peer-id":"4fbad6725f6738fd","added-peer-peer-urls":["https://172.31.29.34:2380"]}
+{"level":"info","ts":1738873748.3188345,"caller":"snapshot/v3_snapshot.go:326","msg":"restored snapshot","path":"snapshotdb","wal-dir":"/var/lib/etcd-1/member/wal","data-dir":"/var/lib/etcd-1","snap-dir":"/var/lib/etcd-1/member/snap"}
+root@master:~#
+
+### the reason get pods didnt work is because the etcd is being recreated. Till it doesnt get into the success status it will not be created. 
+root@master:~# kubectl get pods
+No resources found in default namespace.
+root@master:~# crictl ps
+CONTAINER           IMAGE                                                              CREATED             STATE               NAME                      ATTEMPT             POD ID              POD
+463619bd87574       a9e7e6b294baf1695fccb862d956c5d3ad8510e1e4ca1535f35dc09f247abbfc   59 minutes ago      Running             etcd                      0                   a07004618791b       etcd-master
+e441b0df7fffe       724efdc6b8440d2c78ced040ad90bb8af5553b7ed46439937b567cca86ae5e1b   59 minutes ago      Running             kube-apiserver            2                   ddef10ba9e47e       kube-apiserver-master
+fe2077dbe6d28       42b8a40668702c6f34141af8c536b486852dd3b2483c9b50a608d2377da8c8e8   59 minutes ago      Running             kube-scheduler            3                   d773a3bff1f5a       kube-scheduler-master
+4494b642d29e3       04dd549807d4487a115aab24e9c53dbb8c711ed9a3b138a206e161800b9975ab   About an hour ago   Running             kube-controller-manager   3                   64a55c71cb8e6       kube-controller-manager-master
+0195086a057a1       cbb01a7bd410dc08ba382018ab909a674fb0e48687f0c00797ed5bc34fcc6bb4   6 hours ago         Running             coredns                   0                   ca90902698725       coredns-76f75df574-bsjch
+7cb75e29cfa65       f20cf1600da6cce7b7d3fdd3b5ff91243983ea8be3907cccaee1a956770a2f15   6 hours ago         Running             kube-proxy                1                   7cbad53acd9c0       kube-proxy-lpj82
+81e06bf8deb71       b38a7071cbb74b7dac0cc0d2538c3e57493271b35cd77ff3cc80e301a34ce51a   6 hours ago         Running             cilium-envoy              2                   4147f04ec5977       cilium-envoy-t26zh
+root@master:~#
+
+# if you are using the docker run time, then docker ps command 
+
+
+
+
+
+### apply the command to restore your cluster.
+
+### see the etcd is restarted about 17 second and now if you do the kubectl get pods, you will get the pods back. 
+CONTAINER           IMAGE                                                              CREATED             STATE               NAME                      ATTEMPT             POD ID              POD
+3fe75e8cd1ba2       d781bfd0e519b886e895b2253f23aaa958fd0fddb2e6013cabbec79ee3cf775d   17 seconds ago      Running             cilium-agent              18                  449015c8787cf       cilium-c9cd2
+463619bd87574       a9e7e6b294baf1695fccb862d956c5d3ad8510e1e4ca1535f35dc09f247abbfc   About an hour ago   Running             etcd                      0                   a07004618791b       etcd-master
+e441b0df7fffe       724efdc6b8440d2c78ced040ad90bb8af5553b7ed46439937b567cca86ae5e1b   About an hour ago   Running             kube-apiserver            2                   ddef10ba9e47e       kube-apiserver-master
+fe2077dbe6d28       42b8a40668702c6f34141af8c536b486852dd3b2483c9b50a608d2377da8c8e8   About an hour ago   Running             kube-scheduler            3                   d773a3bff1f5a       kube-scheduler-master
+4494b642d29e3       04dd549807d4487a115aab24e9c53dbb8c711ed9a3b138a206e161800b9975ab   About an hour ago   Running             kube-controller-manager   3                   64a55c71cb8e6       kube-controller-manager-master
+0195086a057a1       cbb01a7bd410dc08ba382018ab909a674fb0e48687f0c00797ed5bc34fcc6bb4   6 hours ago         Running             coredns                   0                   ca90902698725       coredns-76f75df574-bsjch
+7cb75e29cfa65       f20cf1600da6cce7b7d3fdd3b5ff91243983ea8be3907cccaee1a956770a2f15   6 hours ago         Running             kube-proxy                1                   7cbad53acd9c0       kube-proxy-lpj82
+81e06bf8deb71       b38a7071cbb74b7dac0cc0d2538c3e57493271b35cd77ff3cc80e301a34ce51a   6 hours ago         Running             cilium-envoy              2                   4147f04ec5977       cilium-envoy-t26zh
+root@master:~#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ETCDCTL_API=3 etcdctl get /registry/secrets/default/testing-two --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key
+
+
+
