@@ -1,0 +1,10 @@
+https://argo-cd.readthedocs.io/en/stable/cli_installation/
+### how to install
+
+## how your jenkins is going and creating this deployment in a k8s cluster 
+# whenever we are implementing the ci/cd pipeline how things works over there
+first you will do the gitclone --> codetest --> maven build --> docker-image --> push-img repo --> (CD) deploy latest build in k8s cluster
+
+### jenkins will be having access of the k8s cluster, then only it will be replacing that existing deployment
+# lets assume that someone hacked the jenkins, if your jenkins is compromised that means that your complete cluster will be compromised
+just to make secure the CD part, we seperate the process of CD through ARGOCD or Bmaboot
