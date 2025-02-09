@@ -1,1 +1,178 @@
 # first we will learn about the Prometheus and Grafana and then we will learn about the ELK stack
+### in order for you to install the prometheus or any monitoring solution you need to have the METRIC SERVER CONTAINER INSTLLED ON THE KUBERNETES
+### to install and configure the metric server, go to the previous notes. 
+1. first you will install the metric server from the github
+2. you will add the kubelet insecure tls flag in the component file for the metric server
+
+# root@master:~# kubectl get --raw /metrics # this will give you lots of logs on your screen
+
+
+# Installing metric server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl get deployment metrics-server -n kube-system
+kubectl get --raw /metrics
+
+# Prometheus deployment
+kubectl create namespace prometheus
+kubectl get ns
+
+#install local pvc 
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
+
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+helm install prometheus prometheus-community/prometheus \
+    --namespace prometheus \
+    --set alertmanager.persistentVolume.storageClass="local-path" \
+    --set server.persistentVolume.storageClass="local-path"
+
+kubectl get all -n prometheus
+
+### change prometheus-server service to NodePort Service 
+kubectl -n prometheus edit svc prometheus-server
+
+# Installing Grafana
+kubectl create namespace grafana
+kubectl get ns
+
+helm repo add grafana https://grafana.github.io/helm-charts
+
+## values yaml file
+vi grafana.yaml
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.prometheus.svc.cluster.local
+      access: proxy
+      isDefault: true
+ 
+
+helm install grafana grafana/grafana \
+    --namespace grafana \
+    --set persistence.storageClassName="local-path" \
+    --set persistence.enabled=true \
+    --set adminPassword='admin' \
+    --values grafana.yaml \
+    --set service.type=NodePort
+
+kubectl get all -n grafana
+
+#Get ELB address
+export ELB=$(kubectl get svc -n grafana grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+echo "http://$ELB"
+
+# login usr= "admin"
+# Passwd: get password
+kubectl get secret --namespace grafana grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+Grfana Dashboard Id
+
+Cluster Monitoring = 15757
+Namespace monitoring = 15758
+Node Monitoring = 15759 , 1860
+Pod level monitoring 5225
+PVC usage - 13646
+
+
+
+# Cleanup
+
+helm uninstall prometheus --namespace prometheus
+kubectl delete ns prometheus
+
+helm uninstall grafana --namespace grafana
+kubectl delete ns grafana
+
+
+------------------------------------------------------------------------
+########################### PROMETHEUS ########################### 
+
+root@master:/usr/bin/helm-3.17.0/scripts# helm repo ls
+NAME                    URL
+bitnami                 https://charts.bitnami.com/bitnami
+prometheus-community    https://prometheus-community.github.io/helm-charts
+root@master:/usr/bin/helm-3.17.0/scripts#
+root@master:/usr/bin/helm-3.17.0/scripts#
+root@master:/usr/bin/helm-3.17.0/scripts#
+root@master:/usr/bin/helm-3.17.0/scripts# helm repo update prometheus-community
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "prometheus-community" chart repository
+Update Complete. ⎈Happy Helming!⎈
+root@master:/usr/bin/helm-3.17.0/scripts#
+
+
+root@master:~# kubectl get all -n prometheus
+NAME                                                    READY   STATUS    RESTARTS   AGE
+pod/prometheus-alertmanager-0                           0/1     Pending   0          112m
+pod/prometheus-kube-state-metrics-586c84f44c-lx8lv      1/1     Running   0          112m
+pod/prometheus-prometheus-node-exporter-b8d85           1/1     Running   0          112m
+pod/prometheus-prometheus-node-exporter-gw7tv           1/1     Running   0          112m
+pod/prometheus-prometheus-pushgateway-d777b5496-fhw56   1/1     Running   0          112m
+pod/prometheus-server-575bcfd8db-hrbrp                  2/2     Running   0          112m
+
+NAME                                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/prometheus-alertmanager               ClusterIP   10.108.46.3      <none>        9093/TCP   112m
+service/prometheus-alertmanager-headless      ClusterIP   None             <none>        9093/TCP   112m
+service/prometheus-kube-state-metrics         ClusterIP   10.111.19.231    <none>        8080/TCP   112m
+service/prometheus-prometheus-node-exporter   ClusterIP   10.98.66.123     <none>        9100/TCP   112m
+service/prometheus-prometheus-pushgateway     ClusterIP   10.100.95.166    <none>        9091/TCP   112m
+service/prometheus-server                     ClusterIP   10.102.236.175   <none>        80/TCP     112m
+
+NAME                                                 DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/prometheus-prometheus-node-exporter   2         2         2       2            2           kubernetes.io/os=linux   112m
+
+NAME                                                READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/prometheus-kube-state-metrics       1/1     1            1           112m
+deployment.apps/prometheus-prometheus-pushgateway   1/1     1            1           112m
+deployment.apps/prometheus-server                   1/1     1            1           112m
+
+NAME                                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/prometheus-kube-state-metrics-586c84f44c      1         1         1       112m
+replicaset.apps/prometheus-prometheus-pushgateway-d777b5496   1         1         1       112m
+replicaset.apps/prometheus-server-575bcfd8db                  1         1         1       112m
+
+NAME                                       READY   AGE
+statefulset.apps/prometheus-alertmanager   0/1     112m
+root@master:~#
+
+root@master:~# kubectl -n prometheus edit service/prometheus-server
+...
+app.kubernetes.io/component: server
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/name: prometheus
+  sessionAffinity: None
+  type: NodePort          <--------------------- changed this from ClusterIp to NodePort
+status:
+  loadBalancer: {}
+...
+service/prometheus-server edited
+
+service/prometheus-prometheus-node-exporter   ClusterIP   10.98.66.123     <none>        9100/TCP       115m
+service/prometheus-prometheus-pushgateway     ClusterIP   10.100.95.166    <none>        9091/TCP       115m
+service/prometheus-server                     NodePort    10.102.236.175   <none>        80:30363/TCP   115m
+
+==== ON BROWSER ====
+### put this one your web- browser to get the access of the Prometheus dashboard.
+http://18.208.215.221:30363/query
+
+# on the prometheus dashboard, you can search for the server metrics. 
+
+### Turn the nodePort back again to the Cluster IP so it can access the cluster internally. 
+root@master:~# kubectl -n prometheus edit service/prometheus-server
+...
+app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/name: prometheus
+  sessionAffinity: None
+  type: ClusterIP     <------------------------------ This was changed from the NodePort to ClusterIP
+status:
+  loadBalancer: {}
+...
+
+service/prometheus-server edited
+root@master:~#
+
+########################### GRAFANA ########################### 
