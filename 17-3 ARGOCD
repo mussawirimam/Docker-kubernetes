@@ -1,4 +1,6 @@
-  https://argo-cd.readthedocs.io/en/stable/cli_installation/
+https://argo-cd.readthedocs.io/en/stable/
+https://argo-cd.readthedocs.io/en/stable/cli_installation/
+
 ### how to install
 
 ## how your jenkins is going and creating this deployment in a k8s cluster 
@@ -506,4 +508,10 @@ root@master:~#
 
 
 
+### NOTE:
+# if you select the settings in your dashboard, you can setup your default repositories or the private respositories as well, you can do that by setting up the ssh private key data and repository URL
+# ssh keydata how ssh authentication is happening on your local machine. etc ... 
+# just look around and you will udnerstand it more and more,
+## read the Argocd documentation and play with the argocd cli 
+https://argo-cd.readthedocs.io/en/stable/
 
