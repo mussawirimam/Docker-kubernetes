@@ -413,14 +413,96 @@ Create new application to start managing resources in your cluster
 
 ### deploy your application on the argocd
 you need to configure how argocd will be knowing that which repository on github it has to go to do the deployment. Or which github repository it needs to look for in order to do the deployments. 
+=== on browser ===
+in your argocd dashboard do the following steps:
 
 1. click on create a NEW APP
-2. GENERAL: 
+2. GENERAL
 application Name: argocd
-3. copy the url where the deployment.yaml is. In my case im using this https://github.com/aneeshansari23/myargoapp.git. Paste it under SOURCE Repository URL
-4. path is the ---->  ./ 
-5. DESTINATION Cluster URL. Default cluster https://kubernetes.default.svc . Namespace: default
+Project Name: default
+Sync: Automatic
+tick mark: Self Heal 
+tick mark: Prune Resources 
 
+3. SOURCE 
+#copy the url where the deployment.yaml is. In my case im using this   
+Repository URL: https://github.com/aneeshansari23/myargoapp.git
+path:  ./ 
+
+#### ignore the box
+### no need to do anything, this is just the example of what the repository yaml file looks like 
+# the above repository consists of the manifest below:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: mydep
+  name: mydep
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mydep
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mydep
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+#### ignore the box ends
+
+5. DESTINATION 
+Cluster URL.
+Default cluster: https://kubernetes.default.svc 
+Namespace: default
+
+6. click on create
+
+### your github deployment is getting ready
+testargo
+
+Project:
+default
+Labels:
+Status:
+ Healthy  Synced 
+Repository:
+https://github.com/aneeshansari23/myargoapp.git
+Target Revision:
+HEAD
+Path:
+./
+Destination:
+in-cluster
+Namespace:
+default
+Created At:
+02/08/2025 20:30:33 (a few seconds ago)
+Last Sync:
+02/08/2025 20:30:34 (a few seconds ago)
+  
+7. click on the testargo box
+you can see the logs, events, summary once you click on one of the pod icons from the argocd
+
+8. check from your terminal and see if the deployment and pods are there 
+root@master:~# kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE     IP           NODE    NOMINATED NODE   READINESS GATES
+mydep-58c68db89f-2tdj4   1/1     Running   0          2m27s   10.0.1.64    node1   <none>           <none>
+mydep-58c68db89f-pmshj   1/1     Running   0          2m27s   10.0.1.232   node1   <none>           <none>
+mydep-58c68db89f-wfkcp   1/1     Running   0          2m27s   10.0.1.229   node1   <none>           <none>
+root@master:~#
+root@master:~#
+root@master:~# kubectl get deployment -o wide
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES   SELECTOR
+mydep   3/3     3            3           2m34s   nginx        nginx    app=mydep
+root@master:~#
 
 
 
