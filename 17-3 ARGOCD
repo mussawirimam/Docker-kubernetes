@@ -102,7 +102,7 @@ service/argocd-metrics                            ClusterIP   10.110.240.126   <
 service/argocd-notifications-controller-metrics   ClusterIP   10.97.249.202    <none>        9001/TCP                     5m29s
 service/argocd-redis                              ClusterIP   10.100.102.60    <none>        6379/TCP                     5m29s
 service/argocd-repo-server                        ClusterIP   10.108.248.6     <none>        8081/TCP,8084/TCP            5m29s
-service/argocd-server                             ClusterIP   10.104.57.104    <none>        80/TCP,443/TCP               5m29s
+service/argocd-server                             ClusterIP   10.104.57.104    <none>        80/TCP,443/TCP               5m29s    <-------------------------- will need to create this NODEPORT 
 service/argocd-server-metrics                     ClusterIP   10.101.141.243   <none>        8083/TCP                     5m29s
 
 NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
@@ -124,3 +124,304 @@ replicaset.apps/argocd-server-545bfdcc88                      1         1       
 NAME                                             READY   AGE
 statefulset.apps/argocd-application-controller   1/1     5m28s
 root@master:~#
+
+### Turning the argocd server into the NODEPORT
+root@master:~# kubectl -n argocd edit svc
+
+### if you are on the On-prem change it to the NODEPORT and if you are doing this on cloud then change the service to the LOADBALANCER
+### if want to access it through the nginx ingress controller with the domain name, just it ClusterIP and create the INGRESS CONTROLLER
+
+##### BEFORE
+....
+   name: argocd-server
+    namespace: argocd
+    resourceVersion: "20658"
+    uid: 2077ea90-0563-4bb4-8765-7204e9ec4bda
+  spec:
+    clusterIP: 10.107.30.119
+    clusterIPs:
+    - 10.107.30.119
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app.kubernetes.io/name: argocd-server
+    sessionAffinity: None
+    type: ClusterIp    <------------------------------------- change this from ClusterIP to NodePort
+  status:
+    loadBalancer: {}
+...
+######## AFTER
+....
+   name: argocd-server
+    namespace: argocd
+    resourceVersion: "20658"
+    uid: 2077ea90-0563-4bb4-8765-7204e9ec4bda
+  spec:
+    clusterIP: 10.107.30.119
+    clusterIPs:
+    - 10.107.30.119
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app.kubernetes.io/name: argocd-server
+    sessionAffinity: None
+    type: NODEPORT    <------------------------------------- change is made here 
+  status:
+    loadBalancer: {}
+...
+
+
+### TROUBLESHOOTING TIME: whenever I try to save the edit, it is going back into the file and not letting me save.
+root@master:~# fc 487    <------------- this command lets you edit the history command 
+kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+Warning: deleting cluster-scoped resources, not scoped to the provided namespace
+customresourcedefinition.apiextensions.k8s.io "applications.argoproj.io" deleted
+customresourcedefinition.apiextensions.k8s.io "applicationsets.argoproj.io" deleted
+customresourcedefinition.apiextensions.k8s.io "appprojects.argoproj.io" deleted
+serviceaccount "argocd-application-controller" deleted
+serviceaccount "argocd-applicationset-controller" deleted
+...
+
+root@master:~# !487
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+customresourcedefinition.apiextensions.k8s.io/applications.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/applicationsets.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/appprojects.argoproj.io created
+serviceaccount/argocd-application-controller created
+...
+
+### FIXED: The issue was that I was putting the NodePort spelling as all capital and it was not being recognized. And the Error is in the comment of the edit 
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+# services "argocd-server-metrics" was not valid:
+# * spec.type: Unsupported value: "NODEPORT": supported values: "ClusterIP", "ExternalName", "LoadBalancer", "NodePort"
+#
+###
+....
+   name: argocd-server
+    namespace: argocd
+    resourceVersion: "20658"
+    uid: 2077ea90-0563-4bb4-8765-7204e9ec4bda
+  spec:
+    clusterIP: 10.107.30.119
+    clusterIPs:
+    - 10.107.30.119
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app.kubernetes.io/name: argocd-server
+    sessionAffinity: None
+    type: NodePort    <------------------------------------- nodeport was in capital, so it wasnt recognizing it. 
+  status:
+    loadBalancer: {}
+...
+
+### TROUBLE SHOOTING ENDS 
+
+### port 80 is accessible on the NodePort, check with below:
+root@master:~# kubectl get all -n argocd
+NAME                                                    READY   STATUS    RESTARTS   AGE
+pod/argocd-application-controller-0                     1/1     Running   0          11m
+pod/argocd-applicationset-controller-6dfb7b585b-qlp2q   1/1     Running   0          11m
+pod/argocd-dex-server-7ff4b8d9df-ggjd8                  1/1     Running   0          11m
+pod/argocd-notifications-controller-768c89485f-ttffh    1/1     Running   0          11m
+pod/argocd-redis-db6c68bbb-ggbps                        1/1     Running   0          11m
+pod/argocd-repo-server-6f8774799c-dkk5q                 1/1     Running   0          11m
+pod/argocd-server-545bfdcc88-598fw                      1/1     Running   0          11m
+
+NAME                                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/argocd-applicationset-controller          ClusterIP   10.99.189.171    <none>        7000/TCP,8080/TCP            11m
+service/argocd-dex-server                         ClusterIP   10.98.36.35      <none>        5556/TCP,5557/TCP,5558/TCP   11m
+service/argocd-metrics                            ClusterIP   10.99.7.191      <none>        8082/TCP                     11m
+service/argocd-notifications-controller-metrics   ClusterIP   10.110.108.1     <none>        9001/TCP                     11m
+service/argocd-redis                              ClusterIP   10.101.253.79    <none>        6379/TCP                     11m
+service/argocd-repo-server                        ClusterIP   10.106.217.167   <none>        8081/TCP,8084/TCP            11m
+service/argocd-server                             NodePort    10.107.30.119    <none>        80:31146/TCP,443:31536/TCP   11m  <---------------------------- the port 80 will be accessible on this NodePort 
+service/argocd-server-metrics                     ClusterIP   10.109.81.95     <none>        8083/TCP                     11m
+
+NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/argocd-applicationset-controller   1/1     1            1           11m
+deployment.apps/argocd-dex-server                  1/1     1            1           11m
+deployment.apps/argocd-notifications-controller    1/1     1            1           11m
+deployment.apps/argocd-redis                       1/1     1            1           11m
+deployment.apps/argocd-repo-server                 1/1     1            1           11m
+deployment.apps/argocd-server                      1/1     1            1           11m
+
+NAME                                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/argocd-applicationset-controller-6dfb7b585b   1         1         1       11m
+replicaset.apps/argocd-dex-server-7ff4b8d9df                  1         1         1       11m
+replicaset.apps/argocd-notifications-controller-768c89485f    1         1         1       11m
+replicaset.apps/argocd-redis-db6c68bbb                        1         1         1       11m
+replicaset.apps/argocd-repo-server-6f8774799c                 1         1         1       11m
+replicaset.apps/argocd-server-545bfdcc88                      1         1         1       11m
+
+NAME                                             READY   AGE
+statefulset.apps/argocd-application-controller   1/1     11m
+
+### access the ARGOCD through Browser
+===== ON BROWSER =====
+1. copy the public address of the ec2 instance
+2. copy the port 31536
+3. paste the publicip:nodeportnumber
+http://23.22.26.67:31536/l
+
+https://23.22.26.67:31536/login?return_url=https%3A%2F%2F23.22.26.67%3A31536%2Fapplications
+Let's get stuff deployed!
+
+You will get the login promt for user and password
+User name: admin
+Password: theres a process which you need to follow from the document. 
+
+### To find the password secrets on the argocd for the dashboard password prompt
+root@master:~# kubectl get secrets -n argocd
+NAME                          TYPE     DATA   AGE
+argocd-initial-admin-secret   Opaque   1      175m
+argocd-notifications-secret   Opaque   0      90m
+argocd-redis                  Opaque   1      175m
+argocd-secret                 Opaque   5      90m
+root@master:~#
+root@master:~# kubectl -n argocd get secrets argocd-secret
+NAME            TYPE     DATA   AGE
+argocd-secret   Opaque   5      91m
+root@master:~#
+
+root@master:~# kubectl -n argocd get secrets argocd-secret -o yaml
+apiVersion: v1
+data:
+  admin.password: JDJhJhU0xxxxxxxxxxlp   ### copy this password   <--------------------- this is the user password that we need to put on the argocd password promt on the browser for the argocd dashboard... I am removing the Hashes here but you will see the full string of the secret admin password
+  admin.passwordMtime: MjAy1Nxxxxxxx1o=
+  server.secretkey: V2UTxxxxx0=
+  tls.crt: LS0tk1ESxxxxxwVytt
+  tls.key: LS0tL
+kind: Secret
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"argocd-secret","app.kubernetes.io/part-of":"argocd"},"name":"argocd-secret","namespace":"argocd"},"type":"Opaque"}
+  creationTimestamp: "2025-02-08T23:14:55Z"
+  labels:
+    app.kubernetes.io/name: argocd-secret
+    app.kubernetes.io/part-of: argocd
+  name: argocd-secret
+  namespace: argocd
+  resourceVersion: "20814"
+  uid: 19b7f0xxxx62ea96bd2
+type: Opaque
+root@master:~#
+
+### use this command to decrypt the admin password
+root@master:~# echo "JDJhJhU0xxxxxxxxxxlp" | base64 -d
+$2xxxxxxxxxxxxxxxxxxxxxK5P70i        <------------------------ de-crypted password, copy this and put it on the argocd dashboard username password prompt
+root@master:~#
+
+TROUBLESHOOT TIME: I am putting the password from above in the dashboard but I am getting invalid password error 
+argo
+admin
+Username
+••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+Password
+Invalid username or password
+
+# on google, I have searched for this : argocd login password
+https://stackoverflow.com/questions/68297354/what-is-the-default-password-of-argocd # this article explained that, you have to get the password from the intial admin secret, not the secret from which we are trying to get the password from. 
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d      <----------------- decrypition command you will need for the fix, look below in the fix section
+
+########### FIX: I was using the wrong secret, (you should use the argocd-intial-admin-secret)
+
+  522  kubectl get secrets -n argocd
+  523  kubectl -n argocd get secrets argocd-secret
+  524  kubectl -n argocd get secrets argocd-secret -o yaml
+  525  echo "JDxxxxxxxxxxxxxxxxzBp" | base64 -d
+  526  clear
+  527  history
+root@master:~# !522
+kubectl get secrets -n argocd
+NAME                          TYPE     DATA   AGE
+argocd-initial-admin-secret   Opaque   1      3h10m      <----------------------------------
+argocd-notifications-secret   Opaque   0      105m
+argocd-redis                  Opaque   1      3h10m
+argocd-secret                 Opaque   5      105m
+root@master:~#
+
+
+root@master:~# kubectl -n argocd get secrets argocd-initial-admin-secret -o yaml
+apiVersion: v1
+data:
+  password: NaxxxxxxxxxxxxxxxxxxxA==         <----------------------------------------- this is the password, decrypt it. 
+kind: Secret
+metadata:
+  creationTimestamp: "2025-02-08T21:50:00Z"
+  name: argocd-initial-admin-secret
+  namespace: argocd
+  resourceVersion: "20808"
+  uid: 5c90ab2d-bd9f-44e6-91ae-1aa3f1be4a1f
+type: Opaque
+root@master:~#
+
+
+root@master:~# kubectl -n argocd get secrets argocd-initial-admin-secret -o yaml # dont use this command, use the below command. 
+root@master:~# kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d ### <-------------------------- use this command, it will decrypt the password in the intial-admin-secret
+5vxxxxxxxxxxxxxxxxxxxot    <-------------------------------- the password that is needed to login to the argocd dashboard. Copy this and put it on the argocd dashboard on the browser.
+@master:~#
+
+
+===== ON BROWSWER ======
+login successful:
+Argo
+v2.14.2+ad27246
+
+No applications available to you just yet
+Create new application to start managing resources in your cluster
+######## TROUBLE SHOOTING ENDS
+
+
+### deploy your application on the argocd
+you need to configure how argocd will be knowing that which repository on github it has to go to do the deployment. Or which github repository it needs to look for in order to do the deployments. 
+
+1. click on create a NEW APP
+2. GENERAL: 
+application Name: argocd
+3. copy the url where the deployment.yaml is. In my case im using this https://github.com/aneeshansari23/myargoapp.git. Paste it under SOURCE Repository URL
+4. path is the ---->  ./ 
+5. DESTINATION Cluster URL. Default cluster https://kubernetes.default.svc . Namespace: default
+
+
+
+
+
