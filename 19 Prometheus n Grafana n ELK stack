@@ -176,3 +176,110 @@ service/prometheus-server edited
 root@master:~#
 
 ########################### GRAFANA ########################### 
+
+### installing grafana
+root@master:~# kubectl create namespace grafana
+namespace/grafana created
+
+root@master:~# kubectl get ns
+NAME                 STATUS   AGE
+argocd               Active   2d3h
+default              Active   4d3h
+grafana              Active   100s
+kube-node-lease      Active   4d3h
+kube-public          Active   4d3h
+kube-system          Active   4d3h
+local-path-storage   Active   28h
+prometheus           Active   28h
+root@master:~#
+
+### add the grafana repo 
+root@master:~# helm repo add grafana https://grafana.github.io/helm-charts
+"grafana" has been added to your repositories
+root@master:~#
+
+### update the grafana repo 
+root@master:~# helm repo update grafana
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "grafana" chart repository
+Update Complete. ⎈Happy Helming!⎈
+root@master:~#
+
+### we need to create the values.yaml file, where we will define where the Prometheus is running.
+
+root@master:~# vi grafana.yaml
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.prometheus.svc.cluster.local #       <------------------ deployment name, this is the serve, the location of my prometheus. Which is accessible through the ClusterIP service. (url: http://prometheus-server.prometheus.svc.cluster.local) prormetheus server.prometheusservice.cluster local is the fqdn.
+      access: proxy
+      isDefault: true
+:wq!
+
+### installing grafana through the helm chart
+root@master:~# helm install grafana grafana/grafana \
+    --namespace grafana \
+    --set persistence.storageClassName="local-path" \
+    --set persistence.enabled=true \
+    --set adminPassword='admin' \
+    --values grafana.yaml \
+    --set service.type=NodePort
+NAME: grafana
+LAST DEPLOYED: Tue Feb 11 01:14:05 2025
+NAMESPACE: grafana
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get your 'admin' user password by running:
+
+   kubectl get secret --namespace grafana grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+
+2. The Grafana server can be accessed via port 80 on the following DNS name from within your cluster:
+
+   grafana.grafana.svc.cluster.local
+
+   Get the Grafana URL to visit by running these commands in the same shell:
+     export NODE_PORT=$(kubectl get --namespace grafana -o jsonpath="{.spec.ports[0].nodePort}" services grafana)
+     export NODE_IP=$(kubectl get nodes --namespace grafana -o jsonpath="{.items[0].status.addresses[0].address}")
+     echo http://$NODE_IP:$NODE_PORT
+
+3. Login with the password from step 1 and the username: admin
+root@master:~#
+
+root@master:~# kubectl get all -n grafana
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/grafana-858cc5cf44-29dlp   0/1     Evicted   0          21s
+pod/grafana-858cc5cf44-6pj8x   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-94hpm   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-b8t77   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-b9mgs   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-cgdk7   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-cjfd4   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-dblbc   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-dswjk   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-f96w6   0/1     Error     0          42s
+pod/grafana-858cc5cf44-fc64w   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-h9jjh   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-kcjph   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-kmqmd   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-m8z62   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-mvnhv   0/1     Pending   0          20s
+pod/grafana-858cc5cf44-n7wgz   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-p8gf6   0/1     Evicted   0          21s
+pod/grafana-858cc5cf44-pn8mz   0/1     Evicted   0          21s
+pod/grafana-858cc5cf44-sdp4t   0/1     Evicted   0          22s
+pod/grafana-858cc5cf44-xff6n   0/1     Evicted   0          23s
+
+NAME              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/grafana   NodePort   10.105.178.98   <none>        80:32603/TCP   42s
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/grafana   0/1     1            0           42s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/grafana-858cc5cf44   1         1         0       42s
+root@master:~#
