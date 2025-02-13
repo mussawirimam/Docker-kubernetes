@@ -1,0 +1,190 @@
+ELK stack:
+Elasticsearch ==> Storing Logs
+  # many types of log agents are available
+Logstash/fluentd/metricbeat ==> agent to send logs to elasticsearch
+Kibana ==> Dashboard to execute kibana query language, find the logs
+
+helm repo add elastic https://Helm.elastic.co
+
+
+vi values.yaml
+---
+# Permit co-located instances for solitary minikube virtual machines.
+antiAffinity: "soft"
+
+# Shrink default JVM heap.
+esJavaOpts: "-Xmx128m -Xms128m"
+ES_JAVA_OPTS: "-Xmx128m -Xms128m"
+# Allocate smaller chunks of memory per pod.
+resources:
+  requests:
+    cpu: "100m"
+    memory: "512M"
+  limits:
+    cpu: "1000m"
+    memory: "512M"
+
+# Request smaller persistent volumes.
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: "local-path"
+  resources:
+    requests:
+      storage: 500M
+
+
+kubectl create ns elk 
+
+helm install elasticsearch elastic/elasticsearch -f ./values.yaml 
+
+helm install elasticsearch elastic/elasticsearch -n elk --set persistence.enabled=false,replicas=1    ## Not Working 
+
+
+helm test elasticsearch
+
+helm install kibana elastic/kibana 
+
+GEt password here 
+kubectl get secrets --namespace=elk elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+
+
+Step : Deploying Metricbeat with Helm
+
+helm install metricbeat elastic/metricbeat
+
+
+vi fluentd-configmap.yaml
+
+#@include file-fluent.conf
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: fluentd
+data:
+  fluent.conf: |-
+    ################################################################
+    # This source gets all logs from local docker host
+    @include pods-kind-fluent.conf
+    #@include pods-fluent.conf
+    #@include file-fluent.conf
+    @include elastic-fluent.conf
+  pods-kind-fluent.conf: |-
+    <source>
+      @type tail
+      read_from_head true
+      tag kubernetes.*
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      exclude_path ["/var/log/containers/fluent*"]
+      <parse>
+        @type regexp
+        #https://regex101.com/r/ZkOBTI/1
+        expression ^(?<time>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.[^Z]*Z)\s(?<stream>[^\s]+)\s(?<character>[^\s])\s(?<message>.*)$
+        #time_format %Y-%m-%dT%H:%M:%S.%NZ
+      </parse>
+    </source>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+      kubernetes_url "#{ENV['FLUENT_FILTER_KUBERNETES_URL'] || 'https://' + ENV.fetch('KUBERNETES_SERVICE_HOST') + ':' + ENV.fetch('KUBERNETES_SERVICE_PORT') + '/api'}"
+      verify_ssl "#{ENV['KUBERNETES_VERIFY_SSL'] || true}"
+      ca_file "#{ENV['KUBERNETES_CA_FILE']}"
+      skip_labels "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_LABELS'] || 'false'}"
+      skip_container_metadata "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_CONTAINER_METADATA'] || 'false'}"
+      skip_master_url "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_MASTER_URL'] || 'false'}"
+      skip_namespace_metadata "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_NAMESPACE_METADATA'] || 'false'}"
+    </filter>
+  pods-fluent.conf: |-
+    <source>
+      @type tail
+      read_from_head true
+      tag kubernetes.*
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      exclude_path ["/var/log/containers/fluent*"]
+      <parse>
+        @type kubernetes
+        @type "#{ENV['FLUENT_CONTAINER_TAIL_PARSER_TYPE'] || 'json'}"
+        time_format "%Y-%m-%dT%H:%M:%S.%NZ"
+      </parse>
+    </source>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+      kubernetes_url "#{ENV['FLUENT_FILTER_KUBERNETES_URL'] || 'https://' + ENV.fetch('KUBERNETES_SERVICE_HOST') + ':' + ENV.fetch('KUBERNETES_SERVICE_PORT') + '/api'}"
+      verify_ssl "#{ENV['KUBERNETES_VERIFY_SSL'] || true}"
+      ca_file "#{ENV['KUBERNETES_CA_FILE']}"
+      skip_labels "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_LABELS'] || 'false'}"
+      skip_container_metadata "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_CONTAINER_METADATA'] || 'false'}"
+      skip_master_url "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_MASTER_URL'] || 'false'}"
+      skip_namespace_metadata "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_NAMESPACE_METADATA'] || 'false'}"
+    </filter>
+  file-fluent.conf: |-
+    <match **>
+      @type file
+      path /tmp/file-test.log
+    </match>
+  elastic-fluent.conf: |-
+    <match **>
+      @type elasticsearch
+      host "#{ENV['FLUENT_ELASTICSEARCH_HOST'] || 'elasticsearch.elastic-kibana'}"
+      port "#{ENV['FLUENT_ELASTICSEARCH_PORT'] || '9200'}"
+      index_name fluentd-k8s
+      type_name fluentd
+      include_timestamp true
+    </match>
+
+
+
+kubectl apply -f
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+### installation
+root@master:~# helm repo add elastic https://Helm.elastic.co
+"elastic" has been added to your repositories
+root@master:~# helm repo ls
+NAME                    URL
+bitnami                 https://charts.bitnami.com/bitnami
+hrepo                   https://raw.githubusercontent.com/mussawirimam/hrepo/refs/heads/main
+prometheus-community    https://prometheus-community.github.io/helm-charts
+grafana                 https://grafana.github.io/helm-charts
+elastic                 https://Helm.elastic.co
+root@master:~#
+
+
+### most important thing is to define the storage class in the values.yaml file or else it will trouble you with memory/storage
+root@master:~# vi values.yaml
+root@master:~# cat values.yaml
+antiAffinity: "soft"
+
+# Shrink default JVM heap.
+esJavaOpts: "-Xmx128m -Xms128m"
+ES_JAVA_OPTS: "-Xmx128m -Xms128m"
+# Allocate smaller chunks of memory per pod.
+resources:
+  requests:
+    cpu: "100m"
+    memory: "512M"
+  limits:
+    cpu: "1000m"
+    memory: "512M"
+
+# Request smaller persistent volumes.
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: "local-path"
+  resources:
+    requests:
+      storage: 500M
+root@master:~#
+
+### you can install the elastic search wihtout the persistence vaolume with the single replica, which will not generate the load on your system
+
+
+root@master:~# kubectl create ns elk
+namespace/elk created
+root@master:~#
