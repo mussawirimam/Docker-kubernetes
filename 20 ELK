@@ -42,15 +42,15 @@ helm install elasticsearch elastic/elasticsearch -n elk --set persistence.enable
 
 helm test elasticsearch
 
-helm install kibana elastic/kibana 
+helm install kibana elastic/kibana -n elk
 
-GEt password here 
+Get password here for kibana dashboard: 
 kubectl get secrets --namespace=elk elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
 
 
 Step : Deploying Metricbeat with Helm
 
-helm install metricbeat elastic/metricbeat
+helm install metricbeat elastic/metricbeat -n elk
 
 
 vi fluentd-configmap.yaml
@@ -187,4 +187,259 @@ root@master:~#
 
 root@master:~# kubectl create ns elk
 namespace/elk created
+root@master:~#
+
+root@master:~# helm install elasticsearch elastic/elasticsearch -n elk --set persistence.enabled=false,replicas=1
+NAME: elasticsearch
+LAST DEPLOYED: Thu Feb 13 11:58:21 2025
+NAMESPACE: elk
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Watch all cluster members come up.
+  $ kubectl get pods --namespace=elk -l app=elasticsearch-master -w
+2. Retrieve elastic user's password.
+  $ kubectl get secrets --namespace=elk elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+3. Test cluster health using Helm test.
+  $ helm --namespace=elk test elasticsearch
+root@master:~#
+
+root@master:~# kubectl get pod -n elk
+NAME                     READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0   0/1     Running   0          2m49s
+root@master:~#
+
+root@master:~# kubectl describe pod -n elk
+...
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  2m11s             default-scheduler  Successfully assigned elk/elasticsearch-master-0 to node2
+  Normal   Pulling    2m10s             kubelet            Pulling image "docker.elastic.co/elasticsearch/elasticsearch:8.5.1"
+  Normal   Pulled     24s               kubelet            Successfully pulled image "docker.elastic.co/elasticsearch/elasticsearch:8.5.1" in 1m45.573s (1m45.573s including waiting)
+  Normal   Created    24s               kubelet            Created container configure-sysctl
+  Normal   Started    24s               kubelet            Started container configure-sysctl
+  Normal   Pulled     23s               kubelet            Container image "docker.elastic.co/elasticsearch/elasticsearch:8.5.1" already present on machine
+  Normal   Created    23s               kubelet            Created container elasticsearch
+  Normal   Started    23s               kubelet            Started container elasticsearch
+  Warning  Unhealthy  0s (x2 over 10s)  kubelet            Readiness probe failed: Waiting for elasticsearch cluster to become ready (request params: "wait_for_status=green&timeout=1s" )
+Cluster is not yet ready (request params: "wait_for_status=green&timeout=1s" )
+...
+
+### give it a time it will be reattaching it 
+root@master:~# kubectl get pod -n elk
+NAME                     READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0   1/1     Running   0          4m3s
+root@master:~#
+
+# it will take some time, because it will launch a pod which will be checking for all the available resources in the cluster. 
+root@master:~# helm install kibana elastic/kibana  -n elk
+
+# Open another terminal, mean while the command above is running. 
+root@master:~# kubectl get pod -n elk
+NAME                              READY   STATUS              RESTARTS   AGE
+elasticsearch-master-0            1/1     Running             0          6m50s
+pre-install-kibana-kibana-rl952   0/1     ContainerCreating   0          72s
+root@master:~#
+
+### from the previous terminal above you should have the output 
+### please use the secrets to get the password 
+root@master:~# helm install kibana elastic/kibana -n elk
+NAME: kibana
+LAST DEPLOYED: Thu Feb 13 12:04:01 2025
+NAMESPACE: elk
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Watch all containers come up.
+  $ kubectl get pods --namespace=elk -l release=kibana -w
+2. Retrieve the elastic user's password.
+  $ kubectl get secrets --namespace=elk elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d   ###   <----------------------------------- this is the command for kibana credentials for browser dashboard login
+3. Retrieve the kibana service account token.
+  $ kubectl get secrets --namespace=elk kibana-kibana-es-token -ojsonpath='{.data.token}' | base64 -d
+
+### 
+root@master:~#
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  111s                default-scheduler  Successfully assigned elk/kibana-kibana-8446b87c9f-xz9gc to node1
+  Normal   Pulled     110s                kubelet            Container image "docker.elastic.co/kibana/kibana:8.5.1" already present on machine
+  Normal   Created    110s                kubelet            Created container kibana
+  Normal   Started    109s                kubelet            Started container kibana
+  Warning  Unhealthy  45s                 kubelet            Readiness probe failed: command timed out
+  Warning  Unhealthy  40s (x6 over 100s)  kubelet            Readiness probe failed: Error: Got HTTP code 000 but expected a 200
+root@master:~# kubectl get pod -n elk
+NAME                             READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0           1/1     Running   0          9m6s
+kibana-kibana-8446b87c9f-xz9gc   1/1     Running   0          118s
+root@master:~#
+
+### to get the secret run this command from above 
+
+kubectl get secrets --namespace=elk elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+Oxxxxxxxxxxxx
+
+### we will install the metric beat
+root@master:~# helm install metricbeat elastic/metricbeat -n elk
+NAME: metricbeat
+LAST DEPLOYED: Thu Feb 13 12:10:35 2025
+NAMESPACE: elk
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Watch all containers come up.
+  $ kubectl get pods --namespace=elk -l app=metricbeat-metricbeat -w
+root@master:~#
+
+# give some time, they will get ready 
+root@master:~# kubectl -n elk get pods
+NAME                                             READY   STATUS              RESTARTS   AGE
+elasticsearch-master-0                           1/1     Running             0          12m
+kibana-kibana-8446b87c9f-xz9gc                   1/1     Running             0          5m33s
+metricbeat-kube-state-metrics-5bbbfc6675-d2sts   0/1     ContainerCreating   0          28s
+metricbeat-metricbeat-br7kf                      0/1     Running             0          29s
+metricbeat-metricbeat-metrics-55f54b64b4-62bs8   0/1     ContainerCreating   0          28s
+metricbeat-metricbeat-scg6d                      0/1     ContainerCreating   0          28s
+root@master:~#
+
+root@master:~# kubectl -n elk get pods
+NAME                                             READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0                           1/1     Running   0          13m
+kibana-kibana-8446b87c9f-xz9gc                   1/1     Running   0          6m1s
+metricbeat-kube-state-metrics-5bbbfc6675-d2sts   1/1     Running   0          56s
+metricbeat-metricbeat-br7kf                      1/1     Running   0          57s
+metricbeat-metricbeat-metrics-55f54b64b4-62bs8   1/1     Running   0          56s
+metricbeat-metricbeat-scg6d                      1/1     Running   0          56s
+root@master:~#
+
+### convert the service from ClusterIP to NodePort
+root@master:~# kubectl get svc -n elk
+NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+elasticsearch-master            ClusterIP   10.98.209.124    <none>        9200/TCP,9300/TCP   14m
+elasticsearch-master-headless   ClusterIP   None             <none>        9200/TCP,9300/TCP   14m
+kibana-kibana                   ClusterIP   10.98.29.178     <none>        5601/TCP            7m32s
+metricbeat-kube-state-metrics   ClusterIP   10.108.242.210   <none>        8080/TCP            2m28s
+root@master:~#
+
+root@master:~# kubectl -n elk edit svc kibana-kibana
+### before 
+  ports:
+  - name: http
+    port: 5601
+    protocol: TCP
+    targetPort: 5601
+  selector:
+    app: kibana
+    release: kibana
+  sessionAffinity: None
+  type: ClusterIP      <--------------- change this from ClusterIP to NodePort
+status:
+  loadBalancer: {}
+
+### after 
+  ports:
+  - name: http
+    port: 5601
+    protocol: TCP
+    targetPort: 5601
+  selector:
+    app: kibana
+    release: kibana
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
+
+service/kibana-kibana edited
+
+### Service changed from ClusterIP to NodePort
+root@master:~# kubectl get svc -n elk
+NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+elasticsearch-master            ClusterIP   10.98.209.124    <none>        9200/TCP,9300/TCP   16m
+elasticsearch-master-headless   ClusterIP   None             <none>        9200/TCP,9300/TCP   16m
+kibana-kibana                   NodePort    10.98.29.178     <none>        5601:31945/TCP      9m31s  <---------------------------------
+metricbeat-kube-state-metrics   ClusterIP   10.108.242.210   <none>        8080/TCP            4m27s
+root@master:~#
+root@master:~#
+
+### copy the ip address of your node and Nodeport port from above
+==== on browser ====
+http://192.168.29.134:31945/login?next=%2F
+Welcome to Elastic
+Username: elastic
+Password: in your terminal decrypt the password | look for the command above in notes or in the troubleshoot fix sections. 
+
+Log in
+
+### we have to get the user name and password through the secrets
+root@master:~# kubectl -n elk get secrets
+NAME                                  TYPE                 DATA   AGE
+elasticsearch-master-certs            kubernetes.io/tls    3      21m
+elasticsearch-master-credentials      Opaque               2      21m
+kibana-kibana-es-token                Opaque               1      14m
+sh.helm.release.v1.elasticsearch.v1   helm.sh/release.v1   1      21m
+sh.helm.release.v1.kibana.v1          helm.sh/release.v1   1      16m
+sh.helm.release.v1.metricbeat.v1      helm.sh/release.v1   1      9m43s
+root@master:~#
+
+root@master:~# kubectl -n elk get secrets kibana-kibana-es-token -o yaml
+apiVersion: v1
+data:
+  token: QUFFQUFXVnNZWE4wYVdNdmEybGlZVzVoTDJ0cFltRnVZUzFyYVdKaGJtRTZRemxvVW5oeFkySlJNME5qUkhFdFZFZFJOV0ZOVVE=      <------------- copy this and need to de-crypt this encrypted password
+kind: Secret
+metadata:
+  creationTimestamp: "2025-02-13T17:05:29Z"
+  name: kibana-kibana-es-token
+  namespace: elk
+  resourceVersion: "650402"
+  uid: dda426c6-6978-4a66-957d-2ac9e639248d
+type: Opaque
+root@master:~#
+
+### decryption
+root@master:~# echo "QUFFQUFXVnNZWE4wYVdNdmEybGlZVzVoTDJ0cFltRnVZUzFyYVdKaGJtRTZRemxvVW5oeFkySlJNME5qUkhFdFZFZFJOV0ZOVVE=" | base64 -d
+AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS1raWJhbmE6QzloUnhxY2JRM0NjRHEtVEdRNWFNUQ
+
+
+##### TROUBLE SHOOTING TIME: the credentials is wrong 
+error: Username or password is incorrect. Please try again.
+root@master:~# kubectl -n elk get cm
+NAME                                      DATA   AGE
+kube-root-ca.crt                          1      36m
+metricbeat-metricbeat-daemonset-config    1      13m
+metricbeat-metricbeat-deployment-config   1      13m
+root@master:~#
+
+### FIX:
+### there is this command above in my notes which decrypts the password from the secret
+root@master:~# kubectl get secrets --namespace=elk elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+OxxxxxxxIgsroot@master:~#
+
+### TROUBLE SHOOT ENDS
+
+### successfully deployed the kibana
+==== on browser ====
+Welcome home
+
+
+### On kibana
+click on hamburger menu
+click on discover
+click create dataview
+  create the dataview on 
+  metricbeat datastream
+name: test
+index patter: metricbeat*
+timestamp field: @timestamp
+
+### all the logs on the kibana discover are coming from the different pods will be displayed in here. 
+
+### I will create some deployment, that is why all the system related pods are not showing up in the discover kibana 
+root@master:~# kubectl run mango --image nginx --port 80 --expose
+service/mango created
+pod/mango created
 root@master:~#
