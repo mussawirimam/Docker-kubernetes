@@ -21,6 +21,7 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update prometheus
 
 helm install prometheus prometheus-community/prometheus \
     --namespace prometheus \
@@ -31,12 +32,14 @@ kubectl get all -n prometheus
 
 ### change prometheus-server service to NodePort Service 
 kubectl -n prometheus edit svc prometheus-server
+### once the prometheus installed successfully, you will need to get the password from the secrets | look at the notes below on the hand-on steps.
 
 # Installing Grafana
 kubectl create namespace grafana
 kubectl get ns
 
 helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update grafana
 
 ## values yaml file
 vi grafana.yaml
@@ -177,35 +180,38 @@ root@master:~#
 
 ########################### GRAFANA ########################### 
 
-### installing grafana
-root@master:~# kubectl create namespace grafana
-namespace/grafana created
 
+### Installing grafana
 root@master:~# kubectl get ns
 NAME                 STATUS   AGE
-argocd               Active   2d3h
-default              Active   4d3h
-grafana              Active   100s
-kube-node-lease      Active   4d3h
-kube-public          Active   4d3h
-kube-system          Active   4d3h
-local-path-storage   Active   28h
-prometheus           Active   28h
-root@master:~#
-
-### add the grafana repo 
+default              Active   21d
+kube-node-lease      Active   21d
+kube-public          Active   21d
+kube-system          Active   21d
+local-path-storage   Active   42h
+prometheus           Active   42h
+root@master:~# kubectl create namespace grafana
+namespace/grafana created
+root@master:~# kubectl get ns
+NAME                 STATUS   AGE
+default              Active   21d
+grafana              Active   6s
+kube-node-lease      Active   21d
+kube-public          Active   21d
+kube-system          Active   21d
+local-path-storage   Active   42h
+prometheus           Active   42h
 root@master:~# helm repo add grafana https://grafana.github.io/helm-charts
 "grafana" has been added to your repositories
 root@master:~#
 
-### update the grafana repo 
 root@master:~# helm repo update grafana
 Hang tight while we grab the latest from your chart repositories...
 ...Successfully got an update from the "grafana" chart repository
 Update Complete. ⎈Happy Helming!⎈
 root@master:~#
 
-### we need to create the values.yaml file, where we will define where the Prometheus is running.
+### we need to values.yaml file, wherever we will define where the prometheous is running
 
 root@master:~# vi grafana.yaml
 datasources:
@@ -214,12 +220,11 @@ datasources:
     datasources:
     - name: Prometheus
       type: prometheus
-      url: http://prometheus-server.prometheus.svc.cluster.local #       <------------------ deployment name, this is the serve, the location of my prometheus. Which is accessible through the ClusterIP service. (url: http://prometheus-server.prometheus.svc.cluster.local) prormetheus server.prometheusservice.cluster local is the fqdn.
+      url: http://prometheus-server.prometheus.svc.cluster.local    <--location of ther prometheus. namespace prometheous.service.fqdn
       access: proxy
       isDefault: true
-:wq!
+root@master:~#
 
-### installing grafana through the helm chart
 root@master:~# helm install grafana grafana/grafana \
     --namespace grafana \
     --set persistence.storageClassName="local-path" \
@@ -228,7 +233,7 @@ root@master:~# helm install grafana grafana/grafana \
     --values grafana.yaml \
     --set service.type=NodePort
 NAME: grafana
-LAST DEPLOYED: Tue Feb 11 01:14:05 2025
+LAST DEPLOYED: Wed Feb 12 18:13:59 2025
 NAMESPACE: grafana
 STATUS: deployed
 REVISION: 1
@@ -250,36 +255,50 @@ NOTES:
 3. Login with the password from step 1 and the username: admin
 root@master:~#
 
+# it will take some time, be patient while it is being deployment
 root@master:~# kubectl get all -n grafana
 NAME                           READY   STATUS    RESTARTS   AGE
-pod/grafana-858cc5cf44-29dlp   0/1     Evicted   0          21s
-pod/grafana-858cc5cf44-6pj8x   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-94hpm   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-b8t77   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-b9mgs   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-cgdk7   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-cjfd4   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-dblbc   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-dswjk   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-f96w6   0/1     Error     0          42s
-pod/grafana-858cc5cf44-fc64w   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-h9jjh   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-kcjph   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-kmqmd   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-m8z62   0/1     Evicted   0          23s
-pod/grafana-858cc5cf44-mvnhv   0/1     Pending   0          20s
-pod/grafana-858cc5cf44-n7wgz   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-p8gf6   0/1     Evicted   0          21s
-pod/grafana-858cc5cf44-pn8mz   0/1     Evicted   0          21s
-pod/grafana-858cc5cf44-sdp4t   0/1     Evicted   0          22s
-pod/grafana-858cc5cf44-xff6n   0/1     Evicted   0          23s
+pod/grafana-858cc5cf44-8z4bz   1/1     Running   0          106s
 
 NAME              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-service/grafana   NodePort   10.105.178.98   <none>        80:32603/TCP   42s
+service/grafana   NodePort   10.108.161.96   <none>        80:30999/TCP   106s
 
 NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/grafana   0/1     1            0           42s
+deployment.apps/grafana   1/1     1            1           106s
 
 NAME                                 DESIRED   CURRENT   READY   AGE
-replicaset.apps/grafana-858cc5cf44   1         1         0       42s
+replicaset.apps/grafana-858cc5cf44   1         1         1       106s
 root@master:~#
+
+==== ON BROWSWER ====
+http://192.168.29.134:30999/login
+Grafana
+Welcome to Grafana
+username: admin
+password: admin  # it will give another prompt to setup the password
+
+Update your password
+Continuing to use the default password exposes you to security risks.
+New password
+
+Confirm new password
+### we have successfully got into the grafana 
+Welcome to Grafana
+Need help?
+Documentation
+Tutorials
+Community
+
+### you can create your dashboards in Grafana. You can get the dashboard from here:
+https://grafana.com/grafana/dashboards/
+
+search for the kubernetes
+look for the kubernetes pod metric 
+copy id to clipboard
+go to grafana dashboard
+    click on import dashboard 
+    find and import dashboard for common application at grafana.com/dashboard box | paste the id that you have copied. 
+        https://grafana.com/grafana/dashboards/
+    clic on load
+    it will ask for you prometheus, select prometheus 
+    click on import
