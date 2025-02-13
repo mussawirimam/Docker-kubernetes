@@ -302,3 +302,26 @@ go to grafana dashboard
     clic on load
     it will ask for you prometheus, select prometheus 
     click on import
+
+
+### time to clean up the grafana and run the elk
+root@master:~# helm ls -n grafana
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+grafana grafana         1               2025-02-12 18:13:59.39655563 -0500 EST  deployed        grafana-8.9.0   11.5.1
+root@master:~# helm uninstall grafana --namespace grafana
+release "grafana" uninstalled
+root@master:~#
+
+
+root@master:~# helm uninstall prometheus --namespace prometheus
+release "prometheus" uninstalled
+root@master:~# kubectl delete ns prometheus
+namespace "prometheus" deleted
+kubectl delete ns grafana
+root@master:~# kubectl delete ns grafana
+namespace "grafana" deleted
+root@master:~#
+
+
+### generally Prometheus, Grafana, and ELK should learn together on the production. 
+### for ELK use the next file
