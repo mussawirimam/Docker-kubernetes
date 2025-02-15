@@ -3,6 +3,25 @@ https://docs.docker.com/engine/install/ubuntu/
 dockerhub.com
 https://docs.docker.com/reference/cli/docker/swarm/init/
 
+================================================================================
+
+To run Docker as a non-privileged user, consider setting up the
+Docker daemon in rootless mode for your user:
+
+    dockerd-rootless-setuptool.sh install
+
+Visit https://docs.docker.com/go/rootless/ to learn about rootless mode.
+
+
+To run the Docker daemon as a fully privileged service, but granting non-root
+users access, refer to https://docs.docker.com/go/daemon-access/
+
+WARNING: Access to the remote API on a privileged Docker daemon is equivalent
+         to root access on the host. Refer to the 'Docker daemon attack surface'
+         documentation for details: https://docs.docker.com/go/attack-surface/
+
+================================================================================
+
 Docker architecture is read-only from dockerhub, you will have to pull it to your local machine in order to make any changes to the image and build a container out of it using the dockerfile. 
 root# docker
 Usage:  docker [OPTIONS] COMMAND
