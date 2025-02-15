@@ -1,0 +1,102 @@
+root@ubuntu-jammy:~# history
+    1  ifconfig
+    2  apt install kubectl -y
+    3  apt update -y
+    4  apt install kubectl
+    5  [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
+    6  ls
+    7  chmod +x ./kind
+    8  mv ./kind /usr/local/bin/kind
+    9  kind
+   10  ls
+   11  mv kubectl /usr/local/bin/
+   12  ls
+   13  kubectl
+   14  chmod +x /usr/local/bin/kind
+   15  kubectl
+   16  mv /usr/local/bin/kind /bin
+   17  kubectl
+   18  cd /usr/
+   19  ls
+   20  cd local/
+   21  cd bin
+   22  ls
+   23  kind
+   24  rm kind
+   25  ls
+   26  rm kubectl
+   27  ks
+   28  ls
+   29  clear
+   30  cd ~
+   31  kind
+   32  history
+   33  [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
+   34  chmod +x ./kind
+   35  mv ./kind /usr/local/bin/kind
+   36  kind
+   37  ls   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+   38  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+   39  ls
+   40  kubectl
+   41  echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+   42  kubectl
+   43  chmod +x kubectl
+   44  ls
+   45  mkdir -p ~/.local/bin
+   46  mv ./kubectl ~/.local/bin/kubectl
+   47  ls
+   48  kubectl
+   49  kubectl
+   50  kubectl version --client
+   51  install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+   52  mv ./kubectl ~/.local/bin/kubectl
+   53  /
+   54  ls
+   55  history
+   56  cd /usr/local/bin/
+   57  ls
+   58  cd /.local
+   59  cd ~
+   60  ls
+   61  cd .local/
+   62  ls
+   63  cd bin
+   64  ls
+   65  rm kubectl
+   66  clear
+   67  cd ~
+   68  ls
+   69  cat /etc/os-release
+   70  uptime
+   71  lscpu
+   72  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+   73  install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+   74  ls
+   75  chmod +x kubectl
+   76  mkdir -p ~/.local/bin
+   77  mv ./kubectl ~/.local/bin/kubectl
+   78  kubectl
+   79  kubectl version --client
+   80  kubectl run pod nginx
+   81  kubectl run --name nginx --image nginx
+   82  kubectl --help
+   83  man kubectl
+   84  kubectl
+   85  kind create cluster --name kind-2
+   86  kubectl get nodes
+   87  kind delete cluster --name kind-2
+   88  kubectl
+   89  apt install -y kubeadm
+   90  swapoff -a
+   91  apt-get install -y apt-transport-https ca-certificates curl gpg
+   92  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+   93  ls
+   94  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+   95  apt-get update
+   96  kubeadm
+   97  apt-get install kubeadm
+   98  history
+   99  kind create cluster --name kind-2
+  100  history
+root@ubuntu-jammy:~#
