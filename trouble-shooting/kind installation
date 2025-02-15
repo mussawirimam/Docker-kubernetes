@@ -126,3 +126,46 @@ docker exec -it <container-id> /bin/bash
 
 docker ps
 docker images
+
+
+
+
+#### TROUBLESHOOT: I was having issue with accessing the nginx from outside so I tried creating the nodeport but still was having issue so I followed the link below:
+READ THIS TO UNDERSTAND THE PROBLEM AT HAND: 
+https://kind.sigs.k8s.io/docs/user/ingress/#ingress-nginx
+
+FIX: instead of the Node port, I applied the ingress 
+https://github.com/kubernetes-sigs/kind/issues/1991
+
+# cluster-config.yml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30000
+    hostPort: 30000
+    protocol: TCP
+
+$ kind create cluster --config=cluster-config.yml
+
+$ kubectl create deployment nginx --image=nginx --port=80
+
+$ kubectl create service nodeport nginx --tcp=80:80 --node-port=30000
+
+  304  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml -v=5
+
+  292  vi cluster-config.yaml
+  293  kind create cluster --config=cluster-config.yml
+  294  mv cluster-config.yaml cluster-config.yml
+  295  kind create cluster --config=cluster-config.yml
+  296  kubectl cluster-info --context kind-kind
+  297  kubectl create deployment nginx --image=nginx --port=80
+  298  kubectl create service nodeport nginx --tcp=80:80 --node-port=30000
+  299  docker images
+  300  ifconfig
+  304  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml -v=5
+
+### if you are using the minikube, use this:
+  301  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.41.2/deploy/static/provider/cloud/deploy.yaml
+#### TROUBLESHOOT ENDS
