@@ -99,4 +99,30 @@ root@ubuntu-jammy:~# history
    98  history
    99  kind create cluster --name kind-2
   100  history
+root@ubuntu-jammy:~# kubectl config get-contexts
+CURRENT   NAME          CLUSTER       AUTHINFO      NAMESPACE
+*         kind-kind-2   kind-kind-2   kind-kind-2
 root@ubuntu-jammy:~#
+
+
+kind create cluster --config kind-config.yaml
+
+# kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+
+kubectl get nodes
+
+NAME                 STATUS   ROLES           AGE   VERSION
+kind-control-plane   Ready    control-plane   2m    v1.x.x
+kind-worker          Ready    worker          2m    v1.x.x
+kind-worker2         Ready    worker          2m    v1.x.x
+
+docker exec -it <container-id> /bin/bash
+
+docker ps
+docker images
